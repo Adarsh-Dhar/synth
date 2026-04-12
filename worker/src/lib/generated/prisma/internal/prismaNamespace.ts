@@ -387,7 +387,8 @@ export const ModelName = {
   User: 'User',
   Agent: 'Agent',
   AgentFile: 'AgentFile',
-  TradeLog: 'TradeLog'
+  TradeLog: 'TradeLog',
+  TerminalLog: 'TerminalLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -403,7 +404,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "agent" | "agentFile" | "tradeLog"
+    modelProps: "user" | "agent" | "agentFile" | "tradeLog" | "terminalLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -703,6 +704,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TerminalLog: {
+      payload: Prisma.$TerminalLogPayload<ExtArgs>
+      fields: Prisma.TerminalLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TerminalLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TerminalLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>
+        }
+        findFirst: {
+          args: Prisma.TerminalLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TerminalLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>
+        }
+        findMany: {
+          args: Prisma.TerminalLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>[]
+        }
+        create: {
+          args: Prisma.TerminalLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>
+        }
+        createMany: {
+          args: Prisma.TerminalLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TerminalLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>[]
+        }
+        delete: {
+          args: Prisma.TerminalLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>
+        }
+        update: {
+          args: Prisma.TerminalLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.TerminalLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TerminalLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TerminalLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.TerminalLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TerminalLogPayload>
+        }
+        aggregate: {
+          args: Prisma.TerminalLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTerminalLog>
+        }
+        groupBy: {
+          args: Prisma.TerminalLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TerminalLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TerminalLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TerminalLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -762,7 +837,6 @@ export const AgentScalarFieldEnum = {
   walletAddress: 'walletAddress',
   configuration: 'configuration',
   envConfig: 'envConfig',
-  sessionKeyPriv: 'sessionKeyPriv',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -798,6 +872,17 @@ export const TradeLogScalarFieldEnum = {
 } as const
 
 export type TradeLogScalarFieldEnum = (typeof TradeLogScalarFieldEnum)[keyof typeof TradeLogScalarFieldEnum]
+
+
+export const TerminalLogScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  line: 'line',
+  level: 'level',
+  timestamp: 'timestamp'
+} as const
+
+export type TerminalLogScalarFieldEnum = (typeof TerminalLogScalarFieldEnum)[keyof typeof TerminalLogScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1029,6 +1114,7 @@ export type GlobalOmitConfig = {
   agent?: Prisma.AgentOmit
   agentFile?: Prisma.AgentFileOmit
   tradeLog?: Prisma.TradeLogOmit
+  terminalLog?: Prisma.TerminalLogOmit
 }
 
 /* Types for Logging */

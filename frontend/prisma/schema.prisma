@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+generator worker {
+  provider = "prisma-client"
+  output   = "../../worker/src/lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums to keep your data strictly typed
+enum AgentStatus {
+  STARTING
+  RUNNING
+  STOPPING
+  STOPPED
+  ERROR
+}
+
+enum StrategyType {
+  MEME_SNIPER
+  ARBITRAGE
+  SENTIMENT_TRADER
+}
+
+enum LogType {
+  INFO
+  EXECUTION_BUY
+  EXECUTION_SELL
+  PROFIT_SECURED
+  ERROR
+}
+
+model User {
+  id        String   @id // Clerk User ID
+  email     String   @unique
+  name      String?
+  walletAddress String @default("")
+  agents    Agent[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Agent {
+  id               String       @id @default(cuid())
+  name             String
+  status           AgentStatus  @default(STOPPED)
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletAddress    String       @default("")
+  configuration    Json?
+  envConfig        String?      @db.Text // Encrypted .env (AES-256-GCM)
+  tradeLogs        TradeLog[]
+  terminalLogs     TerminalLog[] @relation("terminalLogs")
+  files            AgentFile[]  // <-- NEW: Relation to bot code files
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+// NEW MODEL: Stores the generated code files for the agent
+model AgentFile {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  filepath  String   // File route (e.g., "src/index.ts")
+  content   String   @db.Text // Text content of the file
+  language  String   @default("plaintext") // e.g., "typescript", "json"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agentId, filepath])
+}
+
+model TradeLog {
+  id              String   @id @default(cuid())
+  agentId         String
+  agent           Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  txHash          String   @unique
+  tokenIn         String
+  tokenOut        String
+  amountIn        String
+  amountOut       String
+  profitEth       String
+  profitUsd       String
+  executionTimeMs Int
+  createdAt       DateTime @default(now())
+}
+
+model TerminalLog {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation("terminalLogs", fields: [agentId], references: [id], onDelete: Cascade)
+  line      String   @db.Text
+  level     String   // "stdout" or "stderr"
+  timestamp DateTime @default(now())
+}

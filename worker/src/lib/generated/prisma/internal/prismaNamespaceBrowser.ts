@@ -54,7 +54,8 @@ export const ModelName = {
   User: 'User',
   Agent: 'Agent',
   AgentFile: 'AgentFile',
-  TradeLog: 'TradeLog'
+  TradeLog: 'TradeLog',
+  TerminalLog: 'TerminalLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -93,7 +94,6 @@ export const AgentScalarFieldEnum = {
   walletAddress: 'walletAddress',
   configuration: 'configuration',
   envConfig: 'envConfig',
-  sessionKeyPriv: 'sessionKeyPriv',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -129,6 +129,17 @@ export const TradeLogScalarFieldEnum = {
 } as const
 
 export type TradeLogScalarFieldEnum = (typeof TradeLogScalarFieldEnum)[keyof typeof TradeLogScalarFieldEnum]
+
+
+export const TerminalLogScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  line: 'line',
+  level: 'level',
+  timestamp: 'timestamp'
+} as const
+
+export type TerminalLogScalarFieldEnum = (typeof TerminalLogScalarFieldEnum)[keyof typeof TerminalLogScalarFieldEnum]
 
 
 export const SortOrder = {

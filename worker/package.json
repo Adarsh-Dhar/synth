@@ -17,8 +17,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@initia/initia.js": "^1.0.21",
-    "@initia/interwovenkit-react": "^2.4.6",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@tanstack/react-query": "^5.94.5",
