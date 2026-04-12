@@ -14,7 +14,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, createHash } from "crypto";
 
 function getDerivedKey(): Buffer {
-  const secret = process.env.AGENT_SECRET ?? "agentia-default-secret-change-me";
+  const secret = process.env.AGENT_SECRET ?? "synth-default-secret-change-me";
   // SHA-256 of the secret gives a stable 32-byte key
   return createHash("sha256").update(secret).digest();
 }

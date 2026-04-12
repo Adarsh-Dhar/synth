@@ -388,7 +388,7 @@ export default function BridgePage() {
       <div className="sticky top-0 z-30 bg-background border-b border-border">
         <div className="px-6 py-4 lg:px-8">
           <h1 className="text-3xl font-bold">Cross-Chain Bridge</h1>
-          <p className="text-muted-foreground mt-1">Deposit funds from other chains to Agentia on Solana</p>
+          <p className="text-muted-foreground mt-1">Deposit funds from other chains to Synth on Solana</p>
         </div>
       </div>
 
@@ -454,7 +454,7 @@ export default function BridgePage() {
                     <div className="bg-background border border-border rounded-lg p-4 flex items-center gap-3">
                       <span className="text-2xl">⚡</span>
                       <div>
-                        <p className="font-semibold">Agentia · Solana</p>
+                        <p className="font-semibold">Synth · Solana</p>
                         <p className="text-sm text-muted-foreground">Fast block times</p>
                       </div>
                     </div>

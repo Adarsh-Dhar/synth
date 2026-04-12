@@ -1,4 +1,4 @@
-# Agentia - AI Trading Platform
+# Synth - AI Trading Platform
 
 > Sleep soundly. Let AI trade at 100ms on Solana.
 
@@ -6,7 +6,7 @@ A modern, production-ready autonomous AI trading platform built with Next.js 16,
 
 ## Overview
 
-Agentia is a comprehensive platform for deploying and managing autonomous AI trading agents powered by cryptographically secure session keys on the Solana blockchain. The application features:
+Synth is a comprehensive platform for deploying and managing autonomous AI trading agents powered by cryptographically secure session keys on the Solana blockchain. The application features:
 
 - 🎯 **Modern Landing Page** - Compelling hero section with feature showcase and CTAs
 - 📊 **Comprehensive Dashboard** - Real-time agent monitoring, performance tracking, and management
@@ -74,7 +74,7 @@ Agentia is a comprehensive platform for deploying and managing autonomous AI tra
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd agentia
+cd synth
 
 # Install dependencies
 pnpm install
@@ -98,7 +98,7 @@ pnpm start
 ## Project Structure
 
 ```
-agentia/
+synth/
 ├── app/
 │   ├── layout.tsx                 # Root layout
 │   ├── page.tsx                   # Landing page
@@ -285,9 +285,9 @@ NEXT_PUBLIC_API_URL=https://api.example.com
 ## Support
 
 For questions or issues:
-- 📧 Email: support@agentia.io
-- 💬 Discord: [Join Community](https://discord.gg/agentia)
-- 🐛 Issues: [GitHub Issues](https://github.com/agentia/platform/issues)
+- 📧 Email: support@synth.io
+- 💬 Discord: [Join Community](https://discord.gg/synth)
+- 🐛 Issues: [GitHub Issues](https://github.com/synth/platform/issues)
 
 ## Credits
 
@@ -301,6 +301,6 @@ Built with:
 
 ---
 
-**Agentia** © 2024. All rights reserved.
+**Synth** © 2024. All rights reserved.
 
 **Current Status**: Production Ready v1.0.0

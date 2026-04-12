@@ -7,6 +7,7 @@ import { FeatureCard } from '@/components/feature-card'
 import Link from 'next/link'
 import { ArrowRight, Zap, Lock, GitBranch } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -25,8 +26,6 @@ export default function Home() {
   const handleConnect = async () => {
     if (connected) {
       router.push('/dashboard')
-    } else {
-      await connect?.()
     }
   }
 
@@ -54,24 +53,28 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button
-              size="lg"
-              onClick={handleConnect}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2"
-            >
-              {connected ? 'Open Dashboard' : 'Connect Wallet'}
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-            {connected && (
-              <Link href="/dashboard">
+            {!connected ? (
+              <WalletMultiButton className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2" />
+            ) : (
+              <>
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="border-border hover:border-primary/50 hover:bg-primary/5 w-full"
+                  onClick={() => router.push('/dashboard')}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2"
                 >
-                  View Dashboard
+                  Open Dashboard
+                  <ArrowRight className="w-5 h-5" />
                 </Button>
-              </Link>
+                <Link href="/dashboard">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-border hover:border-primary/50 hover:bg-primary/5 w-full"
+                  >
+                    View Dashboard
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
 
@@ -182,7 +185,7 @@ export default function Home() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Trade Autonomously?</h2>
             <p className="text-lg text-foreground/70 mb-8">
-             Join hundreds of traders using Agentia for intelligent, hands-free trading on Solana.
+             Join hundreds of traders using Synth for intelligent, hands-free trading on Solana.
             </p>
           <Button
             size="lg"
@@ -215,7 +218,7 @@ export default function Home() {
             ))}
           </div>
           <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-foreground/60">
-            <div>&copy; 2024 Agentia. All rights reserved.</div>
+            <div>&copy; 2024 Synth. All rights reserved.</div>
             <div className="flex gap-6 mt-4 md:mt-0">
               {['Security', 'Status', 'Contact'].map((l) => (
                 <a key={l} href="#" className="hover:text-foreground transition-colors">{l}</a>

@@ -247,7 +247,7 @@ export default function BotConfiguratorPage() {
           </button>
         </div>
         <p className="text-center text-[10px] text-slate-700 mt-2">
-          Powered by Agentia Universal Meta-Agent
+          Powered by Synth Universal Meta-Agent
         </p>
       </div>
     </div>

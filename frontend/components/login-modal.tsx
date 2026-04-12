@@ -29,7 +29,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         
         <div className="space-y-4 py-6">
           <p className="text-sm text-foreground/70">
-            Connect your wallet to access Agentia and start deploying autonomous AI trading agents.
+            Connect your wallet to access Synth and start deploying autonomous AI trading agents.
           </p>
 
           <div className="space-y-3">

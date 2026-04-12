@@ -5,23 +5,16 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 
 export function LandingHeader() {
   const router = useRouter()
-  const { publicKey, connect } = useWallet()
+  const { publicKey } = useWallet()
 
   const connected = !!publicKey
   const activeAddress = publicKey ? publicKey.toBase58() : undefined
   const shortAddr = activeAddress ? `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}` : null
   const displayName = shortAddr
-
-  const handleConnect = async () => {
-    if (connected) {
-      router.push('/dashboard')
-    } else {
-      await connect?.()
-    }
-  }
 
   return (
     <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -30,7 +23,7 @@ export function LandingHeader() {
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
           </div>
-          <span className="font-bold text-lg">Agentia</span>
+          <span className="font-bold text-lg">Synth</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -50,26 +43,24 @@ export function LandingHeader() {
           )}
         </div>
 
-        {connected ? (
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
+          {connected && (
             <span className="hidden sm:block text-xs font-mono text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full border border-border/50">
               {displayName}
             </span>
+          )}
+
+          {!connected ? (
+            <WalletMultiButton className="bg-primary hover:bg-primary/90 text-primary-foreground" />
+          ) : (
             <Button
               onClick={() => router.push('/dashboard')}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Open App
             </Button>
-          </div>
-        ) : (
-          <Button
-            onClick={handleConnect}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            Connect Wallet
-          </Button>
-        )}
+          )}
+        </div>
       </nav>
     </header>
   )

@@ -1,16 +1,10 @@
 """
 agents/planner.py
 
-Planner Agent — Phase 1 & 2 of the Planner Agent architecture.
+Planner Agent — drives the Understand → Investigate → Validate → Generate pipeline.
 
-Defines Pydantic schemas for structured LLM output and the PlannerAgent
-class that drives the Understand → Investigate (MCP) → Validate → Interact
-→ Execute pipeline.
-
-The Planner uses the Solana MCP server as an on-chain oracle BEFORE
-any code is generated, resolving addresses, verifying pool existence,
-and confirming token decimals so the Code Generator receives a fully
-verified, enriched plan.
+Uses the local Solana MCP server as an on-chain oracle before any code is
+generated, so the Code Generator receives fully verified parameters.
 """
 
 from __future__ import annotations
@@ -19,7 +13,6 @@ import json
 import logging
 import os
 import re
-import time
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -27,110 +20,84 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-# ─── MCP Server config ────────────────────────────────────────────────────────
-
-SOLANA_MCP_BASE = os.environ.get("SOLANA_MCP_URL", "http://127.0.0.1:8001")
-MCP_TIMEOUT     = float(os.environ.get("SOLANA_MCP_TIMEOUT_SECONDS", "10"))
+SOLANA_MCP_BASE           = os.environ.get("SOLANA_MCP_URL", "http://127.0.0.1:8001")
+MCP_TIMEOUT               = float(os.environ.get("SOLANA_MCP_TIMEOUT_SECONDS", "10"))
 PLANNER_HISTORY_MAX_TURNS = int(os.environ.get("PLANNER_HISTORY_MAX_TURNS", "6"))
-PLANNER_HISTORY_MAX_CHARS = int(os.environ.get("PLANNER_HISTORY_MAX_CHARS", "2800"))
+PLANNER_HISTORY_MAX_CHARS = int(os.environ.get("PLANNER_HISTORY_MAX_CHARS", "3000"))
 
 
-# ─── Pydantic Schemas ─────────────────────────────────────────────────────────
+# ─── Pydantic schemas ─────────────────────────────────────────────────────────
 
 class OnChainVerification(BaseModel):
     needs_mcp_query: bool = Field(
-        description=(
-            "True when the planner must verify an on-chain value before code generation. "
-            "Examples: resolving an SNS (.sol) name, checking a pool address exists, "
-            "fetching token decimal precision."
-        )
+        description="True when the planner must verify an on-chain value before generating code."
     )
-    mcp_tool_name: Optional[str] = Field(
+    mcp_tool: Optional[str] = Field(
         default=None,
-        description="MCP tool to call. Examples: 'move_view', 'get_balance', 'get_token_balance'.",
+        description="MCP tool name: 'get_balance' | 'get_token_balance' | 'get_account_info' | 'resolve_sns'",
     )
     mcp_payload: Optional[Dict[str, Any]] = Field(
         default=None,
-        description=(
-            "Exact payload to POST to the MCP gateway. For Solana this may include: network, address, programId, instruction, accounts, args."
-        ),
+        description="Exact payload to POST to the MCP gateway.",
     )
     verification_purpose: Optional[str] = Field(
         default=None,
-        description="Human-readable reason for the MCP query (for logging).",
+        description="Human-readable reason for this query (for logging).",
     )
 
 
 class PlannerState(BaseModel):
     strategy_type: str = Field(
         description=(
-            "Detected strategy: 'yield_sweeper', 'arbitrage', 'spread_scanner', "
-            "'cross_chain_liquidation', 'cross_chain_arbitrage', 'cross_chain_sweep', "
-            "'sentiment', 'custom_utility', 'unknown'."
+            "Detected strategy: 'yield_sweeper' | 'arbitrage' | 'liquidation' | "
+            "'sniping' | 'dca' | 'grid' | 'whale_mirror' | 'sentiment' | 'custom_utility' | 'unknown'"
         )
     )
     collected_parameters: Dict[str, str] = Field(
         default_factory=dict,
-        description=(
-            "All confirmed runtime variables gathered so far. "
-            "Keys match bot .env variable names (e.g. 'SOLANA_POOL_A_ADDRESS')."
-        ),
+        description="Confirmed runtime env vars, e.g. {'USER_WALLET_ADDRESS': '...'}.",
     )
     missing_parameters: List[str] = Field(
         default_factory=list,
-        description=(
-            "Variable names that are still required but have not been provided "
-            "or verified yet."
-        ),
+        description="Env var names still required but not yet provided or verified.",
     )
     verification_step: Optional[OnChainVerification] = Field(
         default=None,
-        description="On-chain verification action to perform next, if any.",
+        description="On-chain verification to perform next, if any.",
     )
     is_ready_for_code_generation: bool = Field(
-        description=(
-            "True when all required parameters are collected and verified "
-            "and the code generator can be invoked."
-        )
+        description="True when all required parameters are collected and verified.",
     )
     clarifying_question_for_user: Optional[str] = Field(
         default=None,
-        description=(
-            "A single focused question to ask the user when a required parameter "
-            "is missing and cannot be resolved via MCP."
-        ),
+        description="Single focused question to ask the user when a required parameter is missing.",
     )
     enriched_prompt: Optional[str] = Field(
         default=None,
-        description=(
-            "Final prompt string to pass to the Code Generator, enriched with "
-            "all verified on-chain data injected inline."
-        ),
+        description="Final prompt for the Code Generator with all verified data inline.",
     )
-    # Internal diagnostic fields
     mcp_results_summary: Optional[str] = Field(
         default=None,
-        description="Condensed summary of MCP results injected into context.",
+        description="Condensed summary of MCP results (for logging only).",
     )
 
 
-# ─── Planner System Prompt ────────────────────────────────────────────────────
+# ─── Planner system prompt ────────────────────────────────────────────────────
 
 PLANNER_SYSTEM = """\
 You are the Planner Agent for Agentia, a Solana-native DeFi bot platform.
 
-Your job is to analyse the conversation history and decide what to do NEXT.
-You ALWAYS respond with a single valid JSON object matching this exact schema — no markdown, no preamble:
+Analyse the conversation and return ONLY a single valid JSON object — no markdown, no preamble:
 
 {
   "strategy_type": "<string>",
   "collected_parameters": { "<ENV_KEY>": "<value>", ... },
   "missing_parameters": ["<ENV_KEY>", ...],
   "verification_step": {
-     "needs_mcp_query": true | false,
-     "mcp_tool_name": "move_view" | "get_balance" | "get_token_balance" | null,
-     "mcp_payload": { ... } | null,
-     "verification_purpose": "<string>" | null
+    "needs_mcp_query": true | false,
+    "mcp_tool": "get_balance" | "get_token_balance" | "get_account_info" | "resolve_sns" | null,
+    "mcp_payload": { ... } | null,
+    "verification_purpose": "<string>" | null
   } | null,
   "is_ready_for_code_generation": true | false,
   "clarifying_question_for_user": "<string>" | null,
@@ -139,46 +106,45 @@ You ALWAYS respond with a single valid JSON object matching this exact schema �
 }
 
 STRATEGY DETECTION:
-- yield / sweep / consolidate / bridge-back → "yield_sweeper"
-- arbitrage / flash-loan / spatial / spread-scanner → "arbitrage"
-- cross-chain liquidation / liquidation-sniper → "cross_chain_liquidation"
-- cross-chain arb / flash-bridge → "cross_chain_arbitrage"
-- yield-nomad / auto-compounder / omni-chain-yield → "cross_chain_sweep"
-- sentiment / social / news → "sentiment"
-- anything else custom → "custom_utility"
+  yield / sweep / consolidate            → "yield_sweeper"
+  arb / spread / flash                   → "arbitrage"
+  liquidation / health-factor            → "liquidation"
+  snipe / new-token / launch             → "sniping"
+  dca / dollar-cost                      → "dca"
+  grid                                   → "grid"
+  whale / copy-trade                     → "whale_mirror"
+  sentiment / social / news              → "sentiment"
+  anything else                          → "custom_utility"
 
-PARAMETER REQUIREMENTS by strategy:
-- yield_sweeper:      USER_WALLET_ADDRESS, SOLANA_BRIDGE_ADDRESS, SOLANA_USDC_METADATA_ADDRESS
-- arbitrage:          SOLANA_POOL_A_ADDRESS, SOLANA_POOL_B_ADDRESS, SOLANA_SWAP_ROUTER_ADDRESS,
-                            SOLANA_USDC_METADATA_ADDRESS, SOLANA_EXECUTION_AMOUNT_USDC
-- cross_chain_liquidation:
-                            SOLANA_MOCK_ORACLE_ADDRESS, SOLANA_MOCK_LENDING_ADDRESS,
-                            SOLANA_LIQUIDATION_WATCHLIST
-- cross_chain_arbitrage / cross_chain_sweep:
-                            SOLANA_POOL_A_ADDRESS, SOLANA_POOL_B_ADDRESS, SOLANA_BRIDGE_ADDRESS,
-                            USER_WALLET_ADDRESS, SOLANA_USDC_METADATA_ADDRESS
-- sentiment:          SOLANA_POOL_A_ADDRESS, SOLANA_POOL_B_ADDRESS, USER_WALLET_ADDRESS
-- custom_utility:     only what the user explicitly provided
+REQUIRED PARAMETERS by strategy:
+  yield_sweeper:   USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS, SOLANA_NETWORK
+  arbitrage:       POOL_ADDRESS, TOKEN_MINT_ADDRESS, TRADE_AMOUNT_LAMPORTS,
+                   USER_WALLET_ADDRESS, MIN_PROFIT_LAMPORTS
+  liquidation:     PROGRAM_ID, USER_WALLET_ADDRESS, SOLANA_LIQUIDATION_WATCHLIST
+  sniping:         TOKEN_MINT_ADDRESS, USER_WALLET_ADDRESS, TRADE_AMOUNT_LAMPORTS
+  dca:             TOKEN_MINT_ADDRESS, USER_WALLET_ADDRESS, TRADE_AMOUNT_LAMPORTS
+  grid:            POOL_ADDRESS, TOKEN_MINT_ADDRESS, USER_WALLET_ADDRESS, TRADE_AMOUNT_LAMPORTS
+  whale_mirror:    USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS
+  sentiment:       USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS
+  custom_utility:  only what the user explicitly provided
 
 MCP VERIFICATION RULES:
-1. If any address ends in ".sol" or appears to be an SNS handle, set needs_mcp_query=true and build an MCP payload suitable for the Solana MCP shim (e.g., mcp_tool_name="move_view" with module="name_service", function="resolve" and args=["<name>.sol"]).
-2. If a pool address is provided, verify it by requesting pool info via the MCP shim (module="dex", function="get_pool_info").
-3. If token decimals are unknown, query via the MCP shim for token metadata/decimals.
+1. Wallet address provided → verify with: mcp_tool="get_balance", payload={network, address}
+2. Token mint provided → verify with: mcp_tool="get_account_info", payload={network, address: <mint>}
+3. .sol domain provided → resolve with: mcp_tool="resolve_sns", payload={network, name: "<domain>.sol"}
 4. Never invent MCP results — only set needs_mcp_query=true and let the orchestrator call MCP.
 
 FLOW:
-1. If collected_parameters is missing required keys → set missing_parameters, ask clarifying_question.
-2. If any value needs on-chain verification → set verification_step.needs_mcp_query=true.
-3. If MCP results have been injected into the conversation → incorporate them into
-    collected_parameters and clear the verification_step.
-4. If all parameters collected and verified → set is_ready_for_code_generation=true,
-    build enriched_prompt with all verified values inline.
+1. Missing required params → set missing_parameters + clarifying_question_for_user.
+2. Unverified address/mint → set verification_step.needs_mcp_query=true.
+3. MCP results injected → absorb into collected_parameters, clear verification_step.
+4. All params collected and verified → set is_ready_for_code_generation=true and build enriched_prompt.
 
-NETWORK: set SOLANA_NETWORK to "devnet" for development.
+NETWORK: always set SOLANA_NETWORK="devnet" unless user says mainnet.
 """
 
 
-# ─── MCP Client ───────────────────────────────────────────────────────────────
+# ─── Solana MCP client ────────────────────────────────────────────────────────
 
 class SolanaMCPClient:
     """Thin synchronous HTTP client for the local Solana MCP server."""
@@ -189,109 +155,92 @@ class SolanaMCPClient:
 
     def health(self) -> bool:
         try:
-            resp = httpx.get(f"{self.base_url}/health", timeout=3.0)
-            return resp.status_code == 200
+            r = httpx.get(f"{self.base_url}/health", timeout=3.0)
+            return r.status_code == 200
         except Exception:
             return False
 
-    def move_view(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def query(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
-        POST /solana/move_view on the local Solana MCP shim — synchronous, raises on HTTP error.
-        Returns the parsed JSON response dict.
+        Route a verification payload to the appropriate MCP endpoint.
+        The payload must contain a 'mcp_tool' key that maps to an endpoint.
+        Falls back to /solana/get_balance for unknown tools.
         """
-        url = f"{self.base_url}/solana/move_view"
+        tool = str(payload.get("mcp_tool", "get_balance"))
+        endpoint_map = {
+            "get_balance":       "/solana/get_balance",
+            "get_token_balance": "/solana/get_token_balance",
+            "get_account_info":  "/solana/get_account_info",
+            "resolve_sns":       "/solana/resolve_sns",
+        }
+        path = endpoint_map.get(tool, "/solana/get_balance")
+        url  = f"{self.base_url}{path}"
+
+        # Strip internal planner-only fields before forwarding
+        fwd = {k: v for k, v in payload.items() if k not in {"mcp_tool", "verification_purpose"}}
+
         try:
-            resp = httpx.post(url, json=payload, timeout=self.timeout)
-            resp.raise_for_status()
-            return resp.json()
+            r = httpx.post(url, json=fwd, timeout=self.timeout)
+            r.raise_for_status()
+            return r.json()
         except httpx.HTTPStatusError as exc:
             raise RuntimeError(
-                f"MCP move_view HTTP {exc.response.status_code}: {exc.response.text[:400]}"
+                f"MCP {tool} HTTP {exc.response.status_code}: {exc.response.text[:400]}"
             ) from exc
         except httpx.RequestError as exc:
-            raise RuntimeError(f"MCP move_view request failed: {exc}") from exc
+            raise RuntimeError(f"MCP {tool} request failed: {exc}") from exc
 
 
 # ─── PlannerAgent ─────────────────────────────────────────────────────────────
 
 class PlannerAgent:
-    """
-    Wraps the Planner LLM call and exposes a single plan() method that
-    returns a PlannerState instance.
-    """
-
     def __init__(self, llm_caller) -> None:
-        """
-        Args:
-            llm_caller: callable(system: str, user: str, max_tokens: int) -> str
-                        Typically MetaAgent._llm with operation kwarg stripped.
-        """
-        self._llm    = llm_caller
-        self.mcp     = SolanaMCPClient()
-
-    # ── Public API ─────────────────────────────────────────────────────────────
+        self._llm = llm_caller
+        self.mcp  = SolanaMCPClient()
 
     def plan(
         self,
         chat_history: List[Dict[str, str]],
         trace_id: Optional[str] = None,
     ) -> PlannerState:
-        """
-        Call the Planner LLM with the full chat history and parse the result
-        into a validated PlannerState.
-        """
-        # Serialise history for the user turn
-        history_text = self._format_history(chat_history)
-        if len(history_text) > PLANNER_HISTORY_MAX_CHARS:
-            logger.info(
-                "Planner history truncated: %s -> %s chars",
-                len(history_text),
-                PLANNER_HISTORY_MAX_CHARS,
-            )
-            history_text = history_text[-PLANNER_HISTORY_MAX_CHARS:]
+        text = self._format_history(chat_history)
+        if len(text) > PLANNER_HISTORY_MAX_CHARS:
+            text = text[-PLANNER_HISTORY_MAX_CHARS:]
+
         raw = self._llm(
             PLANNER_SYSTEM,
-            f"Analyse this conversation and return the JSON plan:\n\n{history_text}",
+            f"Analyse this conversation and return the JSON plan:\n\n{text}",
             max_tokens=1024,
             operation="planner",
             trace_id=trace_id,
         )
-        return self._parse_plan(raw)
-
-    # ── Helpers ────────────────────────────────────────────────────────────────
+        return self._parse(raw)
 
     @staticmethod
     def _format_history(history: List[Dict[str, str]]) -> str:
-        lines: List[str] = []
-        bounded_history = history[-PLANNER_HISTORY_MAX_TURNS:] if PLANNER_HISTORY_MAX_TURNS > 0 else history
-        for msg in bounded_history:
-            role    = str(msg.get("role", "unknown")).upper()
-            content = str(msg.get("content", ""))
-            lines.append(f"[{role}]: {content}")
-        return "\n".join(lines)
+        bounded = history[-PLANNER_HISTORY_MAX_TURNS:] if PLANNER_HISTORY_MAX_TURNS > 0 else history
+        return "\n".join(
+            f"[{msg.get('role', 'unknown').upper()}]: {msg.get('content', '')}"
+            for msg in bounded
+        )
 
     @staticmethod
-    def _parse_plan(raw: str) -> PlannerState:
-        # Strip markdown fences
+    def _parse(raw: str) -> PlannerState:
         raw = re.sub(r"```(?:json)?\s*|\s*```", "", raw).strip()
-        # Extract outermost JSON object
-        start = raw.find("{")
-        end   = raw.rfind("}")
-        if start != -1 and end != -1:
-            raw = raw[start : end + 1]
-        # Remove trailing commas
+        s, e = raw.find("{"), raw.rfind("}")
+        if s != -1 and e != -1:
+            raw = raw[s:e + 1]
         raw = re.sub(r",\s*([}\]])", r"\1", raw)
 
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
             try:
-                from json_repair import loads as repair_loads  # type: ignore
-                data = repair_loads(raw, return_dict=True)
+                from json_repair import loads as repair  # type: ignore
+                data = repair(raw, return_dict=True)
             except Exception:
                 data = {}
 
-        # Provide safe defaults
         data.setdefault("strategy_type", "unknown")
         data.setdefault("collected_parameters", {})
         data.setdefault("missing_parameters", [])
@@ -301,9 +250,11 @@ class PlannerAgent:
         data.setdefault("mcp_results_summary", None)
         data.setdefault("verification_step", None)
 
-        # Parse nested verification_step
         vs = data.get("verification_step")
-        if vs and isinstance(vs, dict):
+        if isinstance(vs, dict):
+            # Map old field names gracefully
+            if "mcp_tool_name" in vs and "mcp_tool" not in vs:
+                vs["mcp_tool"] = vs.pop("mcp_tool_name")
             data["verification_step"] = OnChainVerification(**vs)
         else:
             data["verification_step"] = None
@@ -311,66 +262,59 @@ class PlannerAgent:
         try:
             return PlannerState(**data)
         except Exception as exc:
-            logger.warning("PlannerState parse error: %s — returning safe fallback", exc)
+            logger.warning("PlannerState parse error: %s", exc)
             return PlannerState(
                 strategy_type="unknown",
-                collected_parameters={},
-                missing_parameters=[],
                 is_ready_for_code_generation=False,
                 clarifying_question_for_user=(
-                    "Could you give me more details about what your bot should do? "
-                    "For example, which pools or tokens should it use?"
+                    "Could you give me more details? "
+                    "Which tokens, pools, or programs should the bot interact with?"
                 ),
             )
 
 
-# ─── MCP result extraction helpers ───────────────────────────────────────────
+# ─── MCP result helpers ───────────────────────────────────────────────────────
 
 def extract_resolved_address(mcp_response: Dict[str, Any]) -> Optional[str]:
-    """Pull a resolved address string out of a move_view MCP response."""
-    result = mcp_response.get("result", {})
+    """Extract a Solana base58 pubkey from any MCP response shape."""
+    BASE58 = r"^[1-9A-HJ-NP-Za-km-z]{32,44}$"
+
+    # Flat fields
+    for field in ("address", "owner", "resolved", "resolved_address", "pubkey"):
+        v = mcp_response.get(field)
+        if isinstance(v, str) and re.match(BASE58, v.strip()):
+            return v.strip()
+
+    # Nested result.data
+    result = mcp_response.get("result")
     if isinstance(result, dict):
-        # Standard content array shape
+        data = result.get("data")
+        if isinstance(data, str) and re.match(BASE58, data.strip()):
+            return data.strip()
         content = result.get("content", [])
         if isinstance(content, list):
             for item in content:
                 text = item.get("text", "") if isinstance(item, dict) else ""
                 try:
                     inner = json.loads(text)
-                    for field in ("address", "resolved_address", "value"):
-                        if isinstance(inner, dict) and inner.get(field):
-                            return str(inner[field])
-                except (json.JSONDecodeError, AttributeError):
-                    text = str(text).strip()
-                    # Heuristic: return base58-looking strings as Solana addresses
-                    if re.match(r'^[1-9A-HJ-NP-Za-km-z]{32,64}$', text):
-                        return text
-        # Direct data field
-        data = result.get("data")
-        if isinstance(data, str):
-            trimmed = data.strip()
-            if re.match(r'^[1-9A-HJ-NP-Za-km-z]{32,64}$', trimmed):
-                return trimmed
+                    for f in ("address", "owner", "resolved"):
+                        if isinstance(inner, dict) and re.match(BASE58, str(inner.get(f, ""))):
+                            return str(inner[f])
+                except Exception:
+                    if re.match(BASE58, str(text).strip()):
+                        return str(text).strip()
+
     return None
 
 
-def extract_pool_info(mcp_response: Dict[str, Any]) -> Optional[Dict[str, str]]:
-    """Extract coin_a_amount / coin_b_amount from get_pool_info response."""
-    result = mcp_response.get("result", {})
-    if not isinstance(result, dict):
-        return None
-    data_raw = result.get("data", "")
-    if isinstance(data_raw, str):
-        try:
-            data = json.loads(data_raw)
-            if isinstance(data, dict):
-                return {
-                    "coin_a_amount": str(data.get("coin_a_amount", "")),
-                    "coin_b_amount": str(data.get("coin_b_amount", "")),
-                }
-        except json.JSONDecodeError:
-            pass
-    return None
+def extract_balance_info(mcp_response: Dict[str, Any]) -> Optional[Dict[str, str]]:
+    """Extract balance fields from a get_balance or get_token_balance response."""
+    out: Dict[str, str] = {}
+    for field in ("lamports", "balance", "amount"):
+        v = mcp_response.get(field)
+        if v is not None:
+            out[field] = str(v)
+    return out if out else None
 
 
 def summarise_mcp_result(
@@ -378,21 +322,17 @@ def summarise_mcp_result(
     payload: Dict[str, Any],
     response: Dict[str, Any],
 ) -> str:
-    """
-    Build a concise human-readable summary to inject back into the chat history
-    so the Planner LLM can use the verified data on the next loop iteration.
-    """
-    lines = [f"MCP Verification Result [{purpose}]:"]
+    lines = [f"MCP Verification [{purpose}]:"]
     lines.append(f"  Query: {json.dumps(payload, separators=(',', ':'))}")
 
-    resolved = extract_resolved_address(response)
-    pool_info = extract_pool_info(response)
+    addr = extract_resolved_address(response)
+    bal  = extract_balance_info(response)
 
-    if resolved:
-        lines.append(f"  Resolved address: {resolved}")
-    elif pool_info:
-        lines.append(f"  Pool coin_a_amount={pool_info['coin_a_amount']} coin_b_amount={pool_info['coin_b_amount']}")
+    if addr:
+        lines.append(f"  Resolved address: {addr}")
+    elif bal:
+        lines.append(f"  Balance info: {json.dumps(bal)}")
     else:
-        lines.append(f"  Raw response: {json.dumps(response, separators=(',', ':'))[:500]}")
+        lines.append(f"  Raw: {json.dumps(response, separators=(',', ':'))[:500]}")
 
     return "\n".join(lines)

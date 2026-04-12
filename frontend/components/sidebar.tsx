@@ -78,7 +78,7 @@ export function Sidebar() {
               <Bot className="text-primary-foreground" size={20} />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-sidebar-foreground">Agentia</h1>
+              <h1 className="font-bold text-lg text-sidebar-foreground">Synth</h1>
               <p className="text-xs text-muted-foreground">AI Trading</p>
             </div>
           </Link>

@@ -1,7 +1,7 @@
 /**
  * worker/src/index.ts
  *
- * Agentia Worker — entry point.
+ * Synth Worker — entry point.
  *
  * Starts the Express HTTP server (server.ts) and connects to the database.
  * All agent lifecycle logic lives in engine.ts.
@@ -27,7 +27,7 @@ const PORT = parseInt(process.env.PORT ?? "4001", 10);
 // ── Startup ───────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log("🚀 Agentia Worker starting…");
+  console.log("🚀 Synth Worker starting…");
   console.log(`   Port : ${PORT}`);
   console.log(`   Env  : ${process.env.NODE_ENV ?? "development"}`);
 

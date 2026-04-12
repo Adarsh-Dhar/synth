@@ -5,7 +5,7 @@ import Providers from '@/lib/providers'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Agentia - AI Trading Platform',
+  title: 'Synth - AI Trading Platform',
   description: 'Autonomous AI trading platform powered by Solana blockchain with lightning-fast 100ms block times',
   generator: 'v0.app',
   icons: {
