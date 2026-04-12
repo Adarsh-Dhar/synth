@@ -22,9 +22,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage, UserMessage
-from azure.core.credentials import AzureKeyCredential
+import httpx
 
 from planner import (
     PlannerAgent,
@@ -326,19 +324,30 @@ ENV VARS your bot should read:
 
 class MetaAgent:
     def __init__(self):
-        token = os.environ.get("GITHUB_TOKEN")
+        # Use GITHUB_TOKEN (GitHub PAT) primarily, fall back to AZURE_AI_KEY.
+        token = os.environ.get("GITHUB_TOKEN") or os.environ.get("AZURE_AI_KEY")
         if not token:
-            raise ValueError("GITHUB_TOKEN not set in .env")
+            raise ValueError("No AI model credential found. Set GITHUB_TOKEN or AZURE_AI_KEY in agents/.env")
 
-        self.client = ChatCompletionsClient(
-            endpoint=os.environ.get("GITHUB_MODEL_ENDPOINT", "https://models.inference.ai.azure.com"),
-            credential=AzureKeyCredential(token),
-        )
-        self.model         = os.environ.get("GITHUB_MODEL_NAME", "gpt-4o")
+        endpoint = os.environ.get("GITHUB_MODEL_ENDPOINT", "https://models.inference.ai.azure.com").rstrip("/")
+
+        # Warn about a common misconfiguration: GitHub PAT against Azure endpoint.
+        if isinstance(token, str) and token.startswith("github_pat_") and "azure" in endpoint:
+            _log(
+                "WARN",
+                "GITHUB_TOKEN looks like a GitHub PAT but GITHUB_MODEL_ENDPOINT points to an Azure endpoint. "
+                "This will cause 401/Bad credentials. Set GITHUB_MODEL_ENDPOINT to the GitHub models host or use AZURE_AI_KEY."
+            )
+
+        self.model_endpoint = endpoint
+        self.model_token = token
+        self.model = os.environ.get("GITHUB_MODEL_NAME", "gpt-4o")
         self.planner_model = os.environ.get("PLANNER_MODEL_NAME", "gpt-4o-mini")
-        self.max_tokens    = int(os.environ.get("GENERATION_MAX_TOKENS", "3000"))
-        self.mcp_client    = SolanaMCPClient()
-        self.planner       = PlannerAgent(llm_caller=self._llm)
+        self.max_tokens = int(os.environ.get("GENERATION_MAX_TOKENS", "3000"))
+        self.mcp_client = SolanaMCPClient()
+        self.planner = PlannerAgent(llm_caller=self._llm)
+        # Reuse an httpx client for LLM calls
+        self._http_client = httpx.Client(timeout=LLM_TIMEOUT_SECONDS)
 
     # ── LLM wrapper ────────────────────────────────────────────────────────────
 
@@ -363,12 +372,27 @@ class MetaAgent:
             ))
 
         def _complete():
-            return self.client.complete(
-                messages=[SystemMessage(content=system), UserMessage(content=user)],
-                model=model_name,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            # Build request payload compatible with the inference endpoint
+            url = self.model_endpoint
+            if not url.endswith("/chat/completions"):
+                url = url + "/chat/completions"
+
+            payload = {
+                "model": model_name,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.model_token}",
+            }
+            resp = self._http_client.post(url, json=payload, headers=headers, timeout=LLM_TIMEOUT_SECONDS)
+            resp.raise_for_status()
+            return resp.json()
 
         max_attempts = max(1, LLM_MAX_RETRIES + 1)
         for attempt in range(1, max_attempts + 1):
@@ -396,7 +420,22 @@ class MetaAgent:
                     continue
                 raise
 
-        content = response.choices[0].message.content
+        # Normalize response shape from different providers (Azure/GitHub/OpenAI-like)
+        content = None
+        if isinstance(response, dict):
+            choices = response.get("choices") or []
+            if isinstance(choices, list) and len(choices) > 0:
+                first = choices[0]
+                if isinstance(first, dict):
+                    # Try common shapes: { message: { content: "..." } }
+                    msg = first.get("message")
+                    if isinstance(msg, dict) and isinstance(msg.get("content"), str):
+                        content = msg.get("content")
+                    # Fallback: choices[0].text
+                    if content is None and isinstance(first.get("text"), str):
+                        content = first.get("text")
+        if content is None:
+            content = str(response)
         elapsed = round(time.monotonic() - started_at, 2)
         _log("INFO", f"{operation}: done in {elapsed}s", trace_id)
         return content.strip() if isinstance(content, str) else str(content)

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { sanitizeIntentMcpLists } from "@/lib/intent/mcp-sanitizer";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_MODEL_ENDPOINT = process.env.GITHUB_MODEL_ENDPOINT || "https://models.inference.ai.azure.com";
+const MODEL_URL = GITHUB_MODEL_ENDPOINT.replace(/\/+$/, "") + "/chat/completions";
 
 // ─── Rich Expander System Prompt ─────────────────────────────────────────────
 // This prompt produces a deeply detailed technical spec so the downstream
@@ -190,7 +192,7 @@ async function callGitHubModels(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch("https://models.inference.ai.azure.com/chat/completions", {
+    const res = await fetch(MODEL_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -219,7 +221,36 @@ async function callGitHubModels(
     }
 
     const data = await res.json();
-    return data.choices[0].message.content.trim();
+
+    // Normalize multiple possible response shapes from model providers.
+    const extract = (obj: any): string => {
+      try {
+        if (!obj) return "";
+        // OpenAI/GitHub-like: { choices: [ { message: { content: "..." } } ] }
+        if (obj.choices && Array.isArray(obj.choices) && obj.choices.length > 0) {
+          const first = obj.choices[0];
+          if (first?.message && typeof first.message.content === "string") return first.message.content.trim();
+          if (typeof first.text === "string") return first.text.trim();
+          if (first?.delta && typeof first.delta.content === "string") return first.delta.content.trim();
+        }
+        // Some providers use an "output" shape: { output: [ { content: [ { text: "..." } ] } ] }
+        if (Array.isArray(obj.output) && obj.output.length > 0) {
+          const out = obj.output[0];
+          if (out && Array.isArray(out.content) && out.content.length > 0 && typeof out.content[0].text === "string") {
+            return out.content[0].text.trim();
+          }
+          if (out && typeof out.text === "string") return out.text.trim();
+        }
+        // Fallbacks
+        if (obj.message && typeof obj.message === "string") return obj.message.trim();
+        if (typeof obj === "string") return obj.trim();
+        return JSON.stringify(obj);
+      } catch (e) {
+        return String(obj ?? "");
+      }
+    };
+
+    return extract(data);
   } finally {
     clearTimeout(timer);
   }
