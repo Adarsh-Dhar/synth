@@ -131,16 +131,7 @@ export const SUPPORTED_CHAINS = {
 } as const;
 
 export type ChainKey = keyof typeof SUPPORTED_CHAINS;
-
-  USDC: {
-    label:    "USDC",
-    address:  {
-      "solana-devnet": "So11111111111111111111111111111111111111112", // Example USDC mint for Solana devnet
-    },
-    decimals: 6,
-  },
-};
-
+export const SUPPORTED_TOKENS = {
   USDC: {
     label: "USDC",
     address: {
@@ -148,14 +139,18 @@ export type ChainKey = keyof typeof SUPPORTED_CHAINS;
     },
     decimals: 6,
   },
-};
+} as const;
 
+export type TokenKey = keyof typeof SUPPORTED_TOKENS;
+
+export const SUPPORTED_DEXES = {
   solana: { label: "Solana", description: "Solana-native execution" },
 } as const;
 
 export type DexKey = keyof typeof SUPPORTED_DEXES;
 
-  none:    { label: "None", description: "No external risk providers" },
+export const SUPPORTED_SECURITY = {
+  none: { label: "None", description: "No external risk providers" },
 } as const;
 
 export type SecurityKey = keyof typeof SUPPORTED_SECURITY;

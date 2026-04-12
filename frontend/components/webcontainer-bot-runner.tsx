@@ -121,6 +121,7 @@ export function WebContainerBotRunner() {
   const { phase, setPhase, status, stopProcess, bootAndRun } = sandbox;
 
   const userWalletAddress = publicKey ? publicKey.toBase58() : "";
+  const autosignEnabled = Boolean(userWalletAddress);
   const isRunning = phase === "running";
 
   // ── On mount: load files + env ────────────────────────────────────────────

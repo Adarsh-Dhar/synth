@@ -125,8 +125,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        // Ensure React is in scope for custom components
-        React,
+        // Custom component overrides
         Root: function Root({ className, rootRef, ...props }: React.ComponentProps<'div'> & { rootRef?: React.Ref<HTMLDivElement> }) {
           return (
             <div

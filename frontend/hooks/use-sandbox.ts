@@ -48,14 +48,12 @@ export function useSandbox({ generatedFiles, envConfig, termRef }: {
       }
 
       const envContent = [
-        `DRY_RUN=${envConfig.DRY_RUN}`,
-        `SOLANA_RPC_URL=${envConfig.SOLANA_RPC_URL ?? envConfig.SOLANA_RPC_URL}`,
-        `SOLANA_RPC_URL=${envConfig.SOLANA_RPC_URL ?? envConfig.SOLANA_RPC_URL}`,
+        `DRY_RUN=${envConfig.DRY_RUN ?? "true"}`,
+        `SOLANA_RPC_URL=${envConfig.SOLANA_RPC_URL ?? ""}`,
         `SOLANA_KEY=${resolvedKey}`,
-        `SOLANA_KEY=${resolvedKey}`,
-        `CONTRACT_ADDRESS=${envConfig.CONTRACT_ADDRESS}`,
-        `MAX_LOAN_USD=${envConfig.MAX_LOAN_USD}`,
-        `MIN_PROFIT_USD=${envConfig.MIN_PROFIT_USD}`,
+        `CONTRACT_ADDRESS=${envConfig.CONTRACT_ADDRESS ?? ""}`,
+        `MAX_LOAN_USD=${envConfig.MAX_LOAN_USD ?? ""}`,
+        `MIN_PROFIT_USD=${envConfig.MIN_PROFIT_USD ?? ""}`,
         `POLL_MS=15000`,
       ].join("\n");
       
@@ -115,13 +113,11 @@ export function useSandbox({ generatedFiles, envConfig, termRef }: {
       }
       
       const processEnv = {
-        SOLANA_RPC_URL:   envConfig.SOLANA_RPC_URL ?? envConfig.SOLANA_RPC_URL,
-        SOLANA_RPC_URL:   envConfig.SOLANA_RPC_URL ?? envConfig.SOLANA_RPC_URL,
-        SOLANA_KEY:       resolvedKey,
+        SOLANA_RPC_URL:   envConfig.SOLANA_RPC_URL ?? "",
         SOLANA_KEY:       resolvedKey,
         CONTRACT_ADDRESS: envConfig.CONTRACT_ADDRESS || "NOT_DEPLOYED_YET",
-        MAX_LOAN_USD:     envConfig.MAX_LOAN_USD,
-        MIN_PROFIT_USD:   envConfig.MIN_PROFIT_USD,
+        MAX_LOAN_USD:     envConfig.MAX_LOAN_USD ?? "",
+        MIN_PROFIT_USD:   envConfig.MIN_PROFIT_USD ?? "",
         ...TOKEN_ADDRESSES,
       };
       

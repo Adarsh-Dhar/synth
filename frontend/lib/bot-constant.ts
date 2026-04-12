@@ -3,7 +3,8 @@
  *
  * This file uses only SOLANA_* environment variables and Solana-compatible default fields.
  */
-
+ 
+export interface BotIntent {
   chain?: "solana";
   network?: string;
   execution_model?: "polling" | "agentic";

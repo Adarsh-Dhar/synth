@@ -15,8 +15,6 @@ export const ACTION_LOG_TYPE_MAP: Record<string, string> = {
 export const DEFAULT_ENV_CONFIG: EnvConfig = {
   SOLANA_RPC_URL:  "https://api.devnet.solana.com",
   SOLANA_KEY:      "",
-  SOLANA_RPC_URL:  "",
-  SOLANA_KEY:      "",
   CONTRACT_ADDRESS: "",
   MAX_LOAN_USD:    "10000",
   MIN_PROFIT_USD:  "50",

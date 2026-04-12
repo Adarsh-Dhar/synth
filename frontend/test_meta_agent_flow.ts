@@ -32,11 +32,11 @@ async function fetchJsonWithTimeout(
     const res = await axios({
       url,
       method: (init.method || 'GET') as any,
-      headers: init.headers,
-      data: init.body,
+      headers: init.headers as any,
+      data: init.body as any,
       timeout: timeoutMs,
       validateStatus: () => true // Accept all status codes
-    });
+    } as any);
     const text = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
     let data: Json = {};
     try {

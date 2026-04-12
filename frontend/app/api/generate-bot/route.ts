@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { encryptEnvConfig } from "@/lib/crypto-env";
-import { assembleBotFiles } from "../get-bot-code/bot-files";
+import { assembleBotFiles, assembleSolanaBotFiles } from "../get-bot-code/bot-files";
 import { sanitizeIntentMcpLists, shouldUseLegacyDeterministicFallback } from "@/lib/intent/mcp-sanitizer";
 import type { Prisma } from "@/lib/generated/prisma/client.ts";
 import fs from "node:fs";
@@ -51,20 +51,32 @@ function buildSafeYieldSweeperIndexTs(): string {
   return [
     'import "dotenv/config";',
     'import { callMcpTool, getFaBalance } from "./mcp_bridge.js";',
-    'import { resolveAddress } from "./ons_resolver.js";',
     '',
     'const POLL_MS = Number(process.env.POLL_MS ?? 15000);',
-    'const THRESHOLD = BigInt(process.env.SWEEP_THRESHOLD_UUSDC ?? 1000000n);',
-    'const USDC_COIN_TYPE = String(process.env.SOLANA_USDC_METADATA_ADDRESS ?? process.env.SOLANA_USDC_METADATA_ADDRESS ?? process.env.SOLANA_USDC_METADATA_ADDRESS ?? process.env.SOLANA_USDC_METADATA_ADDRESS ?? "0x1::coin::uinit").trim();',
+    'const SWEEP_THRESHOLD = BigInt(String(process.env.SWEEP_THRESHOLD_UUSDC ?? "1000000"));',
     '',
     'function log(level: string, message: string): void {',
     '  console.log("[" + new Date().toISOString() + "] [" + level + "] " + message);',
     '}',
     '',
-    'function toBigInt(value: unknown): bigint | null {',
-    '  if (typeof value === "bigint") return value;',
-    '  if (typeof value === "number" && Number.isFinite(value)) return BigInt(Math.trunc(value));',
-  // Removed all Solana bot file builders and compatibility logic. Solana-only implementation.
+    'async function sweepCycle(): Promise<void> {',
+    '  try {',
+    '    const wallet = String(process.env.USER_WALLET_ADDRESS ?? "").trim();',
+    '    if (!wallet) { log("WARN", "USER_WALLET_ADDRESS not set"); return; }',
+    '    const metadata = String(process.env.SOLANA_USDC_METADATA_ADDRESS ?? "").trim();',
+    '    const bal = await getFaBalance(String(process.env.SOLANA_NETWORK ?? "devnet"), wallet, metadata);',
+    '    log("INFO", "Balance (raw): " + String(bal));',
+    '    // placeholder: implement sweep logic as needed',
+    '  } catch (err) {',
+    '    const msg = err instanceof Error ? err.message : String(err);',
+    '    log("ERROR", msg);',
+    '  }',
+    '}',
+    '',
+    'setInterval(() => { void sweepCycle(); }, POLL_MS);',
+    ''
+  ].join("\n");
+}
 
 function buildSafeSpreadScannerIndexTs(): string {
   return [
@@ -1084,7 +1096,7 @@ function patchSentimentBotFiles(files: GeneratedFile[], intent: Record<string, u
         const raw = typeof file.content === "string" ? file.content : JSON.stringify(file.content ?? {}, null, 2);
         const parsed = JSON.parse(raw) as { name?: string; description?: string; dependencies?: Record<string, string>; scripts?: Record<string, string> };
 
-        const baseDeps = { ...(parsed.dependencies ?? {}), dotenv: "^16.4.0" };
+        const baseDeps: Record<string, string> = { ...(parsed.dependencies ?? {}), dotenv: "^16.4.0" };
         if (chain === "solana") baseDeps["@solana/web3.js"] = "^1.96.0"; else baseDeps["axios"] = "^1.7.4";
 
         const scripts = { ...(parsed.scripts ?? {}), start: parsed.scripts?.start ?? "tsx src/index.ts", dev: parsed.scripts?.dev ?? "tsx src/index.ts" };
@@ -1107,11 +1119,15 @@ function patchSentimentBotFiles(files: GeneratedFile[], intent: Record<string, u
     return [...ensuredMcpBridge, { filepath: "package.json", content: fallbackPkg }];
   }
 
-  const fallbackSentimentPackage = JSON.stringify({ name: "solana-sentiment-bot", version: "1.0.0", type: "module", description: "Solana sentiment bot using solana MCP", scripts: { start: "tsx src/index.ts", dev: "tsx src/index.ts" }, dependencies: { axios: "^1.7.4", dotenv: "^16.4.0" }, devDependencies: { typescript: "^5.0.0", tsx: "^4.7.0" } }, null, 2);
-        typescript: "^5.4.0",
-        "@types/node": "^20.0.0",
-        tsx: "^4.7.0",
-      },
+  const fallbackSentimentPackage = JSON.stringify(
+    {
+      name: "solana-sentiment-bot",
+      version: "1.0.0",
+      type: "module",
+      description: "Solana sentiment bot using solana MCP",
+      scripts: { start: "tsx src/index.ts", dev: "tsx src/index.ts" },
+      dependencies: { axios: "^1.7.4", dotenv: "^16.4.0" },
+      devDependencies: { typescript: "^5.4.0", "@types/node": "^20.0.0", tsx: "^4.7.0" },
     },
     null,
     2,

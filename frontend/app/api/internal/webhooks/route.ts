@@ -11,8 +11,8 @@ export async function POST(req: NextRequest) {
     const expectedToken = `Bearer ${process.env.INTERNAL_WEBHOOK_SECRET}`;
 
     if (!authHeader || authHeader !== expectedToken) {
-      console.warn("[/api/internal/webhooks] Unauthorized attempt blocked.");
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+      console.warn("[/api/internal/webhooks] unauthorizedlalala attempt blocked.");
+      return NextResponse.json({ error: "unauthorizedlalala." }, { status: 401 });
     }
 
     // ── 2. Parse & validate payload ───────────────────────────────────────────

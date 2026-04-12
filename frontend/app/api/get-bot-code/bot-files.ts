@@ -6,14 +6,6 @@ export interface BotFile {
 export function assembleBotFiles(): BotFile[] {
   return assembleSolanaBotFiles();
 }
-
-export function assembleSolanaBotFiles(): BotFile[] {
-  // Legacy entrypoint preserved for compatibility, but deterministic fallbacks
-  // should now emit Solana-first templates. Reuse the Solana assembler so
-  // deterministic fallback no longer produces Solana-specific code.
-  return assembleSolanaBotFiles();
-}
-
 export function assembleSolanaBotFiles(): BotFile[] {
   return [
     { filepath: "package.json", content: SOLANA_PACKAGE_JSON },
@@ -45,7 +37,13 @@ const SOLANA_PACKAGE_JSON = JSON.stringify(
   },
   null,
   2,
+);
 
+const SOLANA_TSCONFIG = JSON.stringify(
+  {
+    compilerOptions: {
+      target: "es2021",
+      module: "esnext",
       moduleResolution: "bundler",
       strict: true,
       esModuleInterop: true,
@@ -92,18 +90,18 @@ const KEYPAIR_PATH = process.env.KEYPAIR_PATH ?? "";
 const POLL_MS = (Number(process.env.POLL_INTERVAL ?? "15") || 15) * 1000;
 const SIMULATION = String(process.env.SIMULATION_MODE ?? "true").toLowerCase() !== "false";
 
-function log(level: string, msg: string) { console.log(`[${new Date().toISOString()}] [${level}] ${msg}`); }
+function log(level: string, msg: string) { console.log("[" + new Date().toISOString() + "] [" + level + "] " + msg); }
 
 async function runCycle() {
   if (!WALLET) throw new Error("USER_WALLET_ADDRESS is required in .env");
   const balance = await getSolBalance(RPC, WALLET);
-  log("INFO", `Balance (${WALLET}) = ${balance} SOL`);
+  log("INFO", "Balance (" + WALLET + ") = " + balance + " SOL");
 
   const threshold = 0.1; // default threshold
   if (balance <= threshold) return;
 
   if (SIMULATION) {
-    log("INFO", `SIMULATION: would transfer funds from ${WALLET} to configured recipient.`);
+    log("INFO", "SIMULATION: would transfer funds from " + WALLET + " to configured recipient.");
     return;
   }
 
@@ -133,6 +131,7 @@ async function runCycle() {
   const raw = tx.serialize();
   const sig = await connection.sendRawTransaction(raw);
   await connection.confirmTransaction(sig, "confirmed");
-  log("INFO", `Transfer sent: ${sig}`);
+  log("INFO", "Transfer sent: " + sig);
+}
 `;
 

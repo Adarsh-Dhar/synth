@@ -158,11 +158,11 @@ export default function BotConfiguratorPage() {
                     </div>
                   )}
                   {msg.card?.type === 'success_card' && (
-                    <SuccessCard agentId={msg.card.agentId} botName={msg.card.botName} />
+                    <SuccessCard agentId={(msg.card as any)?.agentId ?? ""} botName={(msg.card as any)?.botName ?? ""} />
                   )}
                   {msg.card?.type === 'dynamic_credentials_form' && (
                     <DynamicCredentialsCard
-                      fields={msg.card.fields}
+                      fields={msg.card.fields ?? []}
                       onSubmit={submitDynamicKeys}
                       disabled={step !== 'ask_keys'}
                       defaultValues={envDefaults}

@@ -23,7 +23,7 @@ function parseJsonText(text: string): Json {
 }
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs: number): Promise<{ status: number; text: string; data: Json }> {
-  const res = await axios({ url, method: (init.method || "GET") as any, headers: init.headers, data: init.body, timeout: timeoutMs, validateStatus: () => true });
+  const res = await axios({ url, method: (init.method || "GET") as any, headers: init.headers as any, data: init.body as any, timeout: timeoutMs, validateStatus: () => true } as any);
   const text = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
   return { status: res.status, text, data: parseJsonText(text) };
 }
