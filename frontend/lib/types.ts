@@ -63,7 +63,7 @@ export type ConvState =
   | 'deposit'
   | 'done'
 
-  // Shared types for WebContainerRunner and related hooks/components
+  // Shared generated-bot file and runtime configuration types.
 
 export interface GeneratedFile {
   filepath: string;

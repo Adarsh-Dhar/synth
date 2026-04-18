@@ -1,7 +1,7 @@
 /**
  * frontend/app/api/get-bot-code/route.ts
  *
- * Serves generated bot files (Solana by default) so the WebContainer can install deps and run them.
+ * Serves generated bot files (Solana by default) so backend workers can install deps and run them.
  *
  * All file content is inlined here so the route works without filesystem
  * access to the /agents directory in production.
