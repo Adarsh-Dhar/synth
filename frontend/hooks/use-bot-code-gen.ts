@@ -10,9 +10,13 @@
 
 import { useState } from "react";
 import type { MutableRefObject } from "react";
-import type { Terminal } from "@xterm/xterm";
 import type { BotEnvConfig, BotIntent } from "@/lib/bot-constant";
 import { DEFAULT_BOT_ENV_CONFIG } from "@/lib/bot-constant";
+
+type TerminalLike = {
+  clear: () => void;
+  writeln: (line: string) => void;
+};
 
 export interface BotFile {
   filepath: string;
@@ -111,7 +115,7 @@ function extractIntent(config: Record<string, unknown> | null | undefined): BotI
   return null;
 }
 
-export function useBotCodeGen(termRef: MutableRefObject<Terminal | null>) {
+export function useBotCodeGen(termRef: MutableRefObject<TerminalLike | null>) {
   const [generatedFiles, setGeneratedFiles] = useState<BotFile[]>([]);
   const [selectedFile,   setSelectedFile]   = useState<string | null>(null);
   const [agentId,        setAgentId]        = useState<string | null>(null);

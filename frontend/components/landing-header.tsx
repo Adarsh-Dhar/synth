@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
@@ -10,6 +10,11 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 export function LandingHeader() {
   const router = useRouter()
   const { publicKey } = useWallet()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const connected = !!publicKey
   const activeAddress = publicKey ? publicKey.toBase58() : undefined
@@ -51,7 +56,13 @@ export function LandingHeader() {
           )}
 
           {!connected ? (
-            <WalletMultiButton className="bg-primary hover:bg-primary/90 text-primary-foreground" />
+            mounted ? (
+              <WalletMultiButton className="bg-primary hover:bg-primary/90 text-primary-foreground" />
+            ) : (
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
+                Connect Wallet
+              </Button>
+            )
           ) : (
             <Button
               onClick={() => router.push('/dashboard')}

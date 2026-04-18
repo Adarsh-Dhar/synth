@@ -42,7 +42,6 @@ export type TradeLogMinAggregateOutputType = {
   tokenOut: string | null
   amountIn: string | null
   amountOut: string | null
-  profitEth: string | null
   profitUsd: string | null
   executionTimeMs: number | null
   createdAt: Date | null
@@ -56,7 +55,6 @@ export type TradeLogMaxAggregateOutputType = {
   tokenOut: string | null
   amountIn: string | null
   amountOut: string | null
-  profitEth: string | null
   profitUsd: string | null
   executionTimeMs: number | null
   createdAt: Date | null
@@ -70,7 +68,6 @@ export type TradeLogCountAggregateOutputType = {
   tokenOut: number
   amountIn: number
   amountOut: number
-  profitEth: number
   profitUsd: number
   executionTimeMs: number
   createdAt: number
@@ -94,7 +91,6 @@ export type TradeLogMinAggregateInputType = {
   tokenOut?: true
   amountIn?: true
   amountOut?: true
-  profitEth?: true
   profitUsd?: true
   executionTimeMs?: true
   createdAt?: true
@@ -108,7 +104,6 @@ export type TradeLogMaxAggregateInputType = {
   tokenOut?: true
   amountIn?: true
   amountOut?: true
-  profitEth?: true
   profitUsd?: true
   executionTimeMs?: true
   createdAt?: true
@@ -122,7 +117,6 @@ export type TradeLogCountAggregateInputType = {
   tokenOut?: true
   amountIn?: true
   amountOut?: true
-  profitEth?: true
   profitUsd?: true
   executionTimeMs?: true
   createdAt?: true
@@ -223,7 +217,6 @@ export type TradeLogGroupByOutputType = {
   tokenOut: string
   amountIn: string
   amountOut: string
-  profitEth: string
   profitUsd: string
   executionTimeMs: number
   createdAt: Date
@@ -260,7 +253,6 @@ export type TradeLogWhereInput = {
   tokenOut?: Prisma.StringFilter<"TradeLog"> | string
   amountIn?: Prisma.StringFilter<"TradeLog"> | string
   amountOut?: Prisma.StringFilter<"TradeLog"> | string
-  profitEth?: Prisma.StringFilter<"TradeLog"> | string
   profitUsd?: Prisma.StringFilter<"TradeLog"> | string
   executionTimeMs?: Prisma.IntFilter<"TradeLog"> | number
   createdAt?: Prisma.DateTimeFilter<"TradeLog"> | Date | string
@@ -275,7 +267,6 @@ export type TradeLogOrderByWithRelationInput = {
   tokenOut?: Prisma.SortOrder
   amountIn?: Prisma.SortOrder
   amountOut?: Prisma.SortOrder
-  profitEth?: Prisma.SortOrder
   profitUsd?: Prisma.SortOrder
   executionTimeMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -293,7 +284,6 @@ export type TradeLogWhereUniqueInput = Prisma.AtLeast<{
   tokenOut?: Prisma.StringFilter<"TradeLog"> | string
   amountIn?: Prisma.StringFilter<"TradeLog"> | string
   amountOut?: Prisma.StringFilter<"TradeLog"> | string
-  profitEth?: Prisma.StringFilter<"TradeLog"> | string
   profitUsd?: Prisma.StringFilter<"TradeLog"> | string
   executionTimeMs?: Prisma.IntFilter<"TradeLog"> | number
   createdAt?: Prisma.DateTimeFilter<"TradeLog"> | Date | string
@@ -308,7 +298,6 @@ export type TradeLogOrderByWithAggregationInput = {
   tokenOut?: Prisma.SortOrder
   amountIn?: Prisma.SortOrder
   amountOut?: Prisma.SortOrder
-  profitEth?: Prisma.SortOrder
   profitUsd?: Prisma.SortOrder
   executionTimeMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -330,7 +319,6 @@ export type TradeLogScalarWhereWithAggregatesInput = {
   tokenOut?: Prisma.StringWithAggregatesFilter<"TradeLog"> | string
   amountIn?: Prisma.StringWithAggregatesFilter<"TradeLog"> | string
   amountOut?: Prisma.StringWithAggregatesFilter<"TradeLog"> | string
-  profitEth?: Prisma.StringWithAggregatesFilter<"TradeLog"> | string
   profitUsd?: Prisma.StringWithAggregatesFilter<"TradeLog"> | string
   executionTimeMs?: Prisma.IntWithAggregatesFilter<"TradeLog"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TradeLog"> | Date | string
@@ -343,7 +331,6 @@ export type TradeLogCreateInput = {
   tokenOut: string
   amountIn: string
   amountOut: string
-  profitEth: string
   profitUsd: string
   executionTimeMs: number
   createdAt?: Date | string
@@ -358,7 +345,6 @@ export type TradeLogUncheckedCreateInput = {
   tokenOut: string
   amountIn: string
   amountOut: string
-  profitEth: string
   profitUsd: string
   executionTimeMs: number
   createdAt?: Date | string
@@ -371,7 +357,6 @@ export type TradeLogUpdateInput = {
   tokenOut?: Prisma.StringFieldUpdateOperationsInput | string
   amountIn?: Prisma.StringFieldUpdateOperationsInput | string
   amountOut?: Prisma.StringFieldUpdateOperationsInput | string
-  profitEth?: Prisma.StringFieldUpdateOperationsInput | string
   profitUsd?: Prisma.StringFieldUpdateOperationsInput | string
   executionTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -386,7 +371,6 @@ export type TradeLogUncheckedUpdateInput = {
   tokenOut?: Prisma.StringFieldUpdateOperationsInput | string
   amountIn?: Prisma.StringFieldUpdateOperationsInput | string
   amountOut?: Prisma.StringFieldUpdateOperationsInput | string
-  profitEth?: Prisma.StringFieldUpdateOperationsInput | string
   profitUsd?: Prisma.StringFieldUpdateOperationsInput | string
   executionTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -400,7 +384,6 @@ export type TradeLogCreateManyInput = {
   tokenOut: string
   amountIn: string
   amountOut: string
-  profitEth: string
   profitUsd: string
   executionTimeMs: number
   createdAt?: Date | string
@@ -413,7 +396,6 @@ export type TradeLogUpdateManyMutationInput = {
   tokenOut?: Prisma.StringFieldUpdateOperationsInput | string
   amountIn?: Prisma.StringFieldUpdateOperationsInput | string
   amountOut?: Prisma.StringFieldUpdateOperationsInput | string
-  profitEth?: Prisma.StringFieldUpdateOperationsInput | string
   profitUsd?: Prisma.StringFieldUpdateOperationsInput | string
   executionTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -427,7 +409,6 @@ export type TradeLogUncheckedUpdateManyInput = {
   tokenOut?: Prisma.StringFieldUpdateOperationsInput | string
   amountIn?: Prisma.StringFieldUpdateOperationsInput | string
   amountOut?: Prisma.StringFieldUpdateOperationsInput | string
-  profitEth?: Prisma.StringFieldUpdateOperationsInput | string
   profitUsd?: Prisma.StringFieldUpdateOperationsInput | string
   executionTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -451,7 +432,6 @@ export type TradeLogCountOrderByAggregateInput = {
   tokenOut?: Prisma.SortOrder
   amountIn?: Prisma.SortOrder
   amountOut?: Prisma.SortOrder
-  profitEth?: Prisma.SortOrder
   profitUsd?: Prisma.SortOrder
   executionTimeMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -469,7 +449,6 @@ export type TradeLogMaxOrderByAggregateInput = {
   tokenOut?: Prisma.SortOrder
   amountIn?: Prisma.SortOrder
   amountOut?: Prisma.SortOrder
-  profitEth?: Prisma.SortOrder
   profitUsd?: Prisma.SortOrder
   executionTimeMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -483,7 +462,6 @@ export type TradeLogMinOrderByAggregateInput = {
   tokenOut?: Prisma.SortOrder
   amountIn?: Prisma.SortOrder
   amountOut?: Prisma.SortOrder
-  profitEth?: Prisma.SortOrder
   profitUsd?: Prisma.SortOrder
   executionTimeMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -550,7 +528,6 @@ export type TradeLogCreateWithoutAgentInput = {
   tokenOut: string
   amountIn: string
   amountOut: string
-  profitEth: string
   profitUsd: string
   executionTimeMs: number
   createdAt?: Date | string
@@ -563,7 +540,6 @@ export type TradeLogUncheckedCreateWithoutAgentInput = {
   tokenOut: string
   amountIn: string
   amountOut: string
-  profitEth: string
   profitUsd: string
   executionTimeMs: number
   createdAt?: Date | string
@@ -606,7 +582,6 @@ export type TradeLogScalarWhereInput = {
   tokenOut?: Prisma.StringFilter<"TradeLog"> | string
   amountIn?: Prisma.StringFilter<"TradeLog"> | string
   amountOut?: Prisma.StringFilter<"TradeLog"> | string
-  profitEth?: Prisma.StringFilter<"TradeLog"> | string
   profitUsd?: Prisma.StringFilter<"TradeLog"> | string
   executionTimeMs?: Prisma.IntFilter<"TradeLog"> | number
   createdAt?: Prisma.DateTimeFilter<"TradeLog"> | Date | string
@@ -619,7 +594,6 @@ export type TradeLogCreateManyAgentInput = {
   tokenOut: string
   amountIn: string
   amountOut: string
-  profitEth: string
   profitUsd: string
   executionTimeMs: number
   createdAt?: Date | string
@@ -632,7 +606,6 @@ export type TradeLogUpdateWithoutAgentInput = {
   tokenOut?: Prisma.StringFieldUpdateOperationsInput | string
   amountIn?: Prisma.StringFieldUpdateOperationsInput | string
   amountOut?: Prisma.StringFieldUpdateOperationsInput | string
-  profitEth?: Prisma.StringFieldUpdateOperationsInput | string
   profitUsd?: Prisma.StringFieldUpdateOperationsInput | string
   executionTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -645,7 +618,6 @@ export type TradeLogUncheckedUpdateWithoutAgentInput = {
   tokenOut?: Prisma.StringFieldUpdateOperationsInput | string
   amountIn?: Prisma.StringFieldUpdateOperationsInput | string
   amountOut?: Prisma.StringFieldUpdateOperationsInput | string
-  profitEth?: Prisma.StringFieldUpdateOperationsInput | string
   profitUsd?: Prisma.StringFieldUpdateOperationsInput | string
   executionTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -658,7 +630,6 @@ export type TradeLogUncheckedUpdateManyWithoutAgentInput = {
   tokenOut?: Prisma.StringFieldUpdateOperationsInput | string
   amountIn?: Prisma.StringFieldUpdateOperationsInput | string
   amountOut?: Prisma.StringFieldUpdateOperationsInput | string
-  profitEth?: Prisma.StringFieldUpdateOperationsInput | string
   profitUsd?: Prisma.StringFieldUpdateOperationsInput | string
   executionTimeMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -674,7 +645,6 @@ export type TradeLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   tokenOut?: boolean
   amountIn?: boolean
   amountOut?: boolean
-  profitEth?: boolean
   profitUsd?: boolean
   executionTimeMs?: boolean
   createdAt?: boolean
@@ -689,7 +659,6 @@ export type TradeLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   tokenOut?: boolean
   amountIn?: boolean
   amountOut?: boolean
-  profitEth?: boolean
   profitUsd?: boolean
   executionTimeMs?: boolean
   createdAt?: boolean
@@ -704,7 +673,6 @@ export type TradeLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   tokenOut?: boolean
   amountIn?: boolean
   amountOut?: boolean
-  profitEth?: boolean
   profitUsd?: boolean
   executionTimeMs?: boolean
   createdAt?: boolean
@@ -719,13 +687,12 @@ export type TradeLogSelectScalar = {
   tokenOut?: boolean
   amountIn?: boolean
   amountOut?: boolean
-  profitEth?: boolean
   profitUsd?: boolean
   executionTimeMs?: boolean
   createdAt?: boolean
 }
 
-export type TradeLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "agentId" | "txHash" | "tokenIn" | "tokenOut" | "amountIn" | "amountOut" | "profitEth" | "profitUsd" | "executionTimeMs" | "createdAt", ExtArgs["result"]["tradeLog"]>
+export type TradeLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "agentId" | "txHash" | "tokenIn" | "tokenOut" | "amountIn" | "amountOut" | "profitUsd" | "executionTimeMs" | "createdAt", ExtArgs["result"]["tradeLog"]>
 export type TradeLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agent?: boolean | Prisma.AgentDefaultArgs<ExtArgs>
 }
@@ -749,7 +716,6 @@ export type $TradeLogPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     tokenOut: string
     amountIn: string
     amountOut: string
-    profitEth: string
     profitUsd: string
     executionTimeMs: number
     createdAt: Date
@@ -1184,7 +1150,6 @@ export interface TradeLogFieldRefs {
   readonly tokenOut: Prisma.FieldRef<"TradeLog", 'String'>
   readonly amountIn: Prisma.FieldRef<"TradeLog", 'String'>
   readonly amountOut: Prisma.FieldRef<"TradeLog", 'String'>
-  readonly profitEth: Prisma.FieldRef<"TradeLog", 'String'>
   readonly profitUsd: Prisma.FieldRef<"TradeLog", 'String'>
   readonly executionTimeMs: Prisma.FieldRef<"TradeLog", 'Int'>
   readonly createdAt: Prisma.FieldRef<"TradeLog", 'DateTime'>

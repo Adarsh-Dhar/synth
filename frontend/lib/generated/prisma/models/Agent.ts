@@ -30,6 +30,9 @@ export type AgentMinAggregateOutputType = {
   status: $Enums.AgentStatus | null
   userId: string | null
   walletAddress: string | null
+  umbraViewingKey: string | null
+  umbraSpendingKey: string | null
+  magicBlockSessionId: string | null
   envConfig: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -41,6 +44,9 @@ export type AgentMaxAggregateOutputType = {
   status: $Enums.AgentStatus | null
   userId: string | null
   walletAddress: string | null
+  umbraViewingKey: string | null
+  umbraSpendingKey: string | null
+  magicBlockSessionId: string | null
   envConfig: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -52,6 +58,9 @@ export type AgentCountAggregateOutputType = {
   status: number
   userId: number
   walletAddress: number
+  umbraViewingKey: number
+  umbraSpendingKey: number
+  magicBlockSessionId: number
   configuration: number
   envConfig: number
   createdAt: number
@@ -66,6 +75,9 @@ export type AgentMinAggregateInputType = {
   status?: true
   userId?: true
   walletAddress?: true
+  umbraViewingKey?: true
+  umbraSpendingKey?: true
+  magicBlockSessionId?: true
   envConfig?: true
   createdAt?: true
   updatedAt?: true
@@ -77,6 +89,9 @@ export type AgentMaxAggregateInputType = {
   status?: true
   userId?: true
   walletAddress?: true
+  umbraViewingKey?: true
+  umbraSpendingKey?: true
+  magicBlockSessionId?: true
   envConfig?: true
   createdAt?: true
   updatedAt?: true
@@ -88,6 +103,9 @@ export type AgentCountAggregateInputType = {
   status?: true
   userId?: true
   walletAddress?: true
+  umbraViewingKey?: true
+  umbraSpendingKey?: true
+  magicBlockSessionId?: true
   configuration?: true
   envConfig?: true
   createdAt?: true
@@ -173,6 +191,9 @@ export type AgentGroupByOutputType = {
   status: $Enums.AgentStatus
   userId: string
   walletAddress: string
+  umbraViewingKey: string | null
+  umbraSpendingKey: string | null
+  magicBlockSessionId: string | null
   configuration: runtime.JsonValue | null
   envConfig: string | null
   createdAt: Date
@@ -206,12 +227,16 @@ export type AgentWhereInput = {
   status?: Prisma.EnumAgentStatusFilter<"Agent"> | $Enums.AgentStatus
   userId?: Prisma.StringFilter<"Agent"> | string
   walletAddress?: Prisma.StringFilter<"Agent"> | string
+  umbraViewingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
+  umbraSpendingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
+  magicBlockSessionId?: Prisma.StringNullableFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   tradeLogs?: Prisma.TradeLogListRelationFilter
+  subscriptions?: Prisma.SubscriptionListRelationFilter
   terminalLogs?: Prisma.TerminalLogListRelationFilter
   files?: Prisma.AgentFileListRelationFilter
 }
@@ -222,12 +247,16 @@ export type AgentOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
+  umbraViewingKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  umbraSpendingKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  magicBlockSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   configuration?: Prisma.SortOrderInput | Prisma.SortOrder
   envConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   tradeLogs?: Prisma.TradeLogOrderByRelationAggregateInput
+  subscriptions?: Prisma.SubscriptionOrderByRelationAggregateInput
   terminalLogs?: Prisma.TerminalLogOrderByRelationAggregateInput
   files?: Prisma.AgentFileOrderByRelationAggregateInput
 }
@@ -241,12 +270,16 @@ export type AgentWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumAgentStatusFilter<"Agent"> | $Enums.AgentStatus
   userId?: Prisma.StringFilter<"Agent"> | string
   walletAddress?: Prisma.StringFilter<"Agent"> | string
+  umbraViewingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
+  umbraSpendingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
+  magicBlockSessionId?: Prisma.StringNullableFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   tradeLogs?: Prisma.TradeLogListRelationFilter
+  subscriptions?: Prisma.SubscriptionListRelationFilter
   terminalLogs?: Prisma.TerminalLogListRelationFilter
   files?: Prisma.AgentFileListRelationFilter
 }, "id">
@@ -257,6 +290,9 @@ export type AgentOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
+  umbraViewingKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  umbraSpendingKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  magicBlockSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   configuration?: Prisma.SortOrderInput | Prisma.SortOrder
   envConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -275,6 +311,9 @@ export type AgentScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumAgentStatusWithAggregatesFilter<"Agent"> | $Enums.AgentStatus
   userId?: Prisma.StringWithAggregatesFilter<"Agent"> | string
   walletAddress?: Prisma.StringWithAggregatesFilter<"Agent"> | string
+  umbraViewingKey?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
+  umbraSpendingKey?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
+  magicBlockSessionId?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableWithAggregatesFilter<"Agent">
   envConfig?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Agent"> | Date | string
@@ -286,12 +325,16 @@ export type AgentCreateInput = {
   name: string
   status?: $Enums.AgentStatus
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAgentsInput
   tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
 }
@@ -302,11 +345,15 @@ export type AgentUncheckedCreateInput = {
   status?: $Enums.AgentStatus
   userId: string
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
 }
@@ -316,12 +363,16 @@ export type AgentUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
   tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
 }
@@ -332,11 +383,15 @@ export type AgentUncheckedUpdateInput = {
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
 }
@@ -347,6 +402,9 @@ export type AgentCreateManyInput = {
   status?: $Enums.AgentStatus
   userId: string
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -358,6 +416,9 @@ export type AgentUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -370,6 +431,9 @@ export type AgentUncheckedUpdateManyInput = {
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -392,6 +456,9 @@ export type AgentCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
+  umbraViewingKey?: Prisma.SortOrder
+  umbraSpendingKey?: Prisma.SortOrder
+  magicBlockSessionId?: Prisma.SortOrder
   configuration?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -404,6 +471,9 @@ export type AgentMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
+  umbraViewingKey?: Prisma.SortOrder
+  umbraSpendingKey?: Prisma.SortOrder
+  magicBlockSessionId?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -415,6 +485,9 @@ export type AgentMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
+  umbraViewingKey?: Prisma.SortOrder
+  umbraSpendingKey?: Prisma.SortOrder
+  magicBlockSessionId?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -499,6 +572,20 @@ export type AgentUpdateOneRequiredWithoutTradeLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutTradeLogsInput, Prisma.AgentUpdateWithoutTradeLogsInput>, Prisma.AgentUncheckedUpdateWithoutTradeLogsInput>
 }
 
+export type AgentCreateNestedOneWithoutSubscriptionsInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutSubscriptionsInput, Prisma.AgentUncheckedCreateWithoutSubscriptionsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutSubscriptionsInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutSubscriptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutSubscriptionsInput, Prisma.AgentUncheckedCreateWithoutSubscriptionsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutSubscriptionsInput
+  upsert?: Prisma.AgentUpsertWithoutSubscriptionsInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutSubscriptionsInput, Prisma.AgentUpdateWithoutSubscriptionsInput>, Prisma.AgentUncheckedUpdateWithoutSubscriptionsInput>
+}
+
 export type AgentCreateNestedOneWithoutTerminalLogsInput = {
   create?: Prisma.XOR<Prisma.AgentCreateWithoutTerminalLogsInput, Prisma.AgentUncheckedCreateWithoutTerminalLogsInput>
   connectOrCreate?: Prisma.AgentCreateOrConnectWithoutTerminalLogsInput
@@ -518,11 +605,15 @@ export type AgentCreateWithoutUserInput = {
   name: string
   status?: $Enums.AgentStatus
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
 }
@@ -532,11 +623,15 @@ export type AgentUncheckedCreateWithoutUserInput = {
   name: string
   status?: $Enums.AgentStatus
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
 }
@@ -576,6 +671,9 @@ export type AgentScalarWhereInput = {
   status?: Prisma.EnumAgentStatusFilter<"Agent"> | $Enums.AgentStatus
   userId?: Prisma.StringFilter<"Agent"> | string
   walletAddress?: Prisma.StringFilter<"Agent"> | string
+  umbraViewingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
+  umbraSpendingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
+  magicBlockSessionId?: Prisma.StringNullableFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
@@ -587,12 +685,16 @@ export type AgentCreateWithoutFilesInput = {
   name: string
   status?: $Enums.AgentStatus
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAgentsInput
   tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
 }
 
@@ -602,11 +704,15 @@ export type AgentUncheckedCreateWithoutFilesInput = {
   status?: $Enums.AgentStatus
   userId: string
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
 }
 
@@ -631,12 +737,16 @@ export type AgentUpdateWithoutFilesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
   tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
 }
 
@@ -646,11 +756,15 @@ export type AgentUncheckedUpdateWithoutFilesInput = {
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
 }
 
@@ -659,11 +773,15 @@ export type AgentCreateWithoutTradeLogsInput = {
   name: string
   status?: $Enums.AgentStatus
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
 }
@@ -674,10 +792,14 @@ export type AgentUncheckedCreateWithoutTradeLogsInput = {
   status?: $Enums.AgentStatus
   userId: string
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
 }
@@ -703,11 +825,15 @@ export type AgentUpdateWithoutTradeLogsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
 }
@@ -718,10 +844,102 @@ export type AgentUncheckedUpdateWithoutTradeLogsInput = {
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+}
+
+export type AgentCreateWithoutSubscriptionsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+}
+
+export type AgentUncheckedCreateWithoutSubscriptionsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+}
+
+export type AgentCreateOrConnectWithoutSubscriptionsInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutSubscriptionsInput, Prisma.AgentUncheckedCreateWithoutSubscriptionsInput>
+}
+
+export type AgentUpsertWithoutSubscriptionsInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutSubscriptionsInput, Prisma.AgentUncheckedUpdateWithoutSubscriptionsInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutSubscriptionsInput, Prisma.AgentUncheckedCreateWithoutSubscriptionsInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutSubscriptionsInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutSubscriptionsInput, Prisma.AgentUncheckedUpdateWithoutSubscriptionsInput>
+}
+
+export type AgentUpdateWithoutSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
 }
@@ -731,12 +949,16 @@ export type AgentCreateWithoutTerminalLogsInput = {
   name: string
   status?: $Enums.AgentStatus
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAgentsInput
   tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
 }
 
@@ -746,11 +968,15 @@ export type AgentUncheckedCreateWithoutTerminalLogsInput = {
   status?: $Enums.AgentStatus
   userId: string
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
 }
 
@@ -775,12 +1001,16 @@ export type AgentUpdateWithoutTerminalLogsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
   tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
 }
 
@@ -790,11 +1020,15 @@ export type AgentUncheckedUpdateWithoutTerminalLogsInput = {
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
 }
 
@@ -803,6 +1037,9 @@ export type AgentCreateManyUserInput = {
   name: string
   status?: $Enums.AgentStatus
   walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -814,11 +1051,15 @@ export type AgentUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
 }
@@ -828,11 +1069,15 @@ export type AgentUncheckedUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
 }
@@ -842,6 +1087,9 @@ export type AgentUncheckedUpdateManyWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -855,12 +1103,14 @@ export type AgentUncheckedUpdateManyWithoutUserInput = {
 
 export type AgentCountOutputType = {
   tradeLogs: number
+  subscriptions: number
   terminalLogs: number
   files: number
 }
 
 export type AgentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tradeLogs?: boolean | AgentCountOutputTypeCountTradeLogsArgs
+  subscriptions?: boolean | AgentCountOutputTypeCountSubscriptionsArgs
   terminalLogs?: boolean | AgentCountOutputTypeCountTerminalLogsArgs
   files?: boolean | AgentCountOutputTypeCountFilesArgs
 }
@@ -885,6 +1135,13 @@ export type AgentCountOutputTypeCountTradeLogsArgs<ExtArgs extends runtime.Types
 /**
  * AgentCountOutputType without action
  */
+export type AgentCountOutputTypeCountSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SubscriptionWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
 export type AgentCountOutputTypeCountTerminalLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.TerminalLogWhereInput
 }
@@ -903,12 +1160,16 @@ export type AgentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   status?: boolean
   userId?: boolean
   walletAddress?: boolean
+  umbraViewingKey?: boolean
+  umbraSpendingKey?: boolean
+  magicBlockSessionId?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tradeLogs?: boolean | Prisma.Agent$tradeLogsArgs<ExtArgs>
+  subscriptions?: boolean | Prisma.Agent$subscriptionsArgs<ExtArgs>
   terminalLogs?: boolean | Prisma.Agent$terminalLogsArgs<ExtArgs>
   files?: boolean | Prisma.Agent$filesArgs<ExtArgs>
   _count?: boolean | Prisma.AgentCountOutputTypeDefaultArgs<ExtArgs>
@@ -920,6 +1181,9 @@ export type AgentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   status?: boolean
   userId?: boolean
   walletAddress?: boolean
+  umbraViewingKey?: boolean
+  umbraSpendingKey?: boolean
+  magicBlockSessionId?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -933,6 +1197,9 @@ export type AgentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   status?: boolean
   userId?: boolean
   walletAddress?: boolean
+  umbraViewingKey?: boolean
+  umbraSpendingKey?: boolean
+  magicBlockSessionId?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -946,16 +1213,20 @@ export type AgentSelectScalar = {
   status?: boolean
   userId?: boolean
   walletAddress?: boolean
+  umbraViewingKey?: boolean
+  umbraSpendingKey?: boolean
+  magicBlockSessionId?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AgentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "status" | "userId" | "walletAddress" | "configuration" | "envConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["agent"]>
+export type AgentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "status" | "userId" | "walletAddress" | "umbraViewingKey" | "umbraSpendingKey" | "magicBlockSessionId" | "configuration" | "envConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["agent"]>
 export type AgentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tradeLogs?: boolean | Prisma.Agent$tradeLogsArgs<ExtArgs>
+  subscriptions?: boolean | Prisma.Agent$subscriptionsArgs<ExtArgs>
   terminalLogs?: boolean | Prisma.Agent$terminalLogsArgs<ExtArgs>
   files?: boolean | Prisma.Agent$filesArgs<ExtArgs>
   _count?: boolean | Prisma.AgentCountOutputTypeDefaultArgs<ExtArgs>
@@ -972,6 +1243,7 @@ export type $AgentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     tradeLogs: Prisma.$TradeLogPayload<ExtArgs>[]
+    subscriptions: Prisma.$SubscriptionPayload<ExtArgs>[]
     terminalLogs: Prisma.$TerminalLogPayload<ExtArgs>[]
     files: Prisma.$AgentFilePayload<ExtArgs>[]
   }
@@ -981,6 +1253,9 @@ export type $AgentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     status: $Enums.AgentStatus
     userId: string
     walletAddress: string
+    umbraViewingKey: string | null
+    umbraSpendingKey: string | null
+    magicBlockSessionId: string | null
     configuration: runtime.JsonValue | null
     envConfig: string | null
     createdAt: Date
@@ -1381,6 +1656,7 @@ export interface Prisma__AgentClient<T, Null = never, ExtArgs extends runtime.Ty
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   tradeLogs<T extends Prisma.Agent$tradeLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$tradeLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TradeLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  subscriptions<T extends Prisma.Agent$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   terminalLogs<T extends Prisma.Agent$terminalLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$terminalLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TerminalLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   files<T extends Prisma.Agent$filesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$filesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AgentFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1417,6 +1693,9 @@ export interface AgentFieldRefs {
   readonly status: Prisma.FieldRef<"Agent", 'AgentStatus'>
   readonly userId: Prisma.FieldRef<"Agent", 'String'>
   readonly walletAddress: Prisma.FieldRef<"Agent", 'String'>
+  readonly umbraViewingKey: Prisma.FieldRef<"Agent", 'String'>
+  readonly umbraSpendingKey: Prisma.FieldRef<"Agent", 'String'>
+  readonly magicBlockSessionId: Prisma.FieldRef<"Agent", 'String'>
   readonly configuration: Prisma.FieldRef<"Agent", 'Json'>
   readonly envConfig: Prisma.FieldRef<"Agent", 'String'>
   readonly createdAt: Prisma.FieldRef<"Agent", 'DateTime'>
@@ -1843,6 +2122,30 @@ export type Agent$tradeLogsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.TradeLogScalarFieldEnum | Prisma.TradeLogScalarFieldEnum[]
+}
+
+/**
+ * Agent.subscriptions
+ */
+export type Agent$subscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Subscription
+   */
+  select?: Prisma.SubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Subscription
+   */
+  omit?: Prisma.SubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SubscriptionInclude<ExtArgs> | null
+  where?: Prisma.SubscriptionWhereInput
+  orderBy?: Prisma.SubscriptionOrderByWithRelationInput | Prisma.SubscriptionOrderByWithRelationInput[]
+  cursor?: Prisma.SubscriptionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SubscriptionScalarFieldEnum | Prisma.SubscriptionScalarFieldEnum[]
 }
 
 /**

@@ -8,10 +8,10 @@ import json
 import asyncio
 import time
 import traceback
-from uuid import uuid4
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -28,6 +28,8 @@ app.add_middleware(
 agent = MetaAgent()
 
 CREATE_BOT_TIMEOUT = float(os.environ.get("META_AGENT_CREATE_BOT_TIMEOUT_SECONDS", "240"))
+MCP_UPSTREAM_URL = os.environ.get("MCP_UPSTREAM_URL", "http://127.0.0.1:8001").rstrip("/")
+MCP_UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MCP_UPSTREAM_TIMEOUT_SECONDS", "12"))
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -83,90 +85,57 @@ async def mcp_health():
 @app.post("/mcp/{server}/{tool}")
 async def mcp_tool(server: str, tool: str, body: dict, request: Request):
     """
-    HTTP MCP compatibility shim.
-    Real on-chain calls go to the solana-mcp-server on port 8001.
-    This endpoint handles local testing and simulation.
+    HTTP MCP compatibility gateway.
+    Forwards requests to a real MCP-compatible upstream and normalizes response shape.
     """
     s = server.strip().lower()
     t = tool.strip().lower()
 
-    # ── Risk / security providers ──────────────────────────────────────────────
-    if s in {"webacy", "goplus"} and t in {"getrisk", "get_token_risk", "token_risk"}:
-        return _ok({
-            "address": str(body.get("address", "")),
-            "chain": "solana",
-            "risk": "medium", "riskScore": 35,
-            "available": True, "source": "mcp-compat",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+    base_headers = {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+    }
+    session_key = str(request.headers.get("x-session-key", "")).strip()
+    if session_key:
+        base_headers["x-session-key"] = session_key
 
-    # ── Solana: SOL balance ────────────────────────────────────────────────────
-    if s == "solana" and t in {"get_balance", "get_sol_balance"}:
-        address = str(body.get("address", body.get("owner", ""))).strip()
-        return _ok({
-            "ok": True, "address": address,
-            "lamports": 1_000_000_000,
-            "balance": "1.0",
-            "simulated": True,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+    candidates = [
+        f"{MCP_UPSTREAM_URL}/mcp/{s}/{t}",
+        f"{MCP_UPSTREAM_URL}/{s}/{t}",
+    ]
 
-    # ── Solana: SPL token balance ──────────────────────────────────────────────
-    if s == "solana" and t in {"get_token_balance"}:
-        return _ok({
-            "ok": True,
-            "owner": str(body.get("owner", body.get("address", ""))),
-            "mint": str(body.get("mint", "")),
-            "amount": "0",
-            "decimals": 6,
-            "balance": "0.0",
-            "simulated": True,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+    last_error = ""
+    async with httpx.AsyncClient(timeout=MCP_UPSTREAM_TIMEOUT_SECONDS) as client:
+        for url in candidates:
+            try:
+                resp = await client.post(url, json=body, headers=base_headers)
+                if resp.status_code == 404:
+                    last_error = f"404 at {url}"
+                    continue
+                resp.raise_for_status()
 
-    # ── Solana: account info ───────────────────────────────────────────────────
-    if s == "solana" and t in {"get_account_info"}:
-        return _ok({
-            "ok": True,
-            "address": str(body.get("address", "")),
-            "exists": True,
-            "lamports": 1_000_000_000,
-            "simulated": True,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+                payload = resp.json()
+                if isinstance(payload, dict) and isinstance(payload.get("result"), dict):
+                    return payload
 
-    # ── Solana: send transaction ───────────────────────────────────────────────
-    if s == "solana" and t in {"send_raw_transaction", "send_transaction"}:
-        key = (
-            str(request.headers.get("x-session-key", "")).strip()
-            or str(body.get("sessionKey", body.get("session_key", ""))).strip()
-            or str(os.environ.get("SOLANA_KEY", "")).strip()
-        )
-        return _ok({
-            "ok": True,
-            "signature": f"sim_{uuid4().hex[:40]}",
-            "simulated": True,
-            "session_key_provided": bool(key),
-            "source": "mcp-compat",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+                return _ok({
+                    "available": True,
+                    "server": s,
+                    "tool": t,
+                    "source": "upstream",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "data": payload,
+                })
+            except Exception as exc:
+                last_error = str(exc)
 
-    # ── Solana: SNS resolution ─────────────────────────────────────────────────
-    if s == "solana" and t == "resolve_sns":
-        name = str(body.get("name", "")).strip().lower()
-        return _ok({
-            "ok": True,
-            "name": name,
-            "address": f"SNS_{name.replace('.', '_').upper()}",
-            "simulated": True,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
-
-    # ── Fallback ───────────────────────────────────────────────────────────────
     return _ok({
         "available": False,
-        "server": server, "tool": tool,
-        "message": "Tool not implemented on local MCP compat endpoint.",
+        "server": s,
+        "tool": t,
+        "message": "Tool unavailable from configured MCP upstream.",
+        "upstream": MCP_UPSTREAM_URL,
+        "detail": last_error,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     })
 

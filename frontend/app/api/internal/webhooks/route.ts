@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
       tokenOut,
       amountIn,
       amountOut,
-      profitEth,
       profitUsd,
       executionTimeMs,
       status, // optional: update agent status alongside the log
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
     // All TradeLog fields are required
     const requiredTradeFields = [
       "txHash", "tokenIn", "tokenOut",
-      "amountIn", "amountOut", "profitEth", "profitUsd", "executionTimeMs",
+      "amountIn", "amountOut", "profitUsd", "executionTimeMs",
     ] as const;
 
     const missingFields = requiredTradeFields.filter(
@@ -89,7 +88,6 @@ export async function POST(req: NextRequest) {
           tokenOut,
           amountIn:       String(amountIn),
           amountOut:      String(amountOut),
-          profitEth:      String(profitEth),
           profitUsd:      String(profitUsd),
           executionTimeMs: Math.round(executionTimeMs),
         },

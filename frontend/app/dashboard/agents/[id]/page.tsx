@@ -29,7 +29,6 @@ interface TradeLogEntry {
   tokenOut:        string
   amountIn:        string
   amountOut:       string
-  profitEth:       string
   profitUsd:       string
   executionTimeMs: number
   createdAt:       string

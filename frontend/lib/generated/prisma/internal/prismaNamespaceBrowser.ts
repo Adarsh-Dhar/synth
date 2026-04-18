@@ -55,6 +55,7 @@ export const ModelName = {
   Agent: 'Agent',
   AgentFile: 'AgentFile',
   TradeLog: 'TradeLog',
+  Subscription: 'Subscription',
   TerminalLog: 'TerminalLog'
 } as const
 
@@ -92,6 +93,9 @@ export const AgentScalarFieldEnum = {
   status: 'status',
   userId: 'userId',
   walletAddress: 'walletAddress',
+  umbraViewingKey: 'umbraViewingKey',
+  umbraSpendingKey: 'umbraSpendingKey',
+  magicBlockSessionId: 'magicBlockSessionId',
   configuration: 'configuration',
   envConfig: 'envConfig',
   createdAt: 'createdAt',
@@ -122,13 +126,29 @@ export const TradeLogScalarFieldEnum = {
   tokenOut: 'tokenOut',
   amountIn: 'amountIn',
   amountOut: 'amountOut',
-  profitEth: 'profitEth',
   profitUsd: 'profitUsd',
   executionTimeMs: 'executionTimeMs',
   createdAt: 'createdAt'
 } as const
 
 export type TradeLogScalarFieldEnum = (typeof TradeLogScalarFieldEnum)[keyof typeof TradeLogScalarFieldEnum]
+
+
+export const SubscriptionScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  provider: 'provider',
+  status: 'status',
+  externalReference: 'externalReference',
+  plan: 'plan',
+  webhookUrl: 'webhookUrl',
+  validUntil: 'validUntil',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
 
 
 export const TerminalLogScalarFieldEnum = {

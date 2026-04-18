@@ -47,14 +47,13 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       tokenOut,
       amountIn,
       amountOut,
-      profitEth,
       profitUsd,
       executionTimeMs,
     } = body;
 
     // Validate required fields
     const missing = (
-      ["txHash", "tokenIn", "tokenOut", "amountIn", "amountOut", "profitEth", "profitUsd", "executionTimeMs"] as const
+      ["txHash", "tokenIn", "tokenOut", "amountIn", "amountOut", "profitUsd", "executionTimeMs"] as const
     ).filter((k) => body[k] === undefined || body[k] === null);
 
     if (missing.length > 0) {
@@ -88,7 +87,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         tokenOut,
         amountIn: String(amountIn),
         amountOut: String(amountOut),
-        profitEth: String(profitEth),
         profitUsd: String(profitUsd),
         executionTimeMs: Math.round(executionTimeMs),
       },

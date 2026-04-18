@@ -43,6 +43,9 @@ LLM_MAX_RETRIES      = int(os.environ.get("META_AGENT_LLM_MAX_RETRIES", "2"))
 LLM_RETRY_BASE_DELAY = float(os.environ.get("META_AGENT_LLM_RETRY_BASE_DELAY_SECONDS", "0.6"))
 PLANNER_MAX_LOOPS    = int(os.environ.get("PLANNER_MAX_LOOPS", "4"))
 PLANNER_ENABLED      = os.environ.get("PLANNER_ENABLED", "true").lower() != "false"
+JUPITER_DOCS_MCP_URL = os.environ.get("JUPITER_DOCS_MCP_URL", "http://127.0.0.1:5001").rstrip("/")
+JUPITER_DOCS_TIMEOUT_SECONDS = float(os.environ.get("JUPITER_DOCS_TIMEOUT_SECONDS", "8"))
+JUPITER_DOCS_MAX_CHARS = int(os.environ.get("JUPITER_DOCS_MAX_CHARS", "4000"))
 
 
 def _log(level: str, message: str, trace_id: Optional[str] = None) -> None:
@@ -54,7 +57,7 @@ def _log(level: str, message: str, trace_id: Optional[str] = None) -> None:
 
 # ─── MCP Bridge — injected into every generated bot ──────────────────────────
 
-MCP_BRIDGE_CONTENT = '''\
+MCP_BRIDGE_CONTENT = r'''
 import "dotenv/config";
 import axios from "axios";
 
@@ -154,11 +157,11 @@ export async function getTokenBalance(
     return 0n;
   }
 }
-'''
+'''.lstrip("\n")
 
 # ─── SNS Resolver — injected into every generated bot ────────────────────────
 
-SNS_RESOLVER_CONTENT = '''\
+SNS_RESOLVER_CONTENT = r'''
 import { callMcpTool } from "./mcp_bridge.js";
 import "dotenv/config";
 
@@ -190,7 +193,7 @@ export async function resolveAddress(nameOrAddress: string): Promise<string> {
   _cache.set(key, m[1]);
   return m[1];
 }
-'''
+'''.lstrip("\n")
 
 
 # ─── Intent Classifier ────────────────────────────────────────────────────────
@@ -294,6 +297,7 @@ CORE RULES:
 9. No TODOs, no stubs — every file must be complete and runnable.
 10. Never hardcode addresses — read everything from process.env.
 11. SOLANA_KEY may be absent at startup — do not throw if missing.
+12. Prefer Jupiter V2 patterns from the provided JUPITER DOCS CONTEXT section when generating swap logic.
 
 SOLANA MCP TOOL REFERENCE:
   Read SOL balance:
@@ -348,6 +352,52 @@ class MetaAgent:
         self.planner = PlannerAgent(llm_caller=self._llm)
         # Reuse an httpx client for LLM calls
         self._http_client = httpx.Client(timeout=LLM_TIMEOUT_SECONDS)
+
+    def _fetch_jupiter_docs_context(self, prompt: str, trace_id: Optional[str] = None) -> str:
+        query = str(prompt or "").strip()
+        if not query:
+            return ""
+
+        # Prefer MCP-compatible route, fallback to a generic docs-search route if available.
+        candidates = [
+            f"{JUPITER_DOCS_MCP_URL}/mcp/jupiter/docs",
+            f"{JUPITER_DOCS_MCP_URL}/jupiter/docs/search",
+        ]
+
+        headers = {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+        }
+        payload = {"query": query}
+
+        for url in candidates:
+            try:
+                resp = self._http_client.post(
+                    url,
+                    json=payload,
+                    headers=headers,
+                    timeout=JUPITER_DOCS_TIMEOUT_SECONDS,
+                )
+                if resp.status_code == 404:
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+
+                if isinstance(data, dict) and isinstance(data.get("result"), dict):
+                    content = data["result"].get("content", [])
+                    if isinstance(content, list) and content:
+                        first = content[0]
+                        text = first.get("text", "") if isinstance(first, dict) else ""
+                        if isinstance(text, str) and text.strip():
+                            return text[:JUPITER_DOCS_MAX_CHARS]
+
+                text = json.dumps(data, ensure_ascii=True)
+                if text:
+                    return text[:JUPITER_DOCS_MAX_CHARS]
+            except Exception as exc:
+                _log("WARN", f"Jupiter docs lookup failed via {url}: {exc}", trace_id)
+
+        return ""
 
     # ── LLM wrapper ────────────────────────────────────────────────────────────
 
@@ -525,6 +575,12 @@ class MetaAgent:
         }
 
         chain_ctx = self._chain_context(network, plan.strategy_type)
+        jupiter_docs = self._fetch_jupiter_docs_context(enriched_prompt, trace_id=trace_id)
+        jupiter_ctx = (
+            f"JUPITER DOCS CONTEXT (live MCP):\n{jupiter_docs}\n\n"
+            if jupiter_docs else
+            "JUPITER DOCS CONTEXT: unavailable for this request.\n\n"
+        )
         params_txt = "\n".join(f"  {k}={v}" for k, v in plan.collected_parameters.items())
         user_msg = (
             f"Bot name: {intent['bot_name']}\n"
@@ -532,6 +588,7 @@ class MetaAgent:
             f"Strategy: {plan.strategy_type}\n"
             f"Verified parameters:\n{params_txt}\n\n"
             f"User intent: {enriched_prompt}\n\n"
+            f"{jupiter_ctx}"
             f"{chain_ctx}\n\nGenerate the 2 files now."
         )
 
@@ -587,6 +644,7 @@ class MetaAgent:
             f"Chain: solana | Network: {network}\n"
             f"Strategy: {strategy}\n"
             f"User intent: {prompt}\n\n"
+            f"JUPITER DOCS CONTEXT (live MCP):\n{self._fetch_jupiter_docs_context(prompt, trace_id=trace_id) or 'unavailable for this request.'}\n\n"
             f"{chain_ctx}\n\nGenerate the 2 files now."
         )
 

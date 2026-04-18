@@ -52,9 +52,13 @@ model Agent {
   userId           String
   user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   walletAddress    String       @default("")
+  umbraViewingKey  String?      @db.Text
+  umbraSpendingKey String?      @db.Text
+  magicBlockSessionId String?   @db.Text
   configuration    Json?
   envConfig        String?      @db.Text // Encrypted .env (AES-256-GCM)
   tradeLogs        TradeLog[]
+  subscriptions    Subscription[]
   terminalLogs     TerminalLog[] @relation("terminalLogs")
   files            AgentFile[]  // <-- NEW: Relation to bot code files
   createdAt        DateTime     @default(now())
@@ -84,10 +88,27 @@ model TradeLog {
   tokenOut        String
   amountIn        String
   amountOut       String
-  profitEth       String
   profitUsd       String
   executionTimeMs Int
   createdAt       DateTime @default(now())
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  agentId           String
+  agent             Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  provider          String
+  status            String
+  externalReference String   @unique
+  plan              String?
+  webhookUrl        String?
+  validUntil        DateTime?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([agentId, provider])
+  @@index([status])
 }
 
 model TerminalLog {

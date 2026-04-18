@@ -62,6 +62,11 @@ export type AgentFile = Prisma.AgentFileModel
  */
 export type TradeLog = Prisma.TradeLogModel
 /**
+ * Model Subscription
+ * 
+ */
+export type Subscription = Prisma.SubscriptionModel
+/**
  * Model TerminalLog
  * 
  */
