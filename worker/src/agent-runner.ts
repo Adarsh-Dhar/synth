@@ -1,21 +1,15 @@
 /**
  * worker/src/agent-runner.ts
  *
- * Spawns an agent's bot as a child process, injecting decrypted env vars.
- *
- * Flow:
- *  1. Fetch agent + files from DB
- *  2. Write files to a temp directory
- *  3. Decrypt configuration.encryptedEnv → env vars
- *  4. npm install (if package.json present)
- *  5. spawn: npx tsx src/index.ts
- *  6. Stream stdout/stderr to in-memory log buffer (polled by dashboard)
+ * Runs each agent bot inside an isolated Docker container.
+ * No untrusted bot code is executed directly on the worker host process.
  */
 
-import { spawn, ChildProcess } from "child_process";
+import Docker, { Container } from "dockerode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import { PassThrough } from "stream";
 import { decryptEnvConfig } from "./crypto-env.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -28,7 +22,8 @@ export interface LogEntry {
 
 export interface RunningAgent {
   agentId: string;
-  process: ChildProcess;
+  container: Container;
+  containerId: string;
   workDir: string;
   logs: LogEntry[];
   startedAt: number;
@@ -37,6 +32,103 @@ export interface RunningAgent {
 // ── In-memory registry ────────────────────────────────────────────────────────
 
 const running = new Map<string, RunningAgent>();
+const docker = new Docker({
+  socketPath: process.env.DOCKER_SOCKET_PATH ?? "/var/run/docker.sock",
+});
+
+const DOCKER_IMAGE = process.env.AGENT_DOCKER_IMAGE ?? "node:20-alpine";
+const DOCKER_MEMORY_BYTES = parseInt(process.env.AGENT_DOCKER_MEMORY_BYTES ?? "536870912", 10);
+const DOCKER_NANO_CPUS = parseInt(process.env.AGENT_DOCKER_NANO_CPUS ?? "1000000000", 10);
+
+const MAX_LOG_LINES = 2000;
+
+function listEnvPairs(env: Record<string, string>): string[] {
+  return Object.entries(env).map(([k, v]) => `${k}=${v}`);
+}
+
+function safeResolveUnder(root: string, filePath: string): string {
+  const cleanRel = filePath.replace(/^\.\//, "");
+  const resolved = path.resolve(root, cleanRel);
+  const normalizedRoot = path.resolve(root) + path.sep;
+  if (!resolved.startsWith(normalizedRoot) && resolved !== path.resolve(root)) {
+    throw new Error(`Invalid file path outside workspace: ${filePath}`);
+  }
+  return resolved;
+}
+
+async function ensureDockerImage(image: string): Promise<void> {
+  try {
+    await docker.getImage(image).inspect();
+    return;
+  } catch {
+    // pull if missing
+  }
+
+  const stream = await docker.pull(image);
+  await new Promise<void>((resolve, reject) => {
+    docker.modem.followProgress(stream, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+function resolveEntryPoint(files: Array<{ filepath: string }>): string {
+  const candidates = [
+    "src/index.ts",
+    "src/main.ts",
+    "index.ts",
+    "main.ts",
+    "src/index.js",
+    "index.js",
+  ];
+  for (const c of candidates) {
+    if (files.some((f) => f.filepath === c || f.filepath === `./${c}`)) {
+      return c;
+    }
+  }
+  const fallback = files.find((f) => f.filepath.endsWith(".ts") || f.filepath.endsWith(".js"));
+  return fallback?.filepath ?? "src/index.ts";
+}
+
+function buildContainerCommand(files: Array<{ filepath: string }>, entryPoint: string): string {
+  const hasPackageJson = files.some((f) => f.filepath === "package.json" || f.filepath === "./package.json");
+  if (hasPackageJson) {
+    return `npm install --legacy-peer-deps --no-fund --loglevel=error && npx tsx ${entryPoint}`;
+  }
+  return `npm install --no-package-lock --no-fund --loglevel=error tsx typescript @types/node && npx tsx ${entryPoint}`;
+}
+
+function pushLine(logBuffer: LogEntry[], line: string, level: "stdout" | "stderr") {
+  if (!line) return;
+  logBuffer.push({ line, level, ts: Date.now() });
+  if (logBuffer.length > MAX_LOG_LINES) {
+    logBuffer.splice(0, logBuffer.length - MAX_LOG_LINES);
+  }
+}
+
+function wireStreamLines(
+  stream: NodeJS.ReadableStream,
+  level: "stdout" | "stderr",
+  onLine: (line: string, level: "stdout" | "stderr") => void,
+) {
+  let buf = "";
+  stream.on("data", (chunk: Buffer | string) => {
+    buf += chunk.toString();
+    const lines = buf.split("\n");
+    buf = lines.pop() ?? "";
+    for (const line of lines) {
+      if (line.trim()) onLine(line, level);
+    }
+  });
+  stream.on("end", () => {
+    if (buf.trim()) onLine(buf, level);
+  });
+}
+
+export function listRunningAgentIds(): string[] {
+  return Array.from(running.keys());
+}
 
 export function getRunningAgent(agentId: string): RunningAgent | undefined {
   return running.get(agentId);
@@ -71,6 +163,9 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
     throw new Error(`Agent ${agentId} is already running`);
   }
 
+  await docker.ping();
+  await ensureDockerImage(DOCKER_IMAGE);
+
   // ── 1. Decrypt env vars ────────────────────────────────────────────────────
   let decryptedEnv: Record<string, string> = {};
 
@@ -92,7 +187,7 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
   console.log(`[AgentRunner] Work dir: ${workDir}`);
 
   for (const file of files) {
-    const filePath = path.join(workDir, file.filepath);
+    const filePath = safeResolveUnder(workDir, file.filepath);
     const dir = path.dirname(filePath);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(filePath, file.content, "utf8");
@@ -104,81 +199,88 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
     .join("\n");
   fs.writeFileSync(path.join(workDir, ".env"), envFileLines, "utf8");
 
-  // ── 3. npm install if package.json is present ──────────────────────────────
-  const hasPackageJson = files.some((f) => f.filepath === "package.json" || f.filepath === "./package.json");
-  if (hasPackageJson) {
-    await npmInstall(workDir, agentId);
-  }
-
-  // ── 4. Determine entry point ───────────────────────────────────────────────
+  // ── 3. Determine entry point and container command ────────────────────────
   const entryPoint = resolveEntryPoint(files);
+  const runCommand = buildContainerCommand(files, entryPoint);
   console.log(`[AgentRunner] Entry point: ${entryPoint}`);
 
-  // ── 5. Spawn bot process ───────────────────────────────────────────────────
+  // ── 4. Start isolated container ────────────────────────────────────────────
   const childEnv: NodeJS.ProcessEnv = {
-    ...process.env, // inherit PATH etc.
-    ...decryptedEnv, // overlay decrypted vars (takes precedence)
+    ...decryptedEnv,
     NODE_ENV: "production",
   };
 
-  const child = spawn("npx", ["tsx", entryPoint], {
-    cwd: workDir,
-    env: childEnv,
-    shell: false, // avoid shell injection risk
+  const container = await docker.createContainer({
+    Image: DOCKER_IMAGE,
+    Cmd: ["sh", "-lc", runCommand],
+    WorkingDir: "/workspace",
+    Env: listEnvPairs(childEnv as Record<string, string>),
+    AttachStdout: true,
+    AttachStderr: true,
+    Tty: false,
+    HostConfig: {
+      AutoRemove: true,
+      Binds: [`${workDir}:/workspace`],
+      ReadonlyRootfs: true,
+      Memory: DOCKER_MEMORY_BYTES,
+      NanoCpus: DOCKER_NANO_CPUS,
+      NetworkMode: process.env.AGENT_DOCKER_NETWORK_MODE ?? "bridge",
+      CapDrop: ["ALL"],
+      SecurityOpt: ["no-new-privileges"],
+      PidsLimit: parseInt(process.env.AGENT_DOCKER_PIDS_LIMIT ?? "256", 10),
+    },
+    User: process.env.AGENT_DOCKER_USER ?? "node",
   });
 
   const logBuffer: LogEntry[] = [];
 
-  const pushLog = (line: string, level: "stdout" | "stderr") => {
-    logBuffer.push({ line, level, ts: Date.now() });
-    // Keep last 2000 lines to avoid unbounded memory growth
-    if (logBuffer.length > 2000) logBuffer.splice(0, logBuffer.length - 2000);
-  };
+  await container.start();
 
-  // Stream output line by line
-  let stdoutBuf = "";
-  child.stdout?.on("data", (chunk: Buffer) => {
-    stdoutBuf += chunk.toString();
-    const lines = stdoutBuf.split("\n");
-    stdoutBuf = lines.pop() ?? "";
-    lines.forEach((l) => {
-      if (l) pushLog(l, "stdout");
-      console.log(`[Agent ${agentId} OUT] ${l}`);
-    });
+  const stream = await container.logs({
+    follow: true,
+    stdout: true,
+    stderr: true,
+    timestamps: false,
   });
 
-  let stderrBuf = "";
-  child.stderr?.on("data", (chunk: Buffer) => {
-    stderrBuf += chunk.toString();
-    const lines = stderrBuf.split("\n");
-    stderrBuf = lines.pop() ?? "";
-    lines.forEach((l) => {
-      if (l) pushLog(l, "stderr");
-      console.error(`[Agent ${agentId} ERR] ${l}`);
-    });
+  const stdoutStream = new PassThrough();
+  const stderrStream = new PassThrough();
+  docker.modem.demuxStream(stream, stdoutStream, stderrStream);
+
+  wireStreamLines(stdoutStream, "stdout", (line, level) => {
+    pushLine(logBuffer, line, level);
+    console.log(`[Agent ${agentId} OUT] ${line}`);
+  });
+  wireStreamLines(stderrStream, "stderr", (line, level) => {
+    pushLine(logBuffer, line, level);
+    console.error(`[Agent ${agentId} ERR] ${line}`);
   });
 
-  child.on("exit", (code) => {
-    // Flush remaining buffer
-    if (stdoutBuf) pushLog(stdoutBuf, "stdout");
-    if (stderrBuf) pushLog(stderrBuf, "stderr");
-
-    console.log(`[AgentRunner] Agent ${agentId} exited with code ${code}`);
+  container.wait().then((result) => {
+    const code = result.StatusCode ?? null;
+    console.log(`[AgentRunner] Agent ${agentId} container exited with code ${code}`);
     running.delete(agentId);
-
-    // Clean up work dir
     try {
       fs.rmSync(workDir, { recursive: true, force: true });
     } catch {
       // Best-effort cleanup
     }
-
     onExit?.(code);
+  }).catch((err) => {
+    pushLine(logBuffer, `Container wait failed: ${err instanceof Error ? err.message : String(err)}`, "stderr");
+    running.delete(agentId);
+    try {
+      fs.rmSync(workDir, { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup
+    }
+    onExit?.(1);
   });
 
   const entry: RunningAgent = {
     agentId,
-    process: child,
+    container,
+    containerId: container.id,
     workDir,
     logs: logBuffer,
     startedAt: Date.now(),
@@ -193,63 +295,14 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
 export function stopAgent(agentId: string): boolean {
   const agent = running.get(agentId);
   if (!agent) return false;
-  agent.process.kill("SIGTERM");
-  // Force-kill after 5 s if still alive
-  setTimeout(() => {
-    if (running.has(agentId)) {
-      agent.process.kill("SIGKILL");
+
+  agent.container.stop({ t: 5 }).catch(async () => {
+    try {
+      await agent.container.kill();
+    } catch {
+      // Container may already be gone
     }
-  }, 5000);
-  return true;
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-async function npmInstall(cwd: string, agentId: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    console.log(`[AgentRunner] Running npm install for agent ${agentId}…`);
-    const proc = spawn(
-      "npm",
-      ["install", "--legacy-peer-deps", "--no-fund", "--loglevel=error"],
-      { cwd, shell: false }
-    );
-    proc.stdout?.on("data", (d: Buffer) =>
-      console.log(`[Agent ${agentId} INSTALL] ${d.toString().trim()}`)
-    );
-    proc.stderr?.on("data", (d: Buffer) =>
-      console.error(`[Agent ${agentId} INSTALL ERR] ${d.toString().trim()}`)
-    );
-    proc.on("exit", (code) => {
-      if (code === 0) {
-        console.log(`[AgentRunner] npm install OK for agent ${agentId}`);
-        resolve();
-      } else {
-        reject(new Error(`npm install failed with exit code ${code}`));
-      }
-    });
   });
-}
 
-function resolveEntryPoint(files: Array<{ filepath: string }>): string {
-  const candidates = [
-    "src/index.ts",
-    "src/main.ts",
-    "index.ts",
-    "main.ts",
-    "src/index.js",
-  ];
-  for (const c of candidates) {
-    if (files.some((f) => f.filepath === c || f.filepath === `./${c}`)) {
-      return c;
-    }
-  }
-  // Fall back to first .ts file that isn't a config/type file
-  const ts = files.find(
-    (f) =>
-      f.filepath.endsWith(".ts") &&
-      !f.filepath.includes("config") &&
-      !f.filepath.includes("types") &&
-      !f.filepath.includes(".d.ts")
-  );
-  return ts?.filepath ?? "src/index.ts";
+  return true;
 }
