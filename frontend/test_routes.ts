@@ -1,5 +1,6 @@
 import 'dotenv/config';
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
+import { createHmac } from 'crypto';
 import { PrismaClient } from "./lib/generated/prisma/client";
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
@@ -8,6 +9,7 @@ const adapter = new PrismaPg(pool as any);
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 const WEBHOOK_SECRET = process.env.INTERNAL_WEBHOOK_SECRET ?? "undefined";
+const DODO_WEBHOOK_SECRET = process.env.DODO_WEBHOOK_SECRET ?? "undefined";
 
 const prisma = new PrismaClient({ adapter });
 
@@ -72,6 +74,10 @@ async function api(
   });
   const data = await res.json().catch(() => null);
   return { status: res.status, data };
+}
+
+function dodoSignature(rawBody: string): string {
+  return createHmac("sha256", DODO_WEBHOOK_SECRET).update(rawBody).digest("hex");
 }
 
 // ─── Shared state (filled in as tests run) ────────────────────────────────────
@@ -386,7 +392,82 @@ async function runAll() {
 
   // ════════════════════════════════════════════════════════════════════════════
   console.log();
-  console.log(c.bold("8 · DELETE /api/agents/[agentId]  (cascade check)"));
+  console.log(c.bold("8 · POST /api/internal/dodo-payments"));
+  // ════════════════════════════════════════════════════════════════════════════
+
+  await test("rejects dodo webhook with missing bearer auth (401)", async () => {
+    const payload = {
+      event: "payment.succeeded",
+      agentId,
+      customerId: "cust_test_1",
+      externalReference: "dodo-ref-missing-auth",
+      metadata: { agentId, customerId: "cust_test_1" },
+    };
+
+    const { status } = await api(
+      "POST",
+      "/api/internal/dodo-payments",
+      payload,
+      { "x-dodo-signature": dodoSignature(JSON.stringify(payload)) }
+    );
+    assert(status === 401, `Expected 401, got ${status}`);
+  });
+
+  await test("rejects dodo webhook with bad hmac signature (401)", async () => {
+    const payload = {
+      event: "payment.succeeded",
+      agentId,
+      customerId: "cust_test_2",
+      externalReference: "dodo-ref-bad-signature",
+      metadata: { agentId, customerId: "cust_test_2" },
+    };
+
+    const { status } = await api(
+      "POST",
+      "/api/internal/dodo-payments",
+      payload,
+      {
+        Authorization: `Bearer ${DODO_WEBHOOK_SECRET}`,
+        "x-dodo-signature": "deadbeef",
+      }
+    );
+    assert(status === 401, `Expected 401, got ${status}`);
+  });
+
+  await test("accepts payment.succeeded and upserts ACTIVE subscription", async () => {
+    const payload = {
+      event: "payment.succeeded",
+      agentId,
+      customerId: "cust_test_3",
+      externalReference: "dodo-ref-active-1",
+      plan: "pro",
+      metadata: { agentId, customerId: "cust_test_3" },
+    };
+    const raw = JSON.stringify(payload);
+
+    const { status } = await api(
+      "POST",
+      "/api/internal/dodo-payments",
+      payload,
+      {
+        Authorization: `Bearer ${DODO_WEBHOOK_SECRET}`,
+        "x-dodo-signature": dodoSignature(raw),
+      }
+    );
+    assert(status === 200, `Expected 200, got ${status}`);
+
+    const sub = await prisma.subscription.findUnique({
+      where: { externalReference: "dodo-ref-active-1" },
+    });
+
+    assert(sub !== null, "Subscription was not created");
+    assert(sub?.status === "ACTIVE", `Expected ACTIVE, got ${sub?.status}`);
+    assert(sub?.agentId === agentId, "Subscription agentId mismatch");
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  console.log();
+  console.log(c.bold("9 · DELETE /api/agents/[agentId]  (cascade check)"));
   // ════════════════════════════════════════════════════════════════════════════
 
   await test("deletes the agent and cascades to all trade logs", async () => {

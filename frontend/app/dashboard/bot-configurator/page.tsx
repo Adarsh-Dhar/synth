@@ -81,7 +81,7 @@ function SuccessCard({ agentId, botName }: { agentId: string; botName: string })
         </div>
       </div>
       <button
-        onClick={() => router.push('/dashboard/webcontainer')}
+        onClick={() => router.push(`/dashboard/deploy/${agentId}/code`)}
         className="w-full flex items-center justify-center gap-2 border border-green-500/50 text-green-300 hover:bg-green-500/15 hover:border-green-400 text-sm font-medium py-2.5 rounded-lg transition-all hover:shadow-lg hover:shadow-green-500/10"
       >
         <Terminal size={14} />
@@ -122,7 +122,7 @@ export default function BotConfiguratorPage() {
                 ✓ Bot Ready
               </span>
               <button
-                onClick={() => router.push('/dashboard/webcontainer')}
+                onClick={() => generatedAgentId ? router.push(`/dashboard/deploy/${generatedAgentId}/code`) : router.push('/dashboard/deploy')}
                 className="flex items-center gap-2 text-xs border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 px-3 py-1.5 rounded-lg transition-colors"
               >
                 <Terminal size={12} />

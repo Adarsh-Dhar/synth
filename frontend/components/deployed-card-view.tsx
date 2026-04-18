@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, CheckCircle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 interface Props {
   agentName: string
@@ -15,7 +16,12 @@ export function DeployedCardView({ agentName, agentId }: Props) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-green-300">{agentName} is live</p>
-        <p className="text-xs text-green-400/70 truncate">Agent ID: {agentId}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-xs text-green-400/70 truncate">Agent ID: {agentId}</p>
+          <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px]">
+            Security Checked via GoldRush
+          </Badge>
+        </div>
       </div>
       <Link href={`/dashboard/agents/${agentId}`}>
         <Button

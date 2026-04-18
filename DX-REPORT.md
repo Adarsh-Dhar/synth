@@ -23,9 +23,51 @@ This report tracks the migration from browser-simulated execution to backend-ver
 - Dodo payments webhook route added to upsert `Subscription` and trigger x402 delivery path.
 - Worker runtime execution hardened: agents now run inside isolated Docker containers (no host-level `spawn` execution of bot code).
 
+## Jupiter CLI Agent Friction Log
+
+### Run 1
+- Date: 19 April 2026
+- Trace id: jupiter-cli-smoke-1
+- Prompt: "Build a Solana bot that swaps SOL to USDC every 30s when in simulation mode and uses Jupiter for swaps."
+- Entry point used: `MetaAgent.build_bot(...)` from `agents/orchestrator.py`.
+
+Observed generator behavior:
+- The model correctly imported `execSync` from `child_process` and wrapped command execution behind `SIMULATION_MODE`.
+- The model generated this command shape: `jupiter-cli swap --input-mint SOL --output-mint ${TOKEN_MINT_ADDRESS} --amount ${TRADE_AMOUNT_LAMPORTS} --slippage-bps 50`.
+
+Friction / corrections needed:
+- Amount formatting issue: model used `TRADE_AMOUNT_LAMPORTS` (smallest units) while prompt guidance requires Jupiter CLI standard units.
+- Mint formatting issue: model used `SOL` as input mint token alias instead of a canonical mint address variable.
+- Unit-coupling issue: profit threshold remained tied to lamport-style naming (`MIN_PROFIT_LAMPORTS`) even though swap output was USDC units.
+- No obvious flag hallucinations in this run; command used expected `swap`, `--input-mint`, `--output-mint`, `--amount`, `--slippage-bps` pattern.
+
+Action taken:
+- Keep this run as baseline evidence for bounty DX scoring.
+- Next prompt iteration should enforce two additional constraints:
+	1) `--amount` must be derived from token decimal-normalized standard units.
+	2) `--input-mint` and `--output-mint` must come from env mint addresses, never symbolic aliases.
+
+### Run 2
+- Date: 19 April 2026
+- Trace id: jupiter-cli-smoke-2
+- Prompt: "Build a Solana bot that swaps SOL to USDC every 30s when in simulation mode and uses Jupiter for swaps. Use mint addresses from env vars only and standard-unit CLI amounts."
+
+Observed generator behavior:
+- The model retained `execSync` usage and simulation gating correctly.
+- The generated command moved input mint to env style: `--input-mint ${process.env.SOL_MINT_ADDRESS}` and `--output-mint ${TOKEN_MINT_ADDRESS}`.
+- The model introduced a decimal standard-unit conversion before `--amount`: `Number(TRADE_AMOUNT_LAMPORTS) / 1_000_000_000`.
+
+Remaining friction:
+- Conversion still used `Number(...)` which can lose precision on large values; should stay BigInt-safe with explicit decimal string conversion logic.
+- Variable naming drift remains (`TRADE_AMOUNT_LAMPORTS`) even in standard-unit path, which risks operator confusion.
+- The model still hard-fails when required env vars are missing (`throw new Error`), which is stricter than earlier resilience guidance.
+
+Action taken:
+- Prompt hardened further to require env-address mints and decimal-normalized amount semantics.
+- Keep Run 2 as comparison evidence showing reduced mint-symbol hallucination and partial amount-format improvement.
+
 ## Next Steps
 - Regenerate Prisma clients and verify compile across frontend and worker.
-- Finish frontend hard-cutover UX cleanup where legacy WebContainer copy/routes remain.
 - Persist Docker runtime metadata (container id/image/resource profile) for audit/debug views.
 - Add RPC Fast simulation routing and benchmark logs.
-- Add webhook signature/idempotency tests for Dodo payloads.
+- Add stricter webhook replay/idempotency tests for Dodo payloads.

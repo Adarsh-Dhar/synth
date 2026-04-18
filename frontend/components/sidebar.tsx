@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Bot, BarChart3, Zap, Wallet, Menu, X, LogOut,
-  ShieldCheck, ShieldOff, Terminal, Settings2,
+  ShieldCheck, ShieldOff, Settings2,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -45,11 +45,6 @@ export function Sidebar() {
       icon:   Settings2,
       badge:  'NEW',
       badgeColor: 'bg-cyan-500/20 text-cyan-400',
-    },
-    {
-      href:   '/dashboard/webcontainer',
-      label:  'Bot IDE',
-      icon:   Terminal,
     },
   ]
 

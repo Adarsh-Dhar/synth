@@ -288,18 +288,28 @@ CORE RULES:
 1. TypeScript + Node.js (ESM). package.json must set "type": "module".
 2. "start" script must be: "tsx src/index.ts"
 3. Dependencies: axios ^1.7.4, dotenv ^16.4.0, tsx (dev), typescript (dev), @types/node (dev).
-   Do NOT include @solana/web3.js — all chain access goes through MCP tools.
+    Do NOT include @solana/web3.js — all chain access goes through MCP tools and CLIs.
 4. Import "dotenv/config" at the very top of src/index.ts.
 5. All money arithmetic uses BigInt — never floats.
 6. SIMULATION_MODE = process.env.SIMULATION_MODE !== "false" (default true).
-7. Use an inFlight boolean guard to prevent overlapping poll cycles.
-8. Handle SIGINT / SIGTERM for graceful shutdown.
-9. No TODOs, no stubs — every file must be complete and runnable.
+7. TRADING: For any token swaps, you MUST use the Jupiter CLI via Node's `child_process.execSync`.
+    Example:
+    import { execSync } from 'child_process';
+    // Note: amount is in standard units for the CLI, not lamports
+    const cmd = `jupiter-cli swap --input-mint ${tokenIn} --output-mint ${tokenOut} --amount ${amount} --slippage-bps 50`;
+    if (!SIMULATION_MODE) { execSync(cmd, { stdio: 'inherit' }); } else { console.log("SIMULATE:", cmd); }
+8. Use an inFlight boolean guard to prevent overlapping poll cycles.
+9. Handle SIGINT / SIGTERM for graceful shutdown.
 10. Never hardcode addresses — read everything from process.env.
-11. SOLANA_KEY may be absent at startup — do not throw if missing.
-12. Prefer Jupiter V2 patterns from the provided JUPITER DOCS CONTEXT section when generating swap logic.
+11. For Jupiter CLI amounts, convert smallest units to decimal-normalized standard token units before building `--amount`.
+12. `--input-mint` and `--output-mint` must come from env mint addresses only (never symbolic aliases like SOL/USDC).
 
 SOLANA MCP TOOL REFERENCE:
+  Responsibility split:
+     - Use MCP tools for balances, account reads, SNS resolution, and generic RPC methods.
+     - Use Jupiter CLI (`jupiter-cli swap ...`) for swap execution path.
+      - When Jupiter CLI swap path is used, do NOT emit swap execution via `callMcpTool(..., "send_raw_transaction", ...)`.
+
   Read SOL balance:
     getSolBalance(network, walletAddress)  → bigint (lamports)
 
