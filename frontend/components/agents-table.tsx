@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { Settings2, Play, Square, Loader2 } from 'lucide-react'
 import { Agent } from '@/lib/api'
 import { AgentsTableProps } from '@/lib/types'
+import { useUser } from '@/lib/user-context'
+import { getWalletAuthHeaders } from '@/lib/auth/client'
 // Solana integration only; wallet gating removed
 
 // ── Status styles ─────────────────────────────────────────────────────────────
@@ -90,8 +92,13 @@ function execModelBadge(model?: string): string | null {
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
-async function callWorkerAction(agentId: string, action: 'start' | 'stop') {
-  const res = await fetch(`/api/agents/${agentId}/${action}`, { method: 'POST' })
+async function callWorkerAction(agentId: string, action: 'start' | 'stop', authHeaders: HeadersInit) {
+  const res = await fetch(`/api/agents/${agentId}/${action}`, {
+    method: 'POST',
+    headers: {
+      ...(authHeaders ?? {}),
+    },
+  })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`)
@@ -102,6 +109,7 @@ async function callWorkerAction(agentId: string, action: 'start' | 'stop') {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function AgentsTable({ agents, onRefresh }: AgentsTableProps) {
+  const { walletSigner } = useUser()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [errors, setErrors]       = useState<Record<string, string>>({})
   const handleToggle = async (agent: Agent) => {
@@ -109,7 +117,8 @@ export function AgentsTable({ agents, onRefresh }: AgentsTableProps) {
     setErrors(prev => { const n = { ...prev }; delete n[agent.id]; return n })
     try {
       const action = agent.status === 'RUNNING' ? 'stop' : 'start'
-      await callWorkerAction(agent.id, action)
+      const authHeaders = await getWalletAuthHeaders(walletSigner)
+      await callWorkerAction(agent.id, action, authHeaders)
       setTimeout(() => onRefresh?.(), 800)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)

@@ -10,19 +10,23 @@ import { DepositModal }    from '@/components/deposit-modal'
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { getWalletAuthHeaders } from '@/lib/auth/client'
 
 export default function DeployChatPage() {
   const router = useRouter();
+  const { publicKey, signMessage } = useWallet();
   const [creatingBot, setCreatingBot] = useState(false);
 
   // Handler for the Create Bot button
   async function handleCreateBot() {
     setCreatingBot(true);
     try {
+      const authHeaders = await getWalletAuthHeaders({ publicKey, signMessage });
       // Call the get-bot-code API to create a new bot and agent in DB
       const res = await fetch('/api/get-bot-code', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authHeaders ?? {}) },
         body: JSON.stringify({}),
       });
       if (!res.ok) {

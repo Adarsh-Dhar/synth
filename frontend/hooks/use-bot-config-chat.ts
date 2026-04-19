@@ -31,6 +31,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { useWallet } from "@solana/wallet-adapter-react";
 import bs58 from 'bs58'
+import { getWalletAuthHeaders } from '@/lib/auth/client'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -300,7 +301,7 @@ export function useBotConfigChat() {
   // ── AutoSign / wallet adapter (Solana) ──────────────────────────────────
   //
   // Wallet adapter: Solana publicKey (base58) will be used when available.
-  const { publicKey, connect } = useWallet();
+  const { publicKey, connect, signMessage } = useWallet();
   const openConnect = connect;
 
   const walletAddress = publicKey ? publicKey.toBase58() : "";
@@ -608,9 +609,11 @@ export function useBotConfigChat() {
         setIsTyping(false);
         appendAssistant("⏳ Saving your bot and encrypting credentials…");
 
+        const authHeaders = await getWalletAuthHeaders({ publicKey, signMessage });
+
         const saveRes = await fetch("/api/generate-bot", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...(authHeaders ?? {}) },
           body: JSON.stringify({
             prompt: chatHistoryRef.current[0]?.content ?? botName,
             expandedPrompt:
@@ -713,9 +716,10 @@ export function useBotConfigChat() {
           // Expand the prompt via classify-intent (non-fatal if it fails)
           let expandedPrompt = text;
           try {
+            const authHeaders = await getWalletAuthHeaders({ publicKey, signMessage });
             const classifyRes = await fetch("/api/classify-intent", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", ...(authHeaders ?? {}) },
               body: JSON.stringify({ prompt: text }),
             });
             if (classifyRes.ok) {

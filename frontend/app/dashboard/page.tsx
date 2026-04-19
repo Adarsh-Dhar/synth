@@ -10,9 +10,10 @@ import { useUser } from '@/lib/user-context'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useRouter } from 'next/navigation'
 import { fetchAgents, Agent } from '@/lib/api'
+import { getWalletAuthHeaders } from '@/lib/auth/client'
 
 export default function DashboardPage() {
-  const { user, loading: userLoading } = useUser()
+  const { user, loading: userLoading, walletSigner } = useUser()
   const { publicKey } = useWallet()
   const router = useRouter()
   const [agents, setAgents] = useState<Agent[]>([])
@@ -26,7 +27,8 @@ export default function DashboardPage() {
     if (!user) return
     if (showRefresh) setRefreshing(true)
     try {
-      const data = await fetchAgents(user.id)
+      const authHeaders = await getWalletAuthHeaders(walletSigner)
+      const data = await fetchAgents(authHeaders)
       setAgents(data)
       setError(null)
     } catch {

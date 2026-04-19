@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { RouteContext } from "@/lib/types";
+import { requireOwnedAgent } from "@/lib/auth/server";
 
 // ─── GET: Fetch the last N trade logs for an agent ───────────────────────────
 export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     const { agentId } = await params;
 
+    const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
+    if (owned.error || !owned.agent) {
+      return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
+    }
+
     const { searchParams } = new URL(req.url);
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? Math.min(parseInt(limitParam, 10), 50) : 50;
-
-    const agentExists = await prisma.agent.findUnique({
-      where: { id: agentId },
-      select: { id: true },
-    });
-
-    if (!agentExists) {
-      return NextResponse.json({ error: "Agent not found." }, { status: 404 });
-    }
 
     const logs = await prisma.tradeLog.findMany({
       where: { agentId },
@@ -39,6 +36,11 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     const { agentId } = await params;
+    const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
+    if (owned.error || !owned.agent) {
+      return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
+    }
+
     const body = await req.json();
 
     const {
@@ -68,15 +70,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         { error: "executionTimeMs must be a non-negative integer." },
         { status: 400 }
       );
-    }
-
-    const agentExists = await prisma.agent.findUnique({
-      where: { id: agentId },
-      select: { id: true },
-    });
-
-    if (!agentExists) {
-      return NextResponse.json({ error: "Agent not found." }, { status: 404 });
     }
 
     const log = await prisma.tradeLog.create({

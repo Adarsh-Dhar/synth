@@ -4,6 +4,7 @@ import { encryptEnvConfig } from "@/lib/crypto-env";
 import { assembleBotFiles, assembleSolanaBotFiles } from "../get-bot-code/bot-files";
 import { sanitizeIntentMcpLists, shouldUseLegacyDeterministicFallback } from "@/lib/intent/mcp-sanitizer";
 import type { Prisma } from "@/lib/generated/prisma/client.ts";
+import { requireWalletAuth } from "@/lib/auth/server";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -1308,6 +1309,11 @@ export async function POST(req: NextRequest) {
   const requestStartedAt = Date.now();
   console.log(`[generate-bot] [${requestId}] Received request`);
   try {
+    const auth = await requireWalletAuth(req);
+    if (auth.error || !auth.user) {
+      return auth.error ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const body = await req.json();
     console.log(`[generate-bot] [${requestId}] Body keys:`, Object.keys(body));
     const granterWalletAddress = typeof body.walletAddress === "string" ? body.walletAddress.trim() : "";
@@ -1548,12 +1554,7 @@ export async function POST(req: NextRequest) {
     const encryptedEnv = encryptEnvConfig(envPlaintext);
 
     // ── Save agent + files to DB ───────────────────────────────────────────
-    const userId = "public-user";
-    await prisma.user.upsert({
-      where:  { id: userId },
-      update: {},
-      create: { id: userId, email: `${userId}@placeholder.agentia`, walletAddress: "" },
-    });
+    const userId = auth.user.id;
 
     const configRecord: Prisma.InputJsonObject = {
       generatedAt:    new Date().toISOString(),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireEnv } from "@/lib/env";
 
 // ─── POST /api/internal/webhooks ─────────────────────────────────────────────
 // Private channel for the off-chain worker to push completed trade results.
@@ -8,11 +9,11 @@ export async function POST(req: NextRequest) {
   try {
     // ── 1. Security gate ──────────────────────────────────────────────────────
     const authHeader = req.headers.get("authorization");
-    const expectedToken = `Bearer ${process.env.INTERNAL_WEBHOOK_SECRET}`;
+    const expectedToken = `Bearer ${requireEnv("INTERNAL_WEBHOOK_SECRET")}`;
 
     if (!authHeader || authHeader !== expectedToken) {
-      console.warn("[/api/internal/webhooks] unauthorizedlalala attempt blocked.");
-      return NextResponse.json({ error: "unauthorizedlalala." }, { status: 401 });
+      console.warn("[/api/internal/webhooks] unauthorized attempt blocked.");
+      return NextResponse.json({ error: "unauthorized." }, { status: 401 });
     }
 
     // ── 2. Parse & validate payload ───────────────────────────────────────────

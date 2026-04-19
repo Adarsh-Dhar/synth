@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RouteContext } from "@/lib/types";
+import { requireOwnedAgent } from "@/lib/auth/server";
+import { requireEnv } from "@/lib/env";
 
 const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:4001";
-const WORKER_SECRET = process.env.WORKER_SECRET ?? "dev-worker-secret";
 
 export async function GET(req: NextRequest, { params }: RouteContext) {
   const { agentId } = await params;
   const since = req.nextUrl.searchParams.get("since");
 
   try {
+    const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
+    if (owned.error || !owned.agent) {
+      return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
+    }
+
+    const workerSecret = requireEnv("WORKER_SECRET");
     const url = new URL(`${WORKER_URL}/agents/${agentId}/logs`);
     if (since) {
       url.searchParams.set("since", since);
@@ -17,7 +24,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     const workerRes = await fetch(url.toString(), {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${WORKER_SECRET}`,
+        Authorization: `Bearer ${workerSecret}`,
       },
     });
 

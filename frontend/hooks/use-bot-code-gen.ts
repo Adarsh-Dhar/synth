@@ -12,6 +12,8 @@ import { useState } from "react";
 import type { MutableRefObject } from "react";
 import type { BotEnvConfig, BotIntent } from "@/lib/bot-constant";
 import { DEFAULT_BOT_ENV_CONFIG } from "@/lib/bot-constant";
+import { useUser } from "@/lib/user-context";
+import { getWalletAuthHeaders } from "@/lib/auth/client";
 
 type TerminalLike = {
   clear: () => void;
@@ -116,6 +118,7 @@ function extractIntent(config: Record<string, unknown> | null | undefined): BotI
 }
 
 export function useBotCodeGen(termRef: MutableRefObject<TerminalLike | null>) {
+  const { walletSigner } = useUser();
   const [generatedFiles, setGeneratedFiles] = useState<BotFile[]>([]);
   const [selectedFile,   setSelectedFile]   = useState<string | null>(null);
   const [agentId,        setAgentId]        = useState<string | null>(null);
@@ -134,7 +137,12 @@ export function useBotCodeGen(termRef: MutableRefObject<TerminalLike | null>) {
         ? `/api/get-latest-bot?agentId=${specificAgentId}`
         : `/api/get-latest-bot`;
 
-      const dbRes = await fetch(url);
+      const authHeaders = await getWalletAuthHeaders(walletSigner);
+      const dbRes = await fetch(url, {
+        headers: {
+          ...(authHeaders ?? {}),
+        },
+      });
 
       if (dbRes.ok) {
         const data: {
@@ -209,7 +217,7 @@ export function useBotCodeGen(termRef: MutableRefObject<TerminalLike | null>) {
       term.writeln("\x1b[33m[System]\x1b[0m No custom bot found — loading demo bot…");
       const res = await fetch("/api/get-bot-code", {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(authHeaders ?? {}) },
         body:    JSON.stringify({}),
       });
 

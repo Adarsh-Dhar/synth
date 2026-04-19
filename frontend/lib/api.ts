@@ -40,22 +40,30 @@ export interface DeployAgentPayload {
 
 // ─── Agent API ────────────────────────────────────────────────────────────────
 
-export async function fetchAgents(userId: string): Promise<Agent[]> {
-  const res = await fetch(`/api/agents?userId=${userId}`)
+export async function fetchAgents(authHeaders?: HeadersInit): Promise<Agent[]> {
+  const res = await fetch('/api/agents', {
+    headers: {
+      ...(authHeaders ?? {}),
+    },
+  })
   if (!res.ok) throw new Error('Failed to fetch agents')
   return res.json()
 }
 
-export async function fetchAgent(agentId: string): Promise<Agent> {
-  const res = await fetch(`/api/agents/${agentId}`)
+export async function fetchAgent(agentId: string, authHeaders?: HeadersInit): Promise<Agent> {
+  const res = await fetch(`/api/agents/${agentId}`, {
+    headers: {
+      ...(authHeaders ?? {}),
+    },
+  })
   if (!res.ok) throw new Error('Failed to fetch agent')
   return res.json()
 }
 
-export async function deployAgent(payload: DeployAgentPayload): Promise<Agent> {
+export async function deployAgent(payload: DeployAgentPayload, authHeaders?: HeadersInit): Promise<Agent> {
   const res = await fetch('/api/agents', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(authHeaders ?? {}) },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -65,27 +73,33 @@ export async function deployAgent(payload: DeployAgentPayload): Promise<Agent> {
   return res.json()
 }
 
-export async function deleteAgent(agentId: string): Promise<void> {
-  const res = await fetch(`/api/agents/${agentId}`, { method: 'DELETE' })
+export async function deleteAgent(agentId: string, authHeaders?: HeadersInit): Promise<void> {
+  const res = await fetch(`/api/agents/${agentId}`, {
+    method: 'DELETE',
+    headers: {
+      ...(authHeaders ?? {}),
+    },
+  })
   if (!res.ok) throw new Error('Failed to delete agent')
 }
 
 export async function updateAgentStatus(
   agentId: string,
-  status: 'RUNNING' | 'PAUSED' | 'REVOKED' | 'EXPIRED'
+  status: 'RUNNING' | 'PAUSED' | 'REVOKED' | 'EXPIRED',
+  authHeaders?: HeadersInit,
 ): Promise<Agent> {
   const res = await fetch(`/api/agents/${agentId}/status`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(authHeaders ?? {}) },
     body: JSON.stringify({ status }),
   })
   if (!res.ok) throw new Error('Failed to update agent status')
   return res.json()
 }
 
-export async function fetchAgentLogs(agentId: string, limit = 50): Promise<TradeLog[]> {
+export async function fetchAgentLogs(agentId: string, limit = 50, authHeaders?: HeadersInit): Promise<TradeLog[]> {
   const res = await fetch(`/api/agents/${agentId}/logs?limit=${limit}`, {
-    headers: { 'Cache-Control': 'no-store' },
+    headers: { 'Cache-Control': 'no-store', ...(authHeaders ?? {}) },
   })
   if (!res.ok) throw new Error('Failed to fetch logs')
   return res.json()

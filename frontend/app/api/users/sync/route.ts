@@ -9,15 +9,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { walletAddress } = body;
 
-    // If walletAddress is provided, use public-user logic
+    // Wallet-based user sync
     if (walletAddress && typeof walletAddress === "string" && walletAddress.trim()) {
-      const user = await prisma.user.upsert({
-        where: { id: "public-user" },
-        update: { walletAddress },
-        create: {
-          id: "public-user",
-          email: "public-user@placeholder.agentia",
-          walletAddress,
+      const normalizedWallet = walletAddress.trim();
+
+      const existing = await prisma.user.findFirst({
+        where: { walletAddress: normalizedWallet },
+      });
+
+      if (existing) {
+        return NextResponse.json(existing, { status: 200 });
+      }
+
+      const walletId = `wallet:${normalizedWallet}`;
+      const emailSafe = normalizedWallet.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      const user = await prisma.user.create({
+        data: {
+          id: walletId,
+          email: `${emailSafe}@wallet.local`,
+          walletAddress: normalizedWallet,
         },
       });
       return NextResponse.json(user, { status: 200 });

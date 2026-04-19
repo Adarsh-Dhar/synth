@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireWalletAuth } from "@/lib/auth/server";
 
 // GET /api/get-db-code
-// Returns all agent code files for the public user (latest agent)
-export async function GET() {
+// Returns all agent code files for the authenticated user (latest agent)
+export async function GET(req: Request) {
   try {
-    const userId = "public-user";
-    // Get the latest agent for the public user
+    const auth = await requireWalletAuth(req);
+    if (auth.error || !auth.user) {
+      return auth.error ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const userId = auth.user.id;
+    // Get the latest agent for the authenticated user
     const agent = await prisma.agent.findFirst({
       where: { userId },
       orderBy: { createdAt: "desc" },

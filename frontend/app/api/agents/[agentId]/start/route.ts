@@ -1,19 +1,26 @@
 // frontend/app/api/agents/[agentId]/start/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { RouteContext } from "@/lib/types";
+import { requireOwnedAgent } from "@/lib/auth/server";
+import { requireEnv } from "@/lib/env";
 
-const WORKER_URL    = process.env.WORKER_URL    ?? "http://localhost:4001";
-const WORKER_SECRET = process.env.WORKER_SECRET ?? "dev-worker-secret";
+const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:4001";
 
-export async function POST(_req: NextRequest, { params }: RouteContext) {
+export async function POST(req: NextRequest, { params }: RouteContext) {
   const { agentId } = await params;
 
   try {
+    const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
+    if (owned.error || !owned.agent) {
+      return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
+    }
+
+    const workerSecret = requireEnv("WORKER_SECRET");
     const workerRes = await fetch(`${WORKER_URL}/agents/${agentId}/start`, {
       method:  "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization:  `Bearer ${WORKER_SECRET}`,
+        Authorization:  `Bearer ${workerSecret}`,
       },
     });
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { decryptEnvConfig } from "@/lib/crypto-env";
+import { requireWalletAuth } from "@/lib/auth/server";
 
 function parseEnv(content: string): Record<string, string> {
   const parsed: Record<string, string> = {};
@@ -24,14 +25,19 @@ function stringifyEnv(values: Record<string, string>): string {
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireWalletAuth(req);
+    if (auth.error || !auth.user) {
+      return auth.error ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const agentId = req.nextUrl.searchParams.get("agentId");
-    const userId  = "public-user";
+    const userId = auth.user.id;
 
     let agent;
 
     if (agentId) {
-      agent = await prisma.agent.findUnique({
-        where:   { id: agentId },
+      agent = await prisma.agent.findFirst({
+        where:   { id: agentId, userId },
         include: { files: { orderBy: { createdAt: "asc" } } },
       });
     } else {
@@ -61,8 +67,8 @@ export async function GET(req: NextRequest) {
         const decryptedEnv = decryptEnvConfig(agent.envConfig);
         const envMap = parseEnv(decryptedEnv);
         envMap.SESSION_KEY_MODE = "true";
-        // Clear any Solana server-side key material in the returned .env as well
-        envMap.SOLANA_KEY = "";
+        // Never send private key material to the browser.
+        delete envMap.SOLANA_KEY;
 
         const hydratedEnv = stringifyEnv(envMap);
         mappedFiles.push({

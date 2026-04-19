@@ -10,7 +10,11 @@ import {
 const app = express();
 app.use(express.json());
 
-const SECRET = process.env.WORKER_SECRET ?? "dev-worker-secret";
+const SECRET = process.env.WORKER_SECRET;
+
+if (!SECRET || !SECRET.trim()) {
+  throw new Error("Missing required environment variable: WORKER_SECRET");
+}
 
 function requireAuth(
   req:  express.Request,

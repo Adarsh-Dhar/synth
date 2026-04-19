@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@/lib/user-context'
+import { getWalletAuthHeaders } from '@/lib/auth/client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,8 +60,13 @@ const STATUS_COLOR: Record<string, string> = {
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
-async function callWorker(agentId: string, action: 'start' | 'stop') {
-  const res = await fetch(`/api/agents/${agentId}/${action}`, { method: 'POST' })
+async function callWorker(agentId: string, action: 'start' | 'stop', authHeaders: HeadersInit) {
+  const res = await fetch(`/api/agents/${agentId}/${action}`, {
+    method: 'POST',
+    headers: {
+      ...(authHeaders ?? {}),
+    },
+  })
   const raw = await res.text()
   let data: { error?: string } = {}
   try {
@@ -76,16 +83,24 @@ async function callWorker(agentId: string, action: 'start' | 'stop') {
   return data
 }
 
-async function fetchAgentDetail(agentId: string): Promise<AgentDetail> {
-  const res = await fetch(`/api/agents/${agentId}`)
+async function fetchAgentDetail(agentId: string, authHeaders: HeadersInit): Promise<AgentDetail> {
+  const res = await fetch(`/api/agents/${agentId}`, {
+    headers: {
+      ...(authHeaders ?? {}),
+    },
+  })
   if (!res.ok) throw new Error('Agent not found')
   return res.json()
 }
 
-async function fetchTerminalLogs(agentId: string, since?: number): Promise<TerminalEntry[]> {
+async function fetchTerminalLogs(agentId: string, authHeaders: HeadersInit, since?: number): Promise<TerminalEntry[]> {
   const url = new URL(`/api/agents/${agentId}/terminal-logs`, window.location.origin)
   if (since) url.searchParams.set('since', String(since))
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), {
+    headers: {
+      ...(authHeaders ?? {}),
+    },
+  })
   if (!res.ok) return []
   const data = await res.json()
   return data.entries ?? []
@@ -93,7 +108,7 @@ async function fetchTerminalLogs(agentId: string, since?: number): Promise<Termi
 
 // ── Live Terminal component ───────────────────────────────────────────────────
 
-function LiveTerminal({ agentId, running }: { agentId: string; running: boolean }) {
+function LiveTerminal({ agentId, running, authHeaders }: { agentId: string; running: boolean; authHeaders: HeadersInit | null }) {
   const [lines, setLines]         = useState<TerminalEntry[]>([])
   const sinceRef                  = useRef<number>(0)
   const bottomRef                 = useRef<HTMLDivElement>(null)
@@ -101,11 +116,12 @@ function LiveTerminal({ agentId, running }: { agentId: string; running: boolean 
 
   // Initial load
   useEffect(() => {
-    fetchTerminalLogs(agentId).then((entries) => {
+    if (!authHeaders) return
+    fetchTerminalLogs(agentId, authHeaders).then((entries) => {
       setLines(entries)
       if (entries.length > 0) sinceRef.current = entries[entries.length - 1].ts
     })
-  }, [agentId])
+  }, [agentId, authHeaders])
 
   // Poll for new lines when running
   useEffect(() => {
@@ -113,15 +129,16 @@ function LiveTerminal({ agentId, running }: { agentId: string; running: boolean 
       if (intervalRef.current) clearInterval(intervalRef.current)
       return
     }
+    if (!authHeaders) return
     intervalRef.current = setInterval(async () => {
-      const newEntries = await fetchTerminalLogs(agentId, sinceRef.current)
+      const newEntries = await fetchTerminalLogs(agentId, authHeaders, sinceRef.current)
       if (newEntries.length > 0) {
         setLines((prev) => [...prev, ...newEntries].slice(-500))
         sinceRef.current = newEntries[newEntries.length - 1].ts
       }
     }, 2000)
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [agentId, running])
+  }, [agentId, running, authHeaders])
 
   // Auto-scroll
   useEffect(() => {
@@ -176,6 +193,7 @@ function LiveTerminal({ agentId, running }: { agentId: string; running: boolean 
 
 export default function AgentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router  = useRouter()
+  const { walletSigner } = useUser()
   const { id: agentId } = React.use(params)
 
   const [agent,             setAgent]             = useState<AgentDetail | null>(null)
@@ -184,17 +202,25 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const [actionLoading,     setActionLoading]     = useState(false)
   const [actionError,       setActionError]       = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [authHeaders,       setAuthHeaders]       = useState<HeadersInit | null>(null)
+
+  useEffect(() => {
+    getWalletAuthHeaders(walletSigner)
+      .then((headers) => setAuthHeaders(headers))
+      .catch(() => setAuthHeaders(null))
+  }, [walletSigner])
 
   const loadAgent = useCallback(async () => {
+    if (!authHeaders) return
     try {
-      setAgent(await fetchAgentDetail(agentId))
+      setAgent(await fetchAgentDetail(agentId, authHeaders))
       setError(null)
     } catch {
       setError('Agent not found')
     } finally {
       setLoading(false)
     }
-  }, [agentId])
+  }, [agentId, authHeaders])
 
   // Initial load + refresh every 5 s while STARTING/STOPPING
   useEffect(() => {
@@ -211,11 +237,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleToggle = async () => {
     if (!agent) return
+    if (!authHeaders) return
     setActionLoading(true)
     setActionError(null)
     try {
       const action = agent.status === 'RUNNING' ? 'stop' : 'start'
-      await callWorker(agentId, action)
+      await callWorker(agentId, action, authHeaders)
       setTimeout(loadAgent, 800)
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err))
@@ -225,9 +252,15 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleDelete = async () => {
+    if (!authHeaders) return
     setActionLoading(true)
     try {
-      const res = await fetch(`/api/agents/${agentId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/agents/${agentId}`, {
+        method: 'DELETE',
+        headers: {
+          ...(authHeaders ?? {}),
+        },
+      })
       if (!res.ok) throw new Error('Delete failed')
       router.push('/dashboard')
     } catch (err) {
@@ -449,7 +482,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <PnLChart data={pnlData} />
             </div>
 
-            <LiveTerminal agentId={agentId} running={isRunning} />
+            <LiveTerminal agentId={agentId} running={isRunning} authHeaders={authHeaders} />
           </div>
 
         </div>

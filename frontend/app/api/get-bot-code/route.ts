@@ -11,8 +11,14 @@ import { NextResponse } from "next/server";
 import { assembleBotFiles } from "./bot-files";
 import { prisma } from "@/lib/prisma";
 import { encryptEnvConfig } from "@/lib/crypto-env";
+import { requireWalletAuth } from "@/lib/auth/server";
 
 export async function POST(req: Request) {
+  const auth = await requireWalletAuth(req);
+  if (auth.error || !auth.user) {
+    return auth.error ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   // If called with a body, use envConfig/configuration from the request, else just save files
   let envConfig = undefined;
   let configuration = undefined;
@@ -35,7 +41,7 @@ export async function POST(req: Request) {
 
   // Save to DB (same as save-bot logic)
   try {
-    const userId = "public-user";
+    const userId = auth.user.id;
 
     if (!files || !Array.isArray(files) || files.length === 0) {
       return NextResponse.json({ error: "No files provided." }, { status: 400 });
@@ -72,17 +78,6 @@ export async function POST(req: Request) {
         mergedConfiguration.encryptedEnv = encryptEnvConfig(JSON.stringify(sanitized));
       }
     }
-
-    // Ensure the public user row exists
-    await prisma.user.upsert({
-      where: { id: userId },
-      update: {},
-      create: {
-        id: userId,
-        email: `${userId}@placeholder.agentia`,
-        walletAddress: "",
-      },
-    });
 
     const agent = await prisma.agent.create({
       data: {

@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireWalletAuth } from "@/lib/auth/server";
 
 // ─── GET: List all agents for a user ─────────────────────────────────────────
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId query parameter is required." },
-        { status: 400 }
-      );
+    const auth = await requireWalletAuth(req);
+    if (auth.error || !auth.user) {
+      return auth.error ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
     const agents = await prisma.agent.findMany({
-      where: { userId },
+      where: { userId: auth.user.id },
       orderBy: { createdAt: "desc" },
       include: {
         files: {
@@ -42,36 +38,37 @@ export async function GET(req: NextRequest) {
 // ─── POST: Deploy a new agent ─────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireWalletAuth(req);
+    if (auth.error || !auth.user) {
+      return auth.error ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const body = await req.json();
     const {
-      userId,
       name,
       configuration,
       walletAddress,
     } = body;
 
-    if (!userId || !name) {
+    if (!name) {
       return NextResponse.json(
-        { error: "Missing required fields: userId, name." },
+        { error: "Missing required field: name." },
         { status: 400 }
       );
     }
 
-    const userExists = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, walletAddress: true },
-    });
+    const userExists = auth.user;
 
     if (!userExists) {
       return NextResponse.json(
-        { error: `User "${userId}" not found.` },
+        { error: "Authenticated user not found." },
         { status: 404 }
       );
     }
 
     const agent = await prisma.agent.create({
       data: {
-        userId,
+        userId: userExists.id,
         name,
         status: "STOPPED",
         walletAddress:

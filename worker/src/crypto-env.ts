@@ -8,7 +8,10 @@
 import { createDecipheriv, createHash } from "crypto";
 
 function getDerivedKey(): Buffer {
-  const secret = process.env.AGENT_SECRET ?? "synth-default-secret-change-me";
+  const secret = process.env.AGENT_SECRET;
+  if (!secret || !secret.trim()) {
+    throw new Error("Missing required environment variable: AGENT_SECRET");
+  }
   return createHash("sha256").update(secret).digest();
 }
 
