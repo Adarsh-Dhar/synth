@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PnLChart } from '@/components/pnl-chart'
+import { GoldRushSecurityBadge } from '@/components/goldrush-security-badge'
+import { useGoldRushStream } from '@/hooks/use-goldrush-stream'
 import {
   ChevronLeft, Play, Square, Trash2, RefreshCw, Loader2,
 } from 'lucide-react'
@@ -203,6 +205,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const [actionError,       setActionError]       = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [authHeaders,       setAuthHeaders]       = useState<HeadersInit | null>(null)
+  const { events: goldRushEvents, connected: goldRushConnected } = useGoldRushStream(agentId)
 
   useEffect(() => {
     getWalletAuthHeaders(walletSigner)
@@ -475,9 +478,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <div className="bg-card border border-border rounded-lg p-5 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold">PnL Trend (USD)</h3>
-                <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px]">
-                  Security Checked via GoldRush
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <GoldRushSecurityBadge verified={goldRushConnected || goldRushEvents.length > 0} />
+                  <span className="text-[10px] text-muted-foreground">
+                    {goldRushConnected ? 'stream live' : `${goldRushEvents.length} events cached`}
+                  </span>
+                </div>
               </div>
               <PnLChart data={pnlData} />
             </div>

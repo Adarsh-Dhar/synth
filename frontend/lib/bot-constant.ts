@@ -9,6 +9,8 @@ export interface BotIntent {
   network?: string;
   execution_model?: "polling" | "agentic";
   strategy?: string;
+  dataProvider?: "goldrush" | "rpc";
+  privateExecution?: boolean;
   mcps?: string[];
   bot_name?: string;
   requires_openai?: boolean;
@@ -27,6 +29,12 @@ export interface BotEnvConfig {
   SOLANA_RPC_URL?: string;
   SOLANA_NETWORK?: string;
   SOLANA_USDC_MINT?: string;
+  GOLDRUSH_API_KEY?: string;
+  GOLDRUSH_STREAM_URL?: string;
+  MAGICBLOCK_TEE_VALIDATOR?: string;
+  MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL?: string;
+  UMBRA_PROGRAM_ADDRESS?: string;
+  UMBRA_NETWORK?: string;
   // Generic
   USER_WALLET_ADDRESS: string;
   RECIPIENT_ADDRESS?: string;
@@ -47,6 +55,12 @@ export const DEFAULT_BOT_ENV_CONFIG: BotEnvConfig = {
   SOLANA_RPC_URL: "https://api.devnet.solana.com",
   SOLANA_NETWORK: "devnet",
   SOLANA_USDC_MINT: "",
+  GOLDRUSH_API_KEY: "",
+  GOLDRUSH_STREAM_URL: "",
+  MAGICBLOCK_TEE_VALIDATOR: "",
+  MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL: "",
+  UMBRA_PROGRAM_ADDRESS: "",
+  UMBRA_NETWORK: "devnet",
   USER_WALLET_ADDRESS: "",
   RECIPIENT_ADDRESS: "",
   KEYPAIR_PATH: "",
@@ -85,6 +99,9 @@ export function getRequiredEnvFields(
   const isYield = strategy.includes("yield") || /sweep|consolidator/.test(botName);
   const isSpreadScanner = botName.includes("spread") && botName.includes("scanner");
   const isArbitrage = strategy.includes("arbitrage") || /arbitrage/.test(botName);
+  const useGoldRush = intent?.dataProvider === "goldrush" || mcps.includes("goldrush");
+  const useMagicBlock = Boolean(intent?.privateExecution) || strategy.includes("private") || mcps.includes("magicblock");
+  const useUmbra = strategy.includes("shield") || strategy.includes("anonymous") || mcps.includes("umbra");
 
   const fields: EnvFieldDef[] = [
     {
@@ -199,6 +216,63 @@ export function getRequiredEnvFields(
       required: true,
       placeholder: "sk-...",
     });
+  }
+
+  if (useGoldRush) {
+    fields.push(
+      {
+        key: "GOLDRUSH_API_KEY",
+        label: "GoldRush API Key",
+        type: "password",
+        required: true,
+        placeholder: "gr_...",
+      },
+      {
+        key: "GOLDRUSH_STREAM_URL",
+        label: "GoldRush Stream URL",
+        type: "text",
+        required: false,
+        placeholder: "wss://api.goldrush.dev/graphql",
+      },
+    );
+  }
+
+  if (useMagicBlock) {
+    fields.push(
+      {
+        key: "MAGICBLOCK_TEE_VALIDATOR",
+        label: "MagicBlock TEE Validator",
+        type: "text",
+        required: true,
+        placeholder: "mainnet-tee.magicblock.app",
+      },
+      {
+        key: "MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL",
+        label: "MagicBlock Private Payments API",
+        type: "text",
+        required: true,
+        placeholder: "https://api.magicblock.gg/private-payments",
+      },
+    );
+  }
+
+  if (useUmbra) {
+    fields.push(
+      {
+        key: "UMBRA_PROGRAM_ADDRESS",
+        label: "Umbra Program Address",
+        type: "text",
+        required: true,
+        placeholder: "UMBRAD2ishebJTcgCLkTkNUx1v3GyoAgpTRPeWoLykh",
+      },
+      {
+        key: "UMBRA_NETWORK",
+        label: "Umbra Network",
+        type: "text",
+        required: true,
+        placeholder: "devnet",
+      },
+    );
   }
 
   return fields;

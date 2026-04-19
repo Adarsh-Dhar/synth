@@ -6,6 +6,26 @@ This report tracks the migration from browser-simulated execution to backend-ver
 ## Date
 19 April 2026
 
+## Current Status Snapshot (19 April 2026)
+
+### Completed Since Phase 1
+- Prisma client outputs are present for both app surfaces:
+	- `frontend/lib/generated/prisma/*`
+	- `worker/src/lib/generated/prisma/*`
+- Worker compile verification is passing (`pnpm -C worker exec tsc -p tsconfig.json --noEmit`).
+- Dodo webhook security + success-path coverage exists in route tests:
+	- unauthorized webhook rejected
+	- bad signature rejected
+	- `payment.succeeded` upsert path validated
+- Subscription enforcement is active in runtime/auth paths (frontend guard + worker start guard).
+
+### Partial / Still Open
+- Cross-surface compile verification is not fully complete:
+	- frontend TypeScript check currently fails at `frontend/lib/auth/server.ts` with a `select/include` union typing error (TS2345).
+- Docker runtime metadata is collected in memory (`containerId`, resource limits), but not yet persisted for audit/debug views.
+- RPC Fast simulation routing is documented, but benchmark logs/artifacts are not yet captured in this report.
+- Dodo replay/idempotency hardening is partially covered (upsert exists), but stricter replay-focused tests are still missing.
+
 ## Decisions Locked
 - Remove TradeLog EVM legacy field `profitEth` and keep `profitUsd` for GoldRush-compatible USD reporting.
 - Add agent privacy/session fields: `umbraViewingKey`, `umbraSpendingKey`, `magicBlockSessionId`.
@@ -67,7 +87,10 @@ Action taken:
 - Keep Run 2 as comparison evidence showing reduced mint-symbol hallucination and partial amount-format improvement.
 
 ## Next Steps
-- Regenerate Prisma clients and verify compile across frontend and worker.
-- Persist Docker runtime metadata (container id/image/resource profile) for audit/debug views.
-- Add RPC Fast simulation routing and benchmark logs.
-- Add stricter webhook replay/idempotency tests for Dodo payloads.
+- Fix frontend TypeScript error in `frontend/lib/auth/server.ts` and re-run compile verification for both frontend and worker.
+- Persist Docker runtime metadata (`containerId`, image, memory/cpu/pids profile, start/stop timestamps) to DB-backed audit records.
+- Add benchmark capture for RPC Fast simulation routing (before/after latency + quote staleness metrics) and attach run logs.
+- Add explicit Dodo replay/idempotency tests:
+	1) duplicate `payment.succeeded` with same `externalReference`
+	2) out-of-order `payment.failed` after success
+	3) signature-valid retried delivery behavior

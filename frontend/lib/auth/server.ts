@@ -87,10 +87,16 @@ export async function requireOwnedAgent(
   if (options?.includeFiles) include.files = { orderBy: { createdAt: "asc" } };
   if (options?.includeTradeLogs) include.tradeLogs = { orderBy: { createdAt: "desc" }, take: 50 };
 
-  const agent = await prisma.agent.findFirst({
-    where: { id: agentId, userId: auth.user.id },
-    ...(options?.select ? { select: options.select } : { include }),
-  });
+  const where = { id: agentId, userId: auth.user.id };
+  const agent = options?.select
+    ? await prisma.agent.findFirst({
+        where,
+        select: options.select,
+      })
+    : await prisma.agent.findFirst({
+        where,
+        include,
+      });
 
   if (!agent) {
     return {

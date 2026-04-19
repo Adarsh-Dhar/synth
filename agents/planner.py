@@ -50,7 +50,8 @@ class PlannerState(BaseModel):
     strategy_type: str = Field(
         description=(
             "Detected strategy: 'yield_sweeper' | 'arbitrage' | 'liquidation' | "
-            "'sniping' | 'dca' | 'grid' | 'whale_mirror' | 'sentiment' | 'custom_utility' | 'unknown'"
+            "'sniping' | 'dca' | 'grid' | 'whale_mirror' | 'sentiment' | "
+            "'private_transfer' | 'shielded_yield' | 'metered_execution' | 'custom_utility' | 'unknown'"
         )
     )
     collected_parameters: Dict[str, str] = Field(
@@ -107,6 +108,9 @@ Analyse the conversation and return ONLY a single valid JSON object — no markd
 
 STRATEGY DETECTION:
   yield / sweep / consolidate            → "yield_sweeper"
+    shielded yield / private sweep         → "shielded_yield"
+    private transfer / confidential move   → "private_transfer"
+    metered / billed execution             → "metered_execution"
   arb / spread / flash                   → "arbitrage"
   liquidation / health-factor            → "liquidation"
   snipe / new-token / launch             → "sniping"
@@ -126,12 +130,19 @@ REQUIRED PARAMETERS by strategy:
   grid:            POOL_ADDRESS, TOKEN_MINT_ADDRESS, USER_WALLET_ADDRESS, TRADE_AMOUNT_LAMPORTS
   whale_mirror:    USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS
   sentiment:       USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS
+    private_transfer: USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS, RECIPIENT_ADDRESS,
+                                        MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL
+    shielded_yield:  USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS, UMBRA_PROGRAM_ADDRESS,
+                                     UMBRA_NETWORK
+    metered_execution: USER_WALLET_ADDRESS, DODO_PLAN_PRO_ID
   custom_utility:  only what the user explicitly provided
 
 MCP VERIFICATION RULES:
 1. Wallet address provided → verify with: mcp_tool="get_balance", payload={network, address}
 2. Token mint provided → verify with: mcp_tool="get_account_info", payload={network, address: <mint>}
 3. .sol domain provided → resolve with: mcp_tool="resolve_sns", payload={network, name: "<domain>.sol"}
+4. GoldRush data checks → mcp_tool="goldrush_token_balances" with wallet + network.
+5. MagicBlock private transfer checks → mcp_tool="magicblock_transfer" with from/to/mint/amount.
 4. Never invent MCP results — only set needs_mcp_query=true and let the orchestrator call MCP.
 
 FLOW:
@@ -172,6 +183,13 @@ class SolanaMCPClient:
             "get_token_balance": "/solana/get_token_balance",
             "get_account_info":  "/solana/get_account_info",
             "resolve_sns":       "/solana/resolve_sns",
+            "goldrush_token_balances": "/goldrush/token-balances",
+            "goldrush_decoded_events": "/goldrush/decoded-events",
+            "magicblock_deposit": "/magicblock/deposit",
+            "magicblock_transfer": "/magicblock/transfer",
+            "magicblock_withdraw": "/magicblock/withdraw",
+            "umbra_shield": "/umbra/shield",
+            "umbra_transfer": "/umbra/transfer",
         }
         path = endpoint_map.get(tool, "/solana/get_balance")
         url  = f"{self.base_url}{path}"

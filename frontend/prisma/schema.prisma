@@ -40,6 +40,8 @@ model User {
   email     String   @unique
   name      String?
   walletAddress String @default("")
+  subscriptionTier String  @default("FREE")
+  monthlyUsageUnits Int    @default(0)
   agents    Agent[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -55,6 +57,10 @@ model Agent {
   umbraViewingKey  String?      @db.Text
   umbraSpendingKey String?      @db.Text
   magicBlockSessionId String?   @db.Text
+  magicBlockValidatorEndpoint String? @db.Text
+  privateExecutionEnabled Boolean @default(false)
+  umbraShieldedMint String?     @db.Text
+  goldrushPortfolioSnapshot Json?
   configuration    Json?
   envConfig        String?      @db.Text // Encrypted .env (AES-256-GCM)
   tradeLogs        TradeLog[]
@@ -109,6 +115,8 @@ model Subscription {
 
   @@index([agentId, provider])
   @@index([status])
+  @@index([agentId, status])
+  @@index([provider, plan])
 }
 
 model TerminalLog {

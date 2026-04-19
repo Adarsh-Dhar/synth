@@ -11,11 +11,13 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Bot, BarChart3, Zap, Wallet, Menu, X, LogOut,
-  ShieldCheck, ShieldOff, Settings2,
+  Settings2, CreditCard, Lock,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { useUser } from '@/lib/user-context'
+import { SubscriptionStatusBadge } from '@/components/subscription-status-badge'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -23,6 +25,7 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
 
   const { publicKey, disconnect } = useWallet()
+  const { user } = useUser()
 
   const connected = !!publicKey
   const displayAddr = publicKey ? publicKey.toBase58() : null
@@ -39,6 +42,8 @@ export function Sidebar() {
     { href: '/dashboard/deploy',               label: 'Deploy Agent',     icon: Zap },
     { href: '/dashboard/agents',               label: 'Active Agents',    icon: Bot },
     { href: '/dashboard/bridge',               label: 'Bridge/Wallet',    icon: Wallet },
+    { href: '/dashboard/billing',              label: 'Billing',          icon: CreditCard },
+    { href: '/dashboard/privacy',              label: 'Privacy Center',   icon: Lock },
     {
       href:   '/dashboard/bot-configurator',
       label:  'Bot Configurator',
@@ -77,6 +82,9 @@ export function Sidebar() {
               <p className="text-xs text-muted-foreground">AI Trading</p>
             </div>
           </Link>
+          <div className="mt-3">
+            <SubscriptionStatusBadge tier={user?.subscriptionTier ?? 'FREE'} />
+          </div>
         </div>
 
         {/* Navigation */}

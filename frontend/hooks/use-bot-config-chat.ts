@@ -93,6 +93,18 @@ const STRATEGY_FIELDS: Record<string, CredentialField[]> = {
       placeholder: "http://localhost:8000/mcp",
       required: true,
     },
+    {
+      key: "MAGICBLOCK_TEE_VALIDATOR",
+      label: "MagicBlock TEE Validator",
+      placeholder: "mainnet-tee.magicblock.app",
+      required: false,
+    },
+    {
+      key: "UMBRA_PROGRAM_ADDRESS",
+      label: "Umbra Program Address",
+      placeholder: "UMBRAD2ishebJTcgCLkTkNUx1v3GyoAgpTRPeWoLykh",
+      required: false,
+    },
   ],
   arbitrage: [
     {
@@ -208,6 +220,18 @@ const STRATEGY_FIELDS: Record<string, CredentialField[]> = {
       label: "MCP Gateway URL",
       placeholder: "http://localhost:8000/mcp",
       required: true,
+    },
+    {
+      key: "MAGICBLOCK_TEE_VALIDATOR",
+      label: "MagicBlock TEE Validator",
+      placeholder: "mainnet-tee.magicblock.app",
+      required: false,
+    },
+    {
+      key: "UMBRA_PROGRAM_ADDRESS",
+      label: "Umbra Program Address",
+      placeholder: "DSuKkyqGVGgo4QtPABfxKJKygUDACbUhirnuv63mEpAJ",
+      required: false,
     },
   ],
   sentiment: [

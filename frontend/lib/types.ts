@@ -243,3 +243,21 @@ export type BotConfigCard =
   | { type: "review_card";     config: BotConfig }
   | { type: "success_card";    agentId: string; botName: string }
   | { type: "credentials_form" };
+
+export type SubscriptionTier = "FREE" | "PRO" | "ENTERPRISE";
+
+export interface PlanLimits {
+  maxAgents: number;
+  monthlyUsageUnits: number;
+}
+
+export interface UserBillingProfile {
+  subscriptionTier: SubscriptionTier;
+  planLimits: PlanLimits;
+  monthlyUsageUnits: number;
+}
+
+export interface AgentPrivacyState {
+  umbraEnabled?: boolean;
+  umbraShieldedBalanceUsd?: number;
+}

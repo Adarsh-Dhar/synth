@@ -30,6 +30,13 @@ function getEventStatus(eventName: string, body: Record<string, unknown>): strin
   return pickStatus(statusSource);
 }
 
+function tierFromPlan(plan: string | null | undefined): string {
+  const normalized = String(plan || "").toUpperCase();
+  if (normalized.includes("ENTERPRISE")) return "ENTERPRISE";
+  if (normalized.includes("PRO")) return "PRO";
+  return "FREE";
+}
+
 async function upsertSubscriptionByReference(args: {
   agentId: string;
   externalReference: string;
@@ -125,6 +132,15 @@ async function maybeDeliverX402(agentId: string, externalReference: string, meta
   });
 }
 
+async function syncUserTierFromAgent(agentId: string, tier: string) {
+  const agent = await prisma.agent.findUnique({ where: { id: agentId }, select: { userId: true } });
+  if (!agent?.userId) return;
+  await prisma.user.update({
+    where: { id: agent.userId },
+    data: { subscriptionTier: tier },
+  });
+}
+
 export async function POST(req: NextRequest) {
   const expectedSecret = String(process.env.DODO_WEBHOOK_SECRET || "").trim();
   const authHeader = String(req.headers.get("authorization") || "").trim();
@@ -203,6 +219,8 @@ export async function POST(req: NextRequest) {
       status: getEventStatus(eventName, body),
     });
 
+    await syncUserTierFromAgent(agentId, tierFromPlan(subscription.plan));
+
     await maybeDeliverX402(agentId, externalReference, metadata);
 
     return NextResponse.json(
@@ -217,7 +235,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (eventName === "payment.failed" || eventName === "subscription.cancelled" || eventName === "subscription.canceled") {
+  if (
+    eventName === "payment.failed" ||
+    eventName === "subscription.cancelled" ||
+    eventName === "subscription.canceled" ||
+    eventName === "subscription.downgraded"
+  ) {
     const subscription = await findSubscriptionByEvent(body, metadataCandidate);
     if (!subscription) {
       return NextResponse.json({ ok: true, ignored: true, event: eventName }, { status: 200 });
@@ -240,10 +263,36 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    await syncUserTierFromAgent(updated.agentId, "FREE");
+
     return NextResponse.json(
       { ok: true, subscriptionId: updated.id, status: updated.status, provider: updated.provider, event: eventName },
       { status: 200 },
     );
+  }
+
+  if (eventName === "subscription.upgraded") {
+    const subscription = await findSubscriptionByEvent(body, metadataCandidate);
+    if (!subscription) {
+      return NextResponse.json({ ok: true, ignored: true, event: eventName }, { status: 200 });
+    }
+
+    const plan = String(body.plan || subscription.plan || "PRO");
+    const updated = await prisma.subscription.update({
+      where: { externalReference: subscription.externalReference },
+      data: {
+        plan,
+        status: "ACTIVE",
+        metadata: body as any,
+      },
+    });
+
+    await syncUserTierFromAgent(updated.agentId, tierFromPlan(plan));
+    return NextResponse.json({ ok: true, event: eventName, tier: tierFromPlan(plan) }, { status: 200 });
+  }
+
+  if (eventName === "usage.threshold_reached") {
+    return NextResponse.json({ ok: true, event: eventName, threshold: true }, { status: 200 });
   }
 
   return NextResponse.json({ ok: true, ignored: true, event: eventName || "unknown" }, { status: 200 });

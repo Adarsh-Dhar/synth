@@ -8,6 +8,8 @@ interface User {
   id: string
   walletAddress: string
   email?: string | null
+  subscriptionTier?: string
+  monthlyUsageUnits?: number
 }
 
 interface UserContextType {

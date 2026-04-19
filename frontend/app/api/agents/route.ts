@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireWalletAuth } from "@/lib/auth/server";
 
+const MAX_AGENTS_BY_TIER: Record<string, number> = {
+  FREE: 2,
+  PRO: 10,
+  ENTERPRISE: 100,
+};
+
 // ─── GET: List all agents for a user ─────────────────────────────────────────
 export async function GET(req: NextRequest) {
   try {
@@ -63,6 +69,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Authenticated user not found." },
         { status: 404 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userExists.id },
+      select: { subscriptionTier: true },
+    });
+    const tier = String(user?.subscriptionTier || "FREE").toUpperCase();
+    const maxAgents = MAX_AGENTS_BY_TIER[tier] ?? MAX_AGENTS_BY_TIER.FREE;
+    const existingCount = await prisma.agent.count({ where: { userId: userExists.id } });
+    if (existingCount >= maxAgents) {
+      return NextResponse.json(
+        { error: `Plan limit reached for tier ${tier}.`, tier, maxAgents },
+        { status: 402 },
       );
     }
 

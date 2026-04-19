@@ -49,3 +49,8 @@ export const SUPPORTED_NETWORKS = [
   { id: 'solana-testnet', name: 'Solana Testnet', icon: '◇' },
   { id: 'solana-devnet', name: 'Solana Devnet', icon: '◎' },
 ]
+
+export const SUPPORTED_DATA_PROVIDERS = [
+  { id: 'goldrush', name: 'GoldRush', mode: 'decoded+priced' },
+  { id: 'rpc', name: 'Raw RPC', mode: 'raw-chain-data' },
+] as const

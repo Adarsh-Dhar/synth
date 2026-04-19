@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { DollarSign, TrendingUp, Zap, RefreshCw } from 'lucide-react'
 import { StatCard } from '@/components/stat-card'
 import { AgentsTable } from '@/components/agents-table'
+import { PortfolioPanel } from '@/components/portfolio-panel'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useUser } from '@/lib/user-context'
@@ -106,6 +107,24 @@ export default function DashboardPage() {
             subvalue={`of ${agents.length} total`}
             icon={<TrendingUp size={24} />}
           />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <PortfolioPanel />
+          <div className="bg-card border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-foreground">Billing Summary</h3>
+              <DollarSign size={16} className="text-muted-foreground" />
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">Track subscription tier and usage limits.</p>
+            <p className="text-2xl font-bold text-foreground">{user?.subscriptionTier ?? 'FREE'}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Monthly usage: {user?.monthlyUsageUnits ?? 0} units
+            </p>
+            <Link href="/dashboard/billing" className="text-xs text-primary mt-3 inline-block">
+              Open billing dashboard
+            </Link>
+          </div>
         </div>
 
         <div className="bg-card border border-border rounded-lg overflow-hidden">

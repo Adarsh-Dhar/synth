@@ -169,3 +169,18 @@ class MultiMCPClient:
             # Some stdio transports can raise during forced teardown; log and continue.
             print(f"⚠️  MCP shutdown completed with non-fatal errors: {exc}")
         print("🔒 All MCP sessions closed.")
+
+    async def connect_default_sessions(self):
+        """Best-effort registration for commonly used MCP endpoints in Synth."""
+        sse_targets = [
+            ("solana", os.environ.get("SOLANA_MCP_SSE_URL", "").strip()),
+            ("goldrush", os.environ.get("GOLDRUSH_MCP_SSE_URL", "").strip()),
+            ("umbra", os.environ.get("UMBRA_MCP_SSE_URL", "").strip()),
+        ]
+        for name, url in sse_targets:
+            if not url:
+                continue
+            try:
+                await self.connect_to_sse_server(name=name, url=url)
+            except Exception as exc:
+                print(f"⚠️  Failed to connect default MCP session '{name}': {exc}")

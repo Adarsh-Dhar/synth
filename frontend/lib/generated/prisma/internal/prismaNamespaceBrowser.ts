@@ -80,6 +80,8 @@ export const UserScalarFieldEnum = {
   email: 'email',
   name: 'name',
   walletAddress: 'walletAddress',
+  subscriptionTier: 'subscriptionTier',
+  monthlyUsageUnits: 'monthlyUsageUnits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -96,6 +98,10 @@ export const AgentScalarFieldEnum = {
   umbraViewingKey: 'umbraViewingKey',
   umbraSpendingKey: 'umbraSpendingKey',
   magicBlockSessionId: 'magicBlockSessionId',
+  magicBlockValidatorEndpoint: 'magicBlockValidatorEndpoint',
+  privateExecutionEnabled: 'privateExecutionEnabled',
+  umbraShieldedMint: 'umbraShieldedMint',
+  goldrushPortfolioSnapshot: 'goldrushPortfolioSnapshot',
   configuration: 'configuration',
   envConfig: 'envConfig',
   createdAt: 'createdAt',

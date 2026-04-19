@@ -33,6 +33,9 @@ export type AgentMinAggregateOutputType = {
   umbraViewingKey: string | null
   umbraSpendingKey: string | null
   magicBlockSessionId: string | null
+  magicBlockValidatorEndpoint: string | null
+  privateExecutionEnabled: boolean | null
+  umbraShieldedMint: string | null
   envConfig: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -47,6 +50,9 @@ export type AgentMaxAggregateOutputType = {
   umbraViewingKey: string | null
   umbraSpendingKey: string | null
   magicBlockSessionId: string | null
+  magicBlockValidatorEndpoint: string | null
+  privateExecutionEnabled: boolean | null
+  umbraShieldedMint: string | null
   envConfig: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -61,6 +67,10 @@ export type AgentCountAggregateOutputType = {
   umbraViewingKey: number
   umbraSpendingKey: number
   magicBlockSessionId: number
+  magicBlockValidatorEndpoint: number
+  privateExecutionEnabled: number
+  umbraShieldedMint: number
+  goldrushPortfolioSnapshot: number
   configuration: number
   envConfig: number
   createdAt: number
@@ -78,6 +88,9 @@ export type AgentMinAggregateInputType = {
   umbraViewingKey?: true
   umbraSpendingKey?: true
   magicBlockSessionId?: true
+  magicBlockValidatorEndpoint?: true
+  privateExecutionEnabled?: true
+  umbraShieldedMint?: true
   envConfig?: true
   createdAt?: true
   updatedAt?: true
@@ -92,6 +105,9 @@ export type AgentMaxAggregateInputType = {
   umbraViewingKey?: true
   umbraSpendingKey?: true
   magicBlockSessionId?: true
+  magicBlockValidatorEndpoint?: true
+  privateExecutionEnabled?: true
+  umbraShieldedMint?: true
   envConfig?: true
   createdAt?: true
   updatedAt?: true
@@ -106,6 +122,10 @@ export type AgentCountAggregateInputType = {
   umbraViewingKey?: true
   umbraSpendingKey?: true
   magicBlockSessionId?: true
+  magicBlockValidatorEndpoint?: true
+  privateExecutionEnabled?: true
+  umbraShieldedMint?: true
+  goldrushPortfolioSnapshot?: true
   configuration?: true
   envConfig?: true
   createdAt?: true
@@ -194,6 +214,10 @@ export type AgentGroupByOutputType = {
   umbraViewingKey: string | null
   umbraSpendingKey: string | null
   magicBlockSessionId: string | null
+  magicBlockValidatorEndpoint: string | null
+  privateExecutionEnabled: boolean
+  umbraShieldedMint: string | null
+  goldrushPortfolioSnapshot: runtime.JsonValue | null
   configuration: runtime.JsonValue | null
   envConfig: string | null
   createdAt: Date
@@ -230,6 +254,10 @@ export type AgentWhereInput = {
   umbraViewingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
   umbraSpendingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
   magicBlockSessionId?: Prisma.StringNullableFilter<"Agent"> | string | null
+  magicBlockValidatorEndpoint?: Prisma.StringNullableFilter<"Agent"> | string | null
+  privateExecutionEnabled?: Prisma.BoolFilter<"Agent"> | boolean
+  umbraShieldedMint?: Prisma.StringNullableFilter<"Agent"> | string | null
+  goldrushPortfolioSnapshot?: Prisma.JsonNullableFilter<"Agent">
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
@@ -250,6 +278,10 @@ export type AgentOrderByWithRelationInput = {
   umbraViewingKey?: Prisma.SortOrderInput | Prisma.SortOrder
   umbraSpendingKey?: Prisma.SortOrderInput | Prisma.SortOrder
   magicBlockSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  magicBlockValidatorEndpoint?: Prisma.SortOrderInput | Prisma.SortOrder
+  privateExecutionEnabled?: Prisma.SortOrder
+  umbraShieldedMint?: Prisma.SortOrderInput | Prisma.SortOrder
+  goldrushPortfolioSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   configuration?: Prisma.SortOrderInput | Prisma.SortOrder
   envConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -273,6 +305,10 @@ export type AgentWhereUniqueInput = Prisma.AtLeast<{
   umbraViewingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
   umbraSpendingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
   magicBlockSessionId?: Prisma.StringNullableFilter<"Agent"> | string | null
+  magicBlockValidatorEndpoint?: Prisma.StringNullableFilter<"Agent"> | string | null
+  privateExecutionEnabled?: Prisma.BoolFilter<"Agent"> | boolean
+  umbraShieldedMint?: Prisma.StringNullableFilter<"Agent"> | string | null
+  goldrushPortfolioSnapshot?: Prisma.JsonNullableFilter<"Agent">
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
@@ -293,6 +329,10 @@ export type AgentOrderByWithAggregationInput = {
   umbraViewingKey?: Prisma.SortOrderInput | Prisma.SortOrder
   umbraSpendingKey?: Prisma.SortOrderInput | Prisma.SortOrder
   magicBlockSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  magicBlockValidatorEndpoint?: Prisma.SortOrderInput | Prisma.SortOrder
+  privateExecutionEnabled?: Prisma.SortOrder
+  umbraShieldedMint?: Prisma.SortOrderInput | Prisma.SortOrder
+  goldrushPortfolioSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   configuration?: Prisma.SortOrderInput | Prisma.SortOrder
   envConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -314,6 +354,10 @@ export type AgentScalarWhereWithAggregatesInput = {
   umbraViewingKey?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   umbraSpendingKey?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   magicBlockSessionId?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
+  magicBlockValidatorEndpoint?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
+  privateExecutionEnabled?: Prisma.BoolWithAggregatesFilter<"Agent"> | boolean
+  umbraShieldedMint?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
+  goldrushPortfolioSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"Agent">
   configuration?: Prisma.JsonNullableWithAggregatesFilter<"Agent">
   envConfig?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Agent"> | Date | string
@@ -328,6 +372,10 @@ export type AgentCreateInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -348,6 +396,10 @@ export type AgentUncheckedCreateInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -366,6 +418,10 @@ export type AgentUpdateInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -386,6 +442,10 @@ export type AgentUncheckedUpdateInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -405,6 +465,10 @@ export type AgentCreateManyInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -419,6 +483,10 @@ export type AgentUpdateManyMutationInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -434,6 +502,10 @@ export type AgentUncheckedUpdateManyInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -459,6 +531,10 @@ export type AgentCountOrderByAggregateInput = {
   umbraViewingKey?: Prisma.SortOrder
   umbraSpendingKey?: Prisma.SortOrder
   magicBlockSessionId?: Prisma.SortOrder
+  magicBlockValidatorEndpoint?: Prisma.SortOrder
+  privateExecutionEnabled?: Prisma.SortOrder
+  umbraShieldedMint?: Prisma.SortOrder
+  goldrushPortfolioSnapshot?: Prisma.SortOrder
   configuration?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -474,6 +550,9 @@ export type AgentMaxOrderByAggregateInput = {
   umbraViewingKey?: Prisma.SortOrder
   umbraSpendingKey?: Prisma.SortOrder
   magicBlockSessionId?: Prisma.SortOrder
+  magicBlockValidatorEndpoint?: Prisma.SortOrder
+  privateExecutionEnabled?: Prisma.SortOrder
+  umbraShieldedMint?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -488,6 +567,9 @@ export type AgentMinOrderByAggregateInput = {
   umbraViewingKey?: Prisma.SortOrder
   umbraSpendingKey?: Prisma.SortOrder
   magicBlockSessionId?: Prisma.SortOrder
+  magicBlockValidatorEndpoint?: Prisma.SortOrder
+  privateExecutionEnabled?: Prisma.SortOrder
+  umbraShieldedMint?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -542,6 +624,10 @@ export type AgentUncheckedUpdateManyWithoutUserNestedInput = {
 
 export type EnumAgentStatusFieldUpdateOperationsInput = {
   set?: $Enums.AgentStatus
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type AgentCreateNestedOneWithoutFilesInput = {
@@ -608,6 +694,10 @@ export type AgentCreateWithoutUserInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -626,6 +716,10 @@ export type AgentUncheckedCreateWithoutUserInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -674,6 +768,10 @@ export type AgentScalarWhereInput = {
   umbraViewingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
   umbraSpendingKey?: Prisma.StringNullableFilter<"Agent"> | string | null
   magicBlockSessionId?: Prisma.StringNullableFilter<"Agent"> | string | null
+  magicBlockValidatorEndpoint?: Prisma.StringNullableFilter<"Agent"> | string | null
+  privateExecutionEnabled?: Prisma.BoolFilter<"Agent"> | boolean
+  umbraShieldedMint?: Prisma.StringNullableFilter<"Agent"> | string | null
+  goldrushPortfolioSnapshot?: Prisma.JsonNullableFilter<"Agent">
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
@@ -688,6 +786,10 @@ export type AgentCreateWithoutFilesInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -707,6 +809,10 @@ export type AgentUncheckedCreateWithoutFilesInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -740,6 +846,10 @@ export type AgentUpdateWithoutFilesInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -759,6 +869,10 @@ export type AgentUncheckedUpdateWithoutFilesInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -776,6 +890,10 @@ export type AgentCreateWithoutTradeLogsInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -795,6 +913,10 @@ export type AgentUncheckedCreateWithoutTradeLogsInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -828,6 +950,10 @@ export type AgentUpdateWithoutTradeLogsInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -847,6 +973,10 @@ export type AgentUncheckedUpdateWithoutTradeLogsInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -864,6 +994,10 @@ export type AgentCreateWithoutSubscriptionsInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -883,6 +1017,10 @@ export type AgentUncheckedCreateWithoutSubscriptionsInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -916,6 +1054,10 @@ export type AgentUpdateWithoutSubscriptionsInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -935,6 +1077,10 @@ export type AgentUncheckedUpdateWithoutSubscriptionsInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -952,6 +1098,10 @@ export type AgentCreateWithoutTerminalLogsInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -971,6 +1121,10 @@ export type AgentUncheckedCreateWithoutTerminalLogsInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -1004,6 +1158,10 @@ export type AgentUpdateWithoutTerminalLogsInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1023,6 +1181,10 @@ export type AgentUncheckedUpdateWithoutTerminalLogsInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1040,6 +1202,10 @@ export type AgentCreateManyUserInput = {
   umbraViewingKey?: string | null
   umbraSpendingKey?: string | null
   magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -1054,6 +1220,10 @@ export type AgentUpdateWithoutUserInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1072,6 +1242,10 @@ export type AgentUncheckedUpdateWithoutUserInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1090,6 +1264,10 @@ export type AgentUncheckedUpdateManyWithoutUserInput = {
   umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1163,6 +1341,10 @@ export type AgentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   umbraViewingKey?: boolean
   umbraSpendingKey?: boolean
   magicBlockSessionId?: boolean
+  magicBlockValidatorEndpoint?: boolean
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: boolean
+  goldrushPortfolioSnapshot?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -1184,6 +1366,10 @@ export type AgentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   umbraViewingKey?: boolean
   umbraSpendingKey?: boolean
   magicBlockSessionId?: boolean
+  magicBlockValidatorEndpoint?: boolean
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: boolean
+  goldrushPortfolioSnapshot?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -1200,6 +1386,10 @@ export type AgentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   umbraViewingKey?: boolean
   umbraSpendingKey?: boolean
   magicBlockSessionId?: boolean
+  magicBlockValidatorEndpoint?: boolean
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: boolean
+  goldrushPortfolioSnapshot?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -1216,13 +1406,17 @@ export type AgentSelectScalar = {
   umbraViewingKey?: boolean
   umbraSpendingKey?: boolean
   magicBlockSessionId?: boolean
+  magicBlockValidatorEndpoint?: boolean
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: boolean
+  goldrushPortfolioSnapshot?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AgentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "status" | "userId" | "walletAddress" | "umbraViewingKey" | "umbraSpendingKey" | "magicBlockSessionId" | "configuration" | "envConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["agent"]>
+export type AgentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "status" | "userId" | "walletAddress" | "umbraViewingKey" | "umbraSpendingKey" | "magicBlockSessionId" | "magicBlockValidatorEndpoint" | "privateExecutionEnabled" | "umbraShieldedMint" | "goldrushPortfolioSnapshot" | "configuration" | "envConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["agent"]>
 export type AgentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tradeLogs?: boolean | Prisma.Agent$tradeLogsArgs<ExtArgs>
@@ -1256,6 +1450,10 @@ export type $AgentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     umbraViewingKey: string | null
     umbraSpendingKey: string | null
     magicBlockSessionId: string | null
+    magicBlockValidatorEndpoint: string | null
+    privateExecutionEnabled: boolean
+    umbraShieldedMint: string | null
+    goldrushPortfolioSnapshot: runtime.JsonValue | null
     configuration: runtime.JsonValue | null
     envConfig: string | null
     createdAt: Date
@@ -1696,6 +1894,10 @@ export interface AgentFieldRefs {
   readonly umbraViewingKey: Prisma.FieldRef<"Agent", 'String'>
   readonly umbraSpendingKey: Prisma.FieldRef<"Agent", 'String'>
   readonly magicBlockSessionId: Prisma.FieldRef<"Agent", 'String'>
+  readonly magicBlockValidatorEndpoint: Prisma.FieldRef<"Agent", 'String'>
+  readonly privateExecutionEnabled: Prisma.FieldRef<"Agent", 'Boolean'>
+  readonly umbraShieldedMint: Prisma.FieldRef<"Agent", 'String'>
+  readonly goldrushPortfolioSnapshot: Prisma.FieldRef<"Agent", 'Json'>
   readonly configuration: Prisma.FieldRef<"Agent", 'Json'>
   readonly envConfig: Prisma.FieldRef<"Agent", 'String'>
   readonly createdAt: Prisma.FieldRef<"Agent", 'DateTime'>

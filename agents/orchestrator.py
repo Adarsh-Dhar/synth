@@ -157,6 +157,49 @@ export async function getTokenBalance(
     return 0n;
   }
 }
+
+/** GoldRush helper: fetch token balances with decoded metadata. */
+export async function getGoldRushTokenBalances(
+    network: string,
+    walletAddress: string,
+): Promise<unknown> {
+    return callMcpTool("solana", "goldrush_token_balances", {
+        network,
+        wallet: walletAddress,
+    });
+}
+
+/** MagicBlock helper for private token transfer path. */
+export async function callMagicBlockPrivateTransfer(args: {
+    network: string;
+    from: string;
+    to: string;
+    mint: string;
+    amount: string;
+}): Promise<unknown> {
+    return callMcpTool("solana", "magicblock_transfer", args);
+}
+
+/** Umbra helper for private shield operation. */
+export async function callUmbraShield(args: {
+    network: string;
+    wallet: string;
+    mint: string;
+    amount: string;
+}): Promise<unknown> {
+    return callMcpTool("solana", "umbra_shield", args);
+}
+
+/** Umbra helper for anonymous transfer operation. */
+export async function callUmbraTransfer(args: {
+    network: string;
+    sender: string;
+    recipient: string;
+    mint: string;
+    amount: string;
+}): Promise<unknown> {
+    return callMcpTool("solana", "umbra_transfer", args);
+}
 '''.lstrip("\n")
 
 # ─── SNS Resolver — injected into every generated bot ────────────────────────
@@ -324,6 +367,19 @@ SOLANA MCP TOOL REFERENCE:
 
   Resolve SNS domain (.sol name) to pubkey:
     callMcpTool("solana", "resolve_sns", { network, name: "alice.sol" })
+
+    GoldRush decoded balance reference:
+        getGoldRushTokenBalances(network, walletAddress)
+
+    MagicBlock private transfer path:
+        callMagicBlockPrivateTransfer({ network, from, to, mint, amount })
+
+    Umbra privacy path:
+        callUmbraShield({ network, wallet, mint, amount })
+        callUmbraTransfer({ network, sender, recipient, mint, amount })
+
+    Dodo usage metering hook:
+        Emit a best-effort usage event at bot start and stop via configured billing endpoint.
 
 ENV VARS your bot should read:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
@@ -574,11 +630,18 @@ class MetaAgent:
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         network = plan.collected_parameters.get("SOLANA_NETWORK", "devnet")
+        mcps = ["solana"]
+        if plan.collected_parameters.get("GOLDRUSH_API_KEY"):
+            mcps.append("goldrush")
+        if plan.collected_parameters.get("MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL"):
+            mcps.append("magicblock")
+        if plan.collected_parameters.get("UMBRA_PROGRAM_ADDRESS"):
+            mcps.append("umbra")
         intent = {
             "chain":    "solana",
             "network":  network,
             "strategy": plan.strategy_type,
-            "mcps":     ["solana"],
+            "mcps":     mcps,
             "bot_name": self._bot_name(plan.strategy_type),
             "requires_openai": plan.strategy_type == "sentiment",
             "collected_parameters": plan.collected_parameters,
@@ -804,7 +867,11 @@ REQUIRED ENV VARS:
   USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS,
   POOL_ADDRESS, PROGRAM_ID,
   TRADE_AMOUNT_LAMPORTS, MIN_PROFIT_LAMPORTS,
-  POLL_INTERVAL_MS, SIMULATION_MODE
+    POLL_INTERVAL_MS, SIMULATION_MODE,
+    GOLDRUSH_API_KEY, GOLDRUSH_STREAM_URL,
+    MAGICBLOCK_TEE_VALIDATOR, MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL,
+    UMBRA_PROGRAM_ADDRESS, UMBRA_NETWORK,
+    DODO_PLAN_PRO_ID
 
 RULES:
 - Every BigInt value is in the token's smallest unit (lamports for SOL).

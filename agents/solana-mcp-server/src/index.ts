@@ -10,6 +10,7 @@ import {
   PublicKey,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
+import { createMagicBlockRouter } from './magicblock-routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -23,6 +24,10 @@ const HOST = process.env.HOST ?? '127.0.0.1';
 const RPC_URL = String(
   process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com'
 ).trim();
+const GOLDRUSH_BASE_URL = String(process.env.GOLDRUSH_BASE_URL ?? 'https://api.covalenthq.com/v1').trim().replace(/\/+$/, '');
+const GOLDRUSH_NETWORK_ID = String(process.env.GOLDRUSH_NETWORK_ID ?? 'solana-mainnet').trim();
+const GOLDRUSH_API_KEY = String(process.env.GOLDRUSH_API_KEY ?? '').trim();
+const MAGICBLOCK_BASE_URL = String(process.env.MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL ?? '').trim();
 
 const connection = new Connection(RPC_URL, { commitment: 'confirmed' });
 
@@ -181,6 +186,54 @@ app.post('/solana/resolve_sns', async (req, res) => {
   }
 });
 
+// ── GOLDRUSH PROXY ROUTES ───────────────────────────────────────────────────
+app.post('/goldrush/token-balances', async (req, res) => {
+  try {
+    if (!GOLDRUSH_API_KEY) return errorResponse(res, 500, 'GOLDRUSH_API_KEY missing');
+    const wallet = String(req.body.wallet ?? req.body.address ?? '').trim();
+    if (!wallet) return errorResponse(res, 400, 'wallet required');
+
+    const url = `${GOLDRUSH_BASE_URL}/${GOLDRUSH_NETWORK_ID}/address/${encodeURIComponent(wallet)}/balances_v2/`;
+    const upstream = await fetch(url, {
+      headers: { Authorization: `Bearer ${GOLDRUSH_API_KEY}` },
+    });
+    const body = await upstream.text();
+    return res.status(upstream.status).type('application/json').send(body);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return errorResponse(res, 500, `goldrush/token-balances error: ${msg}`);
+  }
+});
+
+app.post('/goldrush/decoded-events', async (req, res) => {
+  try {
+    if (!GOLDRUSH_API_KEY) return errorResponse(res, 500, 'GOLDRUSH_API_KEY missing');
+    const wallet = String(req.body.wallet ?? req.body.address ?? '').trim();
+    if (!wallet) return errorResponse(res, 400, 'wallet required');
+
+    const url = `${GOLDRUSH_BASE_URL}/${GOLDRUSH_NETWORK_ID}/address/${encodeURIComponent(wallet)}/transactions_v3/`;
+    const upstream = await fetch(url, {
+      headers: { Authorization: `Bearer ${GOLDRUSH_API_KEY}` },
+    });
+    const body = await upstream.text();
+    return res.status(upstream.status).type('application/json').send(body);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return errorResponse(res, 500, `goldrush/decoded-events error: ${msg}`);
+  }
+});
+
+// ── MAGICBLOCK + UMBRA ROUTES ───────────────────────────────────────────────
+app.use('/magicblock', createMagicBlockRouter(MAGICBLOCK_BASE_URL));
+
+app.post('/umbra/shield', async (_req, res) => {
+  return res.json({ ok: true, simulated: true, message: 'Umbra shield route is wired; integrate SDK call next.' });
+});
+
+app.post('/umbra/transfer', async (_req, res) => {
+  return res.json({ ok: true, simulated: true, message: 'Umbra transfer route is wired; integrate SDK call next.' });
+});
+
 // ── 404 catch-all ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ ok: false, error: `Not found: ${req.method} ${req.path}` });
@@ -190,5 +243,5 @@ app.use((req, res) => {
 app.listen(PORT, HOST, () => {
   log('INFO', `Solana MCP Server → http://${HOST}:${PORT}`);
   log('INFO', `RPC: ${RPC_URL}`);
-  log('INFO', 'Routes: /health /solana/get_balance /solana/get_token_balance /solana/get_account_info /solana/send_raw_transaction /solana/resolve_sns');
+  log('INFO', 'Routes: /health /solana/* /goldrush/* /magicblock/* /umbra/*');
 });

@@ -28,6 +28,8 @@ DEFAULT_CONFIG = {
     "gasBufferUsdc": 0,
     "pollingIntervalSec": 15,
     "simulationMode": True,
+    "dataProvider": "goldrush",
+    "privateExecution": False,
     "maxRiskScore": 20,
 }
 
@@ -89,6 +91,8 @@ CONFIGURATION:
 - Quote denom: {quote_token} ({quote_denom})
 - Poll every: {config.get("pollingIntervalSec", 15)} seconds
 - Simulation mode default: {"true" if config.get("simulationMode", True) else "false"}
+- Data provider: {config.get("dataProvider", "goldrush")}
+- Private execution: {"true" if config.get("privateExecution", False) else "false"}
 
 RULES:
 1. Use TypeScript only.
@@ -100,6 +104,8 @@ RULES:
 7. For yield sweeper behavior, observe SPL token balances and call bridge/sweep helpers when thresholds are met.
 8. Avoid Move-specific terminology (move_view/move_execute); generate Solana-native code.
 9. Keep runtime Solana-native and avoid Move constructs.
+10. If data provider is goldrush, prefer decoded/metadata-aware reads before raw RPC output.
+11. If private execution is true, include MagicBlock/Umbra private transfer hooks in runtime flow.
 """.strip()
 
 

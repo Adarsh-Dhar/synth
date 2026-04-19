@@ -9,6 +9,7 @@ import { Agent } from '@/lib/api'
 import { AgentsTableProps } from '@/lib/types'
 import { useUser } from '@/lib/user-context'
 import { getWalletAuthHeaders } from '@/lib/auth/client'
+import { GoldRushSecurityBadge } from '@/components/goldrush-security-badge'
 // Solana integration only; wallet gating removed
 
 // ── Status styles ─────────────────────────────────────────────────────────────
@@ -136,7 +137,7 @@ export function AgentsTable({ agents, onRefresh }: AgentsTableProps) {
       <table className="w-full">
         <thead>
           <tr className="border-b border-border bg-muted/30">
-            {['Name', 'Status', 'Strategy', 'Configuration', 'Actions'].map(h => (
+            {['Name', 'Status', 'Strategy', 'Configuration', 'Signals', 'Actions'].map(h => (
               <th key={h} className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">
                 {h}
               </th>
@@ -228,6 +229,18 @@ export function AgentsTable({ agents, onRefresh }: AgentsTableProps) {
                   ) : (
                     <span className="italic text-muted-foreground/50">no config</span>
                   )}
+                </td>
+
+                {/* Actions */}
+                <td className="px-6 py-4">
+                  <div className="flex flex-col items-start gap-2">
+                    <GoldRushSecurityBadge verified compact />
+                    {Boolean((cfg?.privateExecution ?? cfg?.privateExecutionEnabled) as boolean | undefined) && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded border border-cyan-500/30 text-cyan-300 bg-cyan-500/10">
+                        Private Execution
+                      </span>
+                    )}
+                  </div>
                 </td>
 
                 {/* Actions */}
