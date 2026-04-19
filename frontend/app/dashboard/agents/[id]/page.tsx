@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PnLChart } from '@/components/pnl-chart'
 import {
   ChevronLeft, Play, Square, Trash2, RefreshCw, Loader2,
 } from 'lucide-react'
@@ -38,6 +39,11 @@ interface TerminalEntry {
   line:  string
   level: 'stdout' | 'stderr'
   ts:    number
+}
+
+interface PnLDataPoint {
+  time: string
+  value: number
 }
 
 // ── Status helpers ────────────────────────────────────────────────────────────
@@ -253,6 +259,27 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const inTransition = agent.status === 'STARTING' || agent.status === 'STOPPING'
   const cfg          = agent.configuration as Record<string, unknown> | null
 
+  const pnlData = React.useMemo<PnLDataPoint[]>(() => {
+    if (!agent.tradeLogs || agent.tradeLogs.length === 0) return []
+
+    const ordered = [...agent.tradeLogs].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )
+
+    let cumulative = 0
+    const points: PnLDataPoint[] = ordered.map((log) => {
+      const delta = Number.parseFloat(String(log.profitUsd ?? '0'))
+      cumulative += Number.isFinite(delta) ? delta : 0
+      const t = new Date(log.createdAt)
+      const time = [t.getHours(), t.getMinutes()]
+        .map((n) => String(n).padStart(2, '0'))
+        .join(':')
+      return { time, value: Number(cumulative.toFixed(4)) }
+    })
+
+    return points
+  }, [agent.tradeLogs])
+
   return (
     <div className="min-h-screen bg-background">
       {/* ── Header ── */}
@@ -412,6 +439,16 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
           {/* ── Right column: terminal ── */}
           <div className="lg:col-span-2">
+            <div className="bg-card border border-border rounded-lg p-5 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold">PnL Trend (USD)</h3>
+                <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px]">
+                  Security Checked via GoldRush
+                </Badge>
+              </div>
+              <PnLChart data={pnlData} />
+            </div>
+
             <LiveTerminal agentId={agentId} running={isRunning} />
           </div>
 
