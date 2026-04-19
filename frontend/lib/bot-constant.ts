@@ -31,6 +31,8 @@ export interface BotEnvConfig {
   SOLANA_USDC_MINT?: string;
   GOLDRUSH_API_KEY?: string;
   GOLDRUSH_STREAM_URL?: string;
+  GOLDRUSH_STREAM_EVENTS?: string;
+  GOLDRUSH_MCP_URL?: string;
   MAGICBLOCK_TEE_VALIDATOR?: string;
   MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL?: string;
   UMBRA_PROGRAM_ADDRESS?: string;
@@ -57,6 +59,8 @@ export const DEFAULT_BOT_ENV_CONFIG: BotEnvConfig = {
   SOLANA_USDC_MINT: "",
   GOLDRUSH_API_KEY: "",
   GOLDRUSH_STREAM_URL: "",
+  GOLDRUSH_STREAM_EVENTS: "lp_pull,drainer_approval,phishing_airdrop",
+  GOLDRUSH_MCP_URL: "",
   MAGICBLOCK_TEE_VALIDATOR: "",
   MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL: "",
   UMBRA_PROGRAM_ADDRESS: "",
@@ -233,6 +237,22 @@ export function getRequiredEnvFields(
         type: "text",
         required: false,
         placeholder: "wss://api.goldrush.dev/graphql",
+      },
+      {
+        key: "GOLDRUSH_STREAM_EVENTS",
+        label: "GoldRush Stream Events",
+        type: "text",
+        required: false,
+        placeholder: "lp_pull,drainer_approval,phishing_airdrop",
+        helpText: "Comma-separated event types the bot should react to.",
+      },
+      {
+        key: "GOLDRUSH_MCP_URL",
+        label: "GoldRush MCP URL",
+        type: "text",
+        required: true,
+        placeholder: "https://goldrush-mcp.example.com/mcp",
+        helpText: "MCP endpoint used by generated bot tools for GoldRush queries.",
       },
     );
   }

@@ -10,3 +10,12 @@ Synth runs agents in a backend-only execution model with per-agent Docker isolat
 - Backend telemetry path: dashboard log streaming is sourced from worker terminal-log APIs (`/api/agents/[agentId]/terminal-logs`) for auditable operational visibility.
 - RPC Fast simulation sandbox: Solana simulation and runtime requests are routed through the configured RPC Fast Frankfurt endpoint to keep test loops low-latency and reduce stale quote risk.
 - Mainnet safety posture: production mainnet rollout is gated behind external security review; we are actively targeting the Adevar Labs audit track before enabling unrestricted live deployment.
+
+## Worker GoldRush Environment
+
+The worker's GoldRush stream manager uses worker-level credentials and endpoints (separate from per-agent encrypted env).
+
+- `GOLDRUSH_API_KEY`: API key used by worker stream subscriptions.
+- `GOLDRUSH_STREAM_URL`: SSE/WebSocket-compatible stream endpoint used by worker and frontend proxies.
+- `GOLDRUSH_MCP_URL`: GoldRush MCP endpoint allowlisted for agent runtime calls.
+- `GOLDRUSH_STREAM_EVENTS` (optional): default comma-separated filters, for example `lp_pull,drainer_approval,phishing_airdrop`.

@@ -12,6 +12,7 @@ export function assembleSolanaBotFiles(): BotFile[] {
     { filepath: "tsconfig.json", content: SOLANA_TSCONFIG },
     { filepath: ".env.example", content: SOLANA_ENV_EXAMPLE },
     { filepath: "src/solana_utils.ts", content: SOLANA_UTILS_TS },
+    { filepath: "src/goldrush_mcp.ts", content: SOLANA_GOLDRUSH_MCP_TS },
     { filepath: "src/index.ts", content: SOLANA_INDEX_TS },
   ];
 }
@@ -66,6 +67,9 @@ RECIPIENT_ADDRESS=YourRecipientBase58
 # Poll interval seconds
 POLL_INTERVAL=15
 SIMULATION_MODE=true
+GOLDRUSH_API_KEY=gr_your_api_key
+GOLDRUSH_MCP_URL=https://goldrush-mcp.example.com/mcp
+GOLDRUSH_STREAM_EVENTS=lp_pull,drainer_approval,phishing_airdrop
 `;
 
 const SOLANA_UTILS_TS = `import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -79,9 +83,37 @@ export async function getSolBalance(rpcUrl: string, address: string): Promise<nu
 }
 `;
 
+const SOLANA_GOLDRUSH_MCP_TS = `import axios from "axios";
+import "dotenv/config";
+
+type GoldRushMcpWalletResponse = {
+  balanceSol?: number;
+  priceUsd?: number;
+};
+
+export async function getWalletBalanceFromGoldRush(walletAddress: string): Promise<number> {
+  const baseUrl = process.env.GOLDRUSH_MCP_URL ?? "";
+  const apiKey = process.env.GOLDRUSH_API_KEY ?? "";
+  if (!baseUrl) throw new Error("GOLDRUSH_MCP_URL is required");
+  if (!apiKey) throw new Error("GOLDRUSH_API_KEY is required");
+
+  const response = await axios.get<GoldRushMcpWalletResponse>(
+    baseUrl.replace(/\/$/, "") + "/wallet/balance",
+    {
+      params: { walletAddress },
+      headers: { Authorization: "Bearer " + apiKey },
+      timeout: 12000,
+    },
+  );
+
+  const value = Number(response.data?.balanceSol ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+`;
+
 const SOLANA_INDEX_TS = `import "dotenv/config";
 import { Connection, PublicKey, SystemProgram, Transaction, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { getSolBalance } from "./solana_utils";
+import { getWalletBalanceFromGoldRush } from "./goldrush_mcp";
 import fs from "fs";
 
 const RPC = process.env.SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
@@ -94,7 +126,7 @@ function log(level: string, msg: string) { console.log("[" + new Date().toISOStr
 
 async function runCycle() {
   if (!WALLET) throw new Error("USER_WALLET_ADDRESS is required in .env");
-  const balance = await getSolBalance(RPC, WALLET);
+  const balance = await getWalletBalanceFromGoldRush(WALLET);
   log("INFO", "Balance (" + WALLET + ") = " + balance + " SOL");
 
   const threshold = 0.1; // default threshold

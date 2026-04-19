@@ -11,6 +11,7 @@ import * as path from "path";
 import * as os from "os";
 import { PassThrough } from "stream";
 import { decryptEnvConfig } from "./crypto-env.js";
+import { GoldRushStreamEvent } from "./types.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,11 +40,39 @@ const docker = new Docker({
 const DOCKER_IMAGE = process.env.AGENT_DOCKER_IMAGE ?? "node:20-alpine";
 const DOCKER_MEMORY_BYTES = parseInt(process.env.AGENT_DOCKER_MEMORY_BYTES ?? "536870912", 10);
 const DOCKER_NANO_CPUS = parseInt(process.env.AGENT_DOCKER_NANO_CPUS ?? "1000000000", 10);
+const DEFAULT_AGENT_EVENT_ENDPOINT = process.env.AGENT_EVENT_ENDPOINT ?? "http://127.0.0.1:7777/agent-event";
 
 const MAX_LOG_LINES = 2000;
 
+export type EventDeliveryResult = {
+  ok: boolean;
+  error?: string;
+};
+
 function listEnvPairs(env: Record<string, string>): string[] {
   return Object.entries(env).map(([k, v]) => `${k}=${v}`);
+}
+
+function resolveHostFromUrl(rawUrl: string | undefined): string | null {
+  if (!rawUrl) return null;
+  try {
+    const parsed = new URL(rawUrl);
+    return parsed.hostname || null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveAllowlistedDomains(goldrushMcpUrl: string): string {
+  const configured = String(process.env.AGENT_DOCKER_ALLOWED_OUTBOUND_DOMAINS ?? "")
+    .split(",")
+    .map((d) => d.trim())
+    .filter(Boolean);
+
+  const mcpHost = resolveHostFromUrl(goldrushMcpUrl);
+  if (mcpHost) configured.push(mcpHost);
+
+  return Array.from(new Set(configured)).join(",");
 }
 
 function safeResolveUnder(root: string, filePath: string): string {
@@ -145,6 +174,53 @@ export function getLogs(agentId: string, since?: number): LogEntry[] {
   return agent.logs.filter((e) => e.ts > since);
 }
 
+async function waitForExecExit(container: Container, execId: string): Promise<number> {
+  for (let i = 0; i < 60; i += 1) {
+    const inspect = await container.getExec(execId).inspect();
+    if (!inspect.Running) {
+      return inspect.ExitCode ?? 1;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return 1;
+}
+
+export async function deliverEventToAgent(
+  agentId: string,
+  event: GoldRushStreamEvent,
+  endpoint: string = DEFAULT_AGENT_EVENT_ENDPOINT,
+): Promise<EventDeliveryResult> {
+  const agent = running.get(agentId);
+  if (!agent) {
+    return { ok: false, error: `Agent ${agentId} is not running` };
+  }
+
+  const payloadB64 = Buffer.from(JSON.stringify(event), "utf8").toString("base64");
+  const exec = await agent.container.exec({
+    AttachStdout: true,
+    AttachStderr: true,
+    Cmd: [
+      "node",
+      "-e",
+      "const endpoint=process.env.EVENT_ENDPOINT||'http://127.0.0.1:7777/agent-event';"
+        + "const raw=Buffer.from(process.env.EVENT_PAYLOAD_B64||'', 'base64').toString('utf8');"
+        + "const payload=JSON.parse(raw||'{}');"
+        + "fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})"
+        + ".then((res)=>{if(!res.ok){throw new Error('HTTP '+res.status);}})"
+        + ".catch((err)=>{console.error(err?.message||String(err));process.exit(1);});",
+    ],
+    Env: [`EVENT_ENDPOINT=${endpoint}`, `EVENT_PAYLOAD_B64=${payloadB64}`],
+  });
+
+  await exec.start({ Detach: false, Tty: false });
+  const exitCode = await waitForExecExit(agent.container, exec.id);
+  if (exitCode !== 0) {
+    return { ok: false, error: `Event delivery failed with exit code ${exitCode}` };
+  }
+
+  return { ok: true };
+}
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 export interface StartAgentOptions {
@@ -182,6 +258,10 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
     console.warn(`[AgentRunner] No encryptedEnv found for agent ${agentId} — bot will likely fail`);
   }
 
+  if (!decryptedEnv.GOLDRUSH_API_KEY) {
+    console.warn(`[AgentRunner] Missing decrypted GOLDRUSH_API_KEY for agent ${agentId}`);
+  }
+
   // ── 2. Write files to temp dir ─────────────────────────────────────────────
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `agent-${agentId}-`));
   console.log(`[AgentRunner] Work dir: ${workDir}`);
@@ -204,10 +284,19 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
   const runCommand = buildContainerCommand(files, entryPoint);
   console.log(`[AgentRunner] Entry point: ${entryPoint}`);
 
+  const resolvedGoldrushMcpUrl =
+    decryptedEnv.GOLDRUSH_MCP_URL ||
+    process.env.GOLDRUSH_MCP_URL ||
+    "";
+  const allowlistedDomains = resolveAllowlistedDomains(resolvedGoldrushMcpUrl);
+
   // ── 4. Start isolated container ────────────────────────────────────────────
   const childEnv: NodeJS.ProcessEnv = {
     ...decryptedEnv,
     NODE_ENV: "production",
+    AGENT_EVENT_ENDPOINT: DEFAULT_AGENT_EVENT_ENDPOINT,
+    GOLDRUSH_MCP_URL: resolvedGoldrushMcpUrl,
+    AGENT_ALLOWED_OUTBOUND_DOMAINS: allowlistedDomains,
   };
 
   const container = await docker.createContainer({

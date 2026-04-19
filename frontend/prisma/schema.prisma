@@ -61,6 +61,7 @@ model Agent {
   privateExecutionEnabled Boolean @default(false)
   umbraShieldedMint String?     @db.Text
   goldrushPortfolioSnapshot Json?
+  goldrushStreamFilter String?  @db.Text
   configuration    Json?
   envConfig        String?      @db.Text // Encrypted .env (AES-256-GCM)
   tradeLogs        TradeLog[]

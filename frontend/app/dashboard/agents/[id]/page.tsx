@@ -50,6 +50,13 @@ interface PnLDataPoint {
   value: number
 }
 
+function formatThreatType(type: string): string {
+  if (type === 'lp_pull') return 'LP Pull'
+  if (type === 'drainer_approval') return 'Drainer Approval'
+  if (type === 'phishing_airdrop') return 'Phishing Airdrop'
+  return type
+}
+
 // ── Status helpers ────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
@@ -316,6 +323,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     return points
   }, [agent.tradeLogs])
 
+  const latestThreatType = React.useMemo(() => {
+    const last = goldRushEvents[goldRushEvents.length - 1]
+    return last?.type ?? null
+  }, [goldRushEvents])
+
   return (
     <div className="min-h-screen bg-background">
       {/* ── Header ── */}
@@ -479,7 +491,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold">PnL Trend (USD)</h3>
                 <div className="flex items-center gap-2">
-                  <GoldRushSecurityBadge verified={goldRushConnected || goldRushEvents.length > 0} />
+                  <GoldRushSecurityBadge
+                    verified={goldRushConnected || goldRushEvents.length > 0}
+                    threatType={latestThreatType}
+                  />
                   <span className="text-[10px] text-muted-foreground">
                     {goldRushConnected ? 'stream live' : `${goldRushEvents.length} events cached`}
                   </span>
@@ -488,7 +503,47 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <PnLChart data={pnlData} />
             </div>
 
-            <LiveTerminal agentId={agentId} running={isRunning} authHeaders={authHeaders} />
+            <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+              <div className="xl:col-span-3">
+                <LiveTerminal agentId={agentId} running={isRunning} authHeaders={authHeaders} />
+              </div>
+
+              <div className="xl:col-span-2 bg-card border border-border rounded-lg overflow-hidden flex flex-col h-[500px]">
+                <div className="bg-muted/30 border-b border-border px-4 py-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">GoldRush Event Log</h3>
+                  <span className="text-xs text-muted-foreground">{goldRushEvents.length} events</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {goldRushEvents.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No GoldRush events received yet.</p>
+                  ) : (
+                    [...goldRushEvents].reverse().map((event, index) => (
+                      <div key={`${event.timestamp}-${index}`} className="rounded-md border border-border p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-red-300">{formatThreatType(event.type)}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(event.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+
+                        {event.txHash && (
+                          <p className="mt-1 text-[10px] font-mono text-muted-foreground truncate" title={event.txHash}>
+                            tx: {event.txHash}
+                          </p>
+                        )}
+
+                        {event.walletAddress && (
+                          <p className="text-[10px] text-muted-foreground truncate" title={event.walletAddress}>
+                            wallet: {event.walletAddress}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>

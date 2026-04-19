@@ -2,6 +2,8 @@ import express from "express";
 import {
   startAgent,
   stopAgent,
+  normalizeAgentEvent,
+  deliverAgentEvent,
   getAgentStatus,
   getAgentLogs,
   listRunningAgents,
@@ -82,6 +84,28 @@ app.get("/agents/:id/logs", requireAuth, (req, res) => {
 
   const entries = getAgentLogs(id.toString(), since);
   res.json({ agentId: id, entries });
+});
+
+// ── Inbound stream event delivery ────────────────────────────────────────────
+app.post("/agents/:id/event", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const event = normalizeAgentEvent(id.toString(), req.body);
+
+  if (!event) {
+    return res.status(400).json({ success: false, error: "Invalid event payload" });
+  }
+
+  try {
+    await deliverAgentEvent({
+      agentId: id.toString(),
+      event,
+      receivedAt: Date.now(),
+    });
+    return res.json({ success: true, delivered: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ success: false, error: message });
+  }
 });
 
 export function startServer(port: number) {

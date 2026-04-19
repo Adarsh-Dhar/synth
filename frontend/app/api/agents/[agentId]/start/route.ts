@@ -16,9 +16,23 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   const { agentId } = await params;
 
   try {
-    const owned = await requireOwnedAgent(req, agentId, { select: { id: true, userId: true }, enforceSubscription: true });
+    const owned = await requireOwnedAgent(req, agentId, { includeFiles: true, enforceSubscription: true });
     if (owned.error || !owned.agent || !owned.user) {
       return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
+    }
+
+    const agent = owned.agent as {
+      configuration?: Record<string, unknown> | null;
+      files?: Array<{ filepath?: string; content?: string }>;
+    };
+    const files = Array.isArray(agent.files)
+      ? agent.files
+          .filter((f) => typeof f.filepath === "string" && typeof f.content === "string")
+          .map((f) => ({ filepath: f.filepath as string, content: f.content as string }))
+      : [];
+
+    if (files.length === 0) {
+      return NextResponse.json({ error: "Agent has no files to run." }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -47,6 +61,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         "Content-Type": "application/json",
         Authorization:  `Bearer ${workerSecret}`,
       },
+      body: JSON.stringify({
+        files,
+        configuration: agent.configuration ?? {},
+      }),
     });
 
     const raw = await workerRes.text();

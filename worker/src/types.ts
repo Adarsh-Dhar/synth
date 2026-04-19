@@ -33,3 +33,24 @@ export interface PriceData {
   volume24h?: number;
   priceChange24h?: number;
 }
+
+export type GoldRushThreatType = "lp_pull" | "drainer_approval" | "phishing_airdrop";
+
+export interface GoldRushStreamEvent {
+  agentId?: string;
+  type: GoldRushThreatType;
+  txHash?: string;
+  walletAddress?: string;
+  tokenAddress?: string;
+  chainId?: string;
+  source?: string;
+  riskScore?: number;
+  details?: Record<string, unknown>;
+  timestamp: number;
+}
+
+export interface AgentEventTrigger {
+  agentId: string;
+  event: GoldRushStreamEvent;
+  receivedAt: number;
+}
