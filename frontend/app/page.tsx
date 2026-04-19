@@ -9,11 +9,12 @@ import { ArrowRight, Zap, Lock, GitBranch } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const { publicKey, connect } = useWallet()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const connected = !!publicKey
 
   // Auto-redirect if already connected
@@ -22,6 +23,10 @@ export default function Home() {
       // Don't auto-redirect on landing — let the user choose
     }
   }, [connected])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleConnect = async () => {
     if (connected) {
@@ -54,7 +59,17 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             {!connected ? (
-              <WalletMultiButton className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2" />
+              mounted ? (
+                <WalletMultiButton className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2" />
+              ) : (
+                <Button
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2"
+                  disabled
+                >
+                  Connect Wallet
+                </Button>
+              )
             ) : (
               <>
                 <Button
