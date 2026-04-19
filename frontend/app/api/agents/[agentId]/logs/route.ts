@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     const { agentId } = await params;
 
-    const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
+    const owned = await requireOwnedAgent(req, agentId, { select: { id: true }, enforceSubscription: true });
     if (owned.error || !owned.agent) {
       return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
     }
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     const { agentId } = await params;
-    const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
+    const owned = await requireOwnedAgent(req, agentId, { select: { id: true }, enforceSubscription: true });
     if (owned.error || !owned.agent) {
       return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
     }

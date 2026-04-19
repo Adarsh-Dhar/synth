@@ -22,6 +22,86 @@ function validDateOrNull(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+function getEventStatus(eventName: string, body: Record<string, unknown>): string {
+  if (eventName === "payment.failed" || eventName === "subscription.cancelled" || eventName === "subscription.canceled") {
+    return "INACTIVE";
+  }
+  const statusSource = body.status ?? body.paymentStatus ?? body.subscriptionStatus;
+  return pickStatus(statusSource);
+}
+
+async function upsertSubscriptionByReference(args: {
+  agentId: string;
+  externalReference: string;
+  customerId: string;
+  metadata: Record<string, unknown>;
+  body: Record<string, unknown>;
+  status: string;
+}) {
+  const { agentId, externalReference, customerId, metadata, body, status } = args;
+  const validUntil = validDateOrNull(body.validUntil);
+  const plan = body.plan ? String(body.plan) : null;
+  const webhookUrl = body.webhookUrl ? String(body.webhookUrl) : null;
+
+  const existing = await prisma.subscription.findUnique({
+    where: { externalReference },
+  });
+
+  const patch = {
+    status,
+    plan: plan ?? undefined,
+    webhookUrl: webhookUrl ?? undefined,
+    validUntil: validUntil ?? undefined,
+    metadata: metadata as any,
+  };
+
+  if (existing) {
+    return prisma.subscription.update({
+      where: { externalReference },
+      data: patch,
+    });
+  }
+
+  try {
+    return await prisma.subscription.create({
+      data: {
+        agentId,
+        provider: "dodo",
+        status,
+        externalReference,
+        plan,
+        webhookUrl,
+        validUntil,
+        metadata: metadata as any,
+      },
+    });
+  } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code: string }).code === "P2002"
+    ) {
+      return prisma.subscription.update({
+        where: { externalReference },
+        data: patch,
+      });
+    }
+    throw error;
+  }
+}
+
+async function findSubscriptionByEvent(body: Record<string, unknown>, metadataCandidate?: Record<string, unknown>) {
+  const externalReference = String(
+    body.externalReference || body.orderId || body.paymentId || metadataCandidate?.externalReference || "",
+  ).trim();
+  if (!externalReference) return null;
+
+  return prisma.subscription.findUnique({
+    where: { externalReference },
+  });
+}
+
 async function maybeDeliverX402(agentId: string, externalReference: string, metadata: unknown) {
   const endpoint = String(process.env.X402_DELIVERY_ENDPOINT || "").trim();
   if (!endpoint) return;
@@ -76,9 +156,6 @@ export async function POST(req: NextRequest) {
   }
 
   const eventName = String(body.event || body.type || "").trim().toLowerCase();
-  if (eventName !== "payment.succeeded") {
-    return NextResponse.json({ ok: true, ignored: true, event: eventName || "unknown" }, { status: 200 });
-  }
 
   const metadataCandidate = (body.metadata ?? body.data) as Record<string, unknown> | undefined;
 
@@ -88,61 +165,86 @@ export async function POST(req: NextRequest) {
     body.externalReference || body.orderId || body.paymentId || metadataCandidate?.externalReference || "",
   ).trim();
 
-  if (!agentId || !customerId || !externalReference) {
+  if (!eventName) {
+    return NextResponse.json({ error: "missing_event" }, { status: 400 });
+  }
+
+  if (eventName === "payment.succeeded") {
+    if (!agentId || !customerId || !externalReference) {
+      return NextResponse.json(
+        { error: "agentId, customerId, and externalReference are required" },
+        { status: 400 },
+      );
+    }
+
+    const agent = await prisma.agent.findUnique({
+      where: { id: agentId },
+      select: { id: true },
+    });
+
+    if (!agent) {
+      return NextResponse.json({ error: "agent_not_found" }, { status: 404 });
+    }
+
+    const metadata = JSON.parse(JSON.stringify({
+      ...body,
+      metadata: {
+        ...(typeof metadataCandidate === "object" && metadataCandidate ? metadataCandidate : {}),
+        customerId,
+      },
+    })) as Record<string, unknown>;
+
+    const subscription = await upsertSubscriptionByReference({
+      agentId,
+      externalReference,
+      customerId,
+      metadata,
+      body,
+      status: getEventStatus(eventName, body),
+    });
+
+    await maybeDeliverX402(agentId, externalReference, metadata);
+
     return NextResponse.json(
-      { error: "agentId, customerId, and externalReference are required" },
-      { status: 400 },
+      {
+        ok: true,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        provider: subscription.provider,
+        customerId,
+      },
+      { status: 200 },
     );
   }
 
-  const agent = await prisma.agent.findUnique({
-    where: { id: agentId },
-    select: { id: true },
-  });
+  if (eventName === "payment.failed" || eventName === "subscription.cancelled" || eventName === "subscription.canceled") {
+    const subscription = await findSubscriptionByEvent(body, metadataCandidate);
+    if (!subscription) {
+      return NextResponse.json({ ok: true, ignored: true, event: eventName }, { status: 200 });
+    }
 
-  if (!agent) {
-    return NextResponse.json({ error: "agent_not_found" }, { status: 404 });
+    const metadata = JSON.parse(JSON.stringify({
+      ...body,
+      metadata: {
+        ...(typeof metadataCandidate === "object" && metadataCandidate ? metadataCandidate : {}),
+        customerId: customerId || undefined,
+      },
+    })) as Record<string, unknown>;
+
+    const updated = await prisma.subscription.update({
+      where: { externalReference: subscription.externalReference },
+      data: {
+        status: "INACTIVE",
+        metadata: metadata as any,
+        validUntil: validDateOrNull(body.validUntil) ?? subscription.validUntil,
+      },
+    });
+
+    return NextResponse.json(
+      { ok: true, subscriptionId: updated.id, status: updated.status, provider: updated.provider, event: eventName },
+      { status: 200 },
+    );
   }
 
-  const metadata = JSON.parse(JSON.stringify({
-    ...body,
-    metadata: {
-      ...(typeof metadataCandidate === "object" && metadataCandidate ? metadataCandidate : {}),
-      customerId,
-    },
-  })) as Record<string, unknown>;
-
-  const subscription = await prisma.subscription.upsert({
-    where: { externalReference },
-    update: {
-      status: "ACTIVE",
-      plan: body.plan ? String(body.plan) : undefined,
-      webhookUrl: body.webhookUrl ? String(body.webhookUrl) : undefined,
-      validUntil: validDateOrNull(body.validUntil) ?? undefined,
-      metadata: metadata as any,
-    },
-    create: {
-      agentId,
-      provider: "dodo",
-      status: "ACTIVE",
-      externalReference,
-      plan: body.plan ? String(body.plan) : null,
-      webhookUrl: body.webhookUrl ? String(body.webhookUrl) : null,
-      validUntil: validDateOrNull(body.validUntil),
-      metadata: metadata as any,
-    },
-  });
-
-  await maybeDeliverX402(agentId, externalReference, metadata);
-
-  return NextResponse.json(
-    {
-      ok: true,
-      subscriptionId: subscription.id,
-      status: subscription.status,
-      provider: subscription.provider,
-      customerId,
-    },
-    { status: 200 },
-  );
+  return NextResponse.json({ ok: true, ignored: true, event: eventName || "unknown" }, { status: 200 });
 }

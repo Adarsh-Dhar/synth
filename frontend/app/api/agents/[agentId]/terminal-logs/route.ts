@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
   const since = req.nextUrl.searchParams.get("since");
 
   try {
-    const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
+    const owned = await requireOwnedAgent(req, agentId, { select: { id: true }, enforceSubscription: true });
     if (owned.error || !owned.agent) {
       return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
     }

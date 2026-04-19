@@ -7,7 +7,7 @@ import { requireOwnedAgent } from "@/lib/auth/server";
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   try {
     const { agentId } = await params;
-    const owned = await requireOwnedAgent(_req, agentId, { includeFiles: true, includeTradeLogs: true });
+    const owned = await requireOwnedAgent(_req, agentId, { includeFiles: true, includeTradeLogs: true, enforceSubscription: true });
     if (owned.error || !owned.agent) {
       return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });
     }

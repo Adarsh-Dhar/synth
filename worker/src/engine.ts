@@ -27,6 +27,24 @@ export function clearAgentLogs(agentId: string) {
 
 // ── Core operations ───────────────────────────────────────────────────────────
 
+async function ensureActiveDodoSubscription(agentId: string): Promise<void> {
+  const subscription = await prisma.subscription.findFirst({
+    where: { agentId, provider: "dodo" },
+    orderBy: { updatedAt: "desc" },
+    select: { status: true, validUntil: true },
+  });
+
+  if (!subscription) {
+    return;
+  }
+
+  const isExpired = Boolean(subscription.validUntil && subscription.validUntil.getTime() <= Date.now());
+  const isActive = subscription.status.trim().toUpperCase() === "ACTIVE" && !isExpired;
+  if (!isActive) {
+    throw new Error("Subscription required to start this agent.");
+  }
+}
+
 export async function startAgent({
   agentId,
   files,
@@ -41,6 +59,8 @@ export async function startAgent({
   if (isAgentRunning(agentId)) {
     throw new Error(`Agent ${agentId} is already running`);
   }
+
+  await ensureActiveDodoSubscription(agentId);
 
   await prisma.agent.update({
     where: { id: agentId },

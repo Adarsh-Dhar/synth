@@ -11,6 +11,11 @@ export type AuthenticatedUser = {
   walletAddress: string;
 };
 
+type SubscriptionRecord = {
+  status: string;
+  validUntil: Date | null;
+};
+
 function unauthorized(message: string): NextResponse {
   return NextResponse.json({ error: message }, { status: 401 });
 }
@@ -66,7 +71,12 @@ export async function requireWalletAuth(req: Request): Promise<{ user: Authentic
 export async function requireOwnedAgent(
   req: Request,
   agentId: string,
-  options?: { includeFiles?: boolean; includeTradeLogs?: boolean; select?: Record<string, boolean> },
+  options?: {
+    includeFiles?: boolean;
+    includeTradeLogs?: boolean;
+    select?: Record<string, boolean>;
+    enforceSubscription?: boolean;
+  },
 ): Promise<{ user: AuthenticatedUser | null; agent: Record<string, unknown> | null; error: NextResponse | null }> {
   const auth = await requireWalletAuth(req);
   if (auth.error || !auth.user) {
@@ -88,6 +98,29 @@ export async function requireOwnedAgent(
       agent: null,
       error: NextResponse.json({ error: "Agent not found." }, { status: 404 }),
     };
+  }
+
+  if (options?.enforceSubscription) {
+    const subscription = await prisma.subscription.findFirst({
+      where: { agentId, provider: "dodo" },
+      orderBy: { updatedAt: "desc" },
+      select: { status: true, validUntil: true },
+    }) as SubscriptionRecord | null;
+
+    if (subscription) {
+      const isExpired = Boolean(subscription.validUntil && subscription.validUntil.getTime() <= Date.now());
+      const isActive = subscription.status.trim().toUpperCase() === "ACTIVE" && !isExpired;
+      if (!isActive) {
+        return {
+          user: auth.user,
+          agent: null,
+          error: NextResponse.json(
+            { error: "Subscription required to access this agent." },
+            { status: 402 },
+          ),
+        };
+      }
+    }
   }
 
   return { user: auth.user, agent: agent as Record<string, unknown>, error: null };
