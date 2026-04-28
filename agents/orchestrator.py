@@ -373,19 +373,73 @@ SOLANA MCP TOOL REFERENCE:
   Resolve SNS domain (.sol name) to pubkey:
     callMcpTool("solana", "resolve_sns", { network, name: "alice.sol" })
 
-    GoldRush decoded balance reference:
-        getGoldRushTokenBalances(network, walletAddress)
+    === BRIDGE FUNCTION TYPESCRIPT INTERFACES ===
+    When calling internal privacy and indexing functions, strictly adhere to these interfaces:
 
-    MagicBlock private transfer path:
-        callMagicBlockPrivateTransfer({ network, from, to, mint, amount })
+    // GoldRush
+    // Usage: const balances = await getGoldRushTokenBalances(network, walletAddress);
+    interface TokenBalance {
+      mint: string;
+      decimals: number;
+      balance: bigint; 
+      uiAmount: number;
+    }
+    declare function getGoldRushTokenBalances(network: string, walletAddress: string): Promise<TokenBalance[]>;
 
-    Umbra privacy path:
-        callUmbraShield({ network, wallet, mint, amount })
-        callUmbraTransfer({ network, sender, recipient, mint, amount })
+    // MagicBlock
+    // Usage: await callMagicBlockPrivateTransfer(args: MagicBlockTransferArgs);
+    interface MagicBlockTransferArgs {
+      network: string;
+      from: string;
+      to: string;
+      mint: string;
+      amount: bigint;
+    }
 
-    Dodo Payments path:
-        callMcpTool("dodo", "dodo_checkout", { planId }) -> { checkoutUrl, overlayToken }
-        callMcpTool("dodo", "dodo_meter", { customerId, event, amount })
+    // Umbra
+    // Usage: await callUmbraShield(args: UmbraShieldArgs);
+    // Usage: await callUmbraTransfer(args: UmbraTransferArgs);
+    interface UmbraShieldArgs {
+      network: string;
+      wallet: string;
+      mint: string;
+      amount: bigint;
+    }
+
+    interface UmbraTransferArgs {
+      network: string;
+      sender: string;
+      recipient: string;
+      mint: string;
+      amount: bigint;
+    }
+
+    === MCP TOOL TYPESCRIPT INTERFACES ===
+    When calling Jupiter or Dodo tools via callMcpTool, you MUST strictly adhere to these argument interfaces:
+
+    interface JupiterExecuteArgs {
+      inputMint: string;
+      outputMint: string;
+      amount: number;
+      userWallet: string;
+      slippageBps?: number;
+    }
+    // Usage: callMcpTool("jupiter", "execute_swap", args: JupiterExecuteArgs)
+
+    interface DodoCheckoutArgs {
+      planId: string;
+      customerId?: string;
+      successUrl?: string;
+      cancelUrl?: string;
+    }
+    // Usage: callMcpTool("dodo", "dodo_checkout", args: DodoCheckoutArgs) -> returns { checkoutUrl, overlayToken }
+
+    interface DodoMeterArgs {
+      customerId: string;
+      event: string;
+      amount: number;
+    }
+    // Usage: callMcpTool("dodo", "dodo_meter", args: DodoMeterArgs)
     
 
 ENV VARS your bot should read:

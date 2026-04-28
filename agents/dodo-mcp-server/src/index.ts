@@ -1,14 +1,13 @@
 import express from "express";
 import dotenv from "dotenv";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { z } from "zod";
 
 dotenv.config();
 
 const app = express();
-app.use("/dodo/webhook", express.raw({ type: "*/*", limit: "1mb" }));
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true }));
-
 const PORT = Number(process.env.PORT || 5002);
 const DODO_WEBHOOK_SECRET = String(process.env.DODO_WEBHOOK_SECRET || "").trim();
 
@@ -53,44 +52,64 @@ function buildDocsAnswer(query: string): string {
   return sections.join(" ");
 }
 
-app.get("/", (req, res) => {
-  res.json({ status: "dodo-mcp-server", version: "0.1.0" });
+// ==========================================
+// 1. TRUE MCP IMPLEMENTATION (SSE TRANSPORT)
+// ==========================================
+const mcp = new McpServer({
+  name: "dodo-mcp-server",
+  version: "0.1.0"
 });
 
-app.get("/mcp/dodo/skills", (req, res) => {
-  res.json({
-    result: {
-      isError: false,
-      content: [
-        { type: "text", text: "Dodo MCP skills: dodo_checkout, dodo_metering, dodo_webhook verification" }
-      ]
-    }
-  });
+// Register the Docs tool
+mcp.tool(
+  "dodo_docs",
+  "Search Dodo Payments documentation to retrieve webhook and checkout schemas.",
+  { query: z.string().describe("The search query keywords") },
+  async ({ query }) => {
+    const text = buildDocsAnswer(query || "");
+    return { content: [{ type: "text", text }] };
+  }
+);
+
+// Register the Skills list tool
+mcp.tool(
+  "dodo_skills",
+  "List available Dodo skills.",
+  {},
+  async () => {
+    return { content: [{ type: "text", text: "Dodo MCP skills: dodo_checkout, dodo_metering, dodo_webhook verification" }] };
+  }
+);
+
+let transport: SSEServerTransport | null = null;
+
+// Establish the SSE connection stream
+app.get("/sse", async (req, res) => {
+  transport = new SSEServerTransport("/message", res);
+  await mcp.connect(transport);
 });
 
-app.post(["/mcp/dodo/docs", "/dodo/docs/search", "/search"], async (req, res) => {
-  const q = (req.body && req.body.query) || req.query.q || "";
-  const text = buildDocsAnswer(String(q));
-  return res.json({
-    result: {
-      isError: false,
-      content: [{ type: "text", text }]
-    }
-  });
+// Native MCP JSON-RPC message endpoint
+app.post("/message", async (req, res) => {
+  if (transport) {
+    await transport.handlePostMessage(req, res);
+  } else {
+    res.status(400).send("No active SSE connection");
+  }
 });
 
-app.post("/dodo/webhook", (req, res) => {
+
+// ==========================================
+// 2. STANDARD RUNTIME/PROXY ENDPOINTS 
+// ==========================================
+app.post("/dodo/webhook", express.raw({ type: "*/*", limit: "1mb" }), (req, res) => {
   if (!DODO_WEBHOOK_SECRET) {
     return res.status(500).json({ error: "DODO_WEBHOOK_SECRET not configured" });
   }
 
   const signature = normalizeSignature(String(req.headers["x-dodo-signature"] || ""));
   const timestamp = String(req.headers["x-dodo-timestamp"] || "").trim();
-  const rawBody = Buffer.isBuffer(req.body)
-    ? req.body.toString("utf8")
-    : typeof req.body === "string"
-      ? req.body
-      : JSON.stringify(req.body ?? {});
+  const rawBody = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
 
   if (!signature) {
     return res.status(401).json({ error: "missing_signature" });
@@ -110,21 +129,18 @@ app.post("/dodo/webhook", (req, res) => {
   return res.json({ status: "ok", verified: true });
 });
 
-app.post("/dodo/checkout", async (req, res) => {
-  const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+app.post("/dodo/checkout", express.json({ limit: "1mb" }), async (req, res) => {
+  const body = req.body || {};
   const planId = String(body.planId || process.env.DODO_PLAN_PRO_ID || "").trim();
-  if (!planId) {
-    return res.status(400).json({ error: "missing_plan_id" });
-  }
+  if (!planId) return res.status(400).json({ error: "missing_plan_id" });
+
   const checkoutBase = String(process.env.DODO_CHECKOUT_API_URL || "https://api.dodopayments.com/v1").trim().replace(/\/+$/, "");
   const checkoutUrl = `${checkoutBase}/subscriptions`;
   const successUrl = String(body.successUrl || process.env.DODO_CHECKOUT_SUCCESS_URL || "http://localhost:3000/dashboard/billing?status=success").trim();
   const cancelUrl = String(body.cancelUrl || process.env.DODO_CHECKOUT_CANCEL_URL || "http://localhost:3000/dashboard/billing?status=cancelled").trim();
   const apiKey = String(process.env.DODO_API_KEY || "").trim();
 
-  if (!apiKey) {
-    return res.status(500).json({ error: "DODO_API_KEY not configured" });
-  }
+  if (!apiKey) return res.status(500).json({ error: "DODO_API_KEY not configured" });
 
   const customerId = String(body.customerId || process.env.DODO_CUSTOMER_ID || "").trim();
   const metadata = typeof body.metadata === "object" && body.metadata ? body.metadata : {};
@@ -136,13 +152,7 @@ app.post("/dodo/checkout", async (req, res) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        planId,
-        customerId,
-        successUrl,
-        cancelUrl,
-        metadata,
-      }),
+      body: JSON.stringify({ planId, customerId, successUrl, cancelUrl, metadata }),
     });
 
     if (!upstream.ok) {
@@ -161,16 +171,15 @@ app.post("/dodo/checkout", async (req, res) => {
       raw: upstreamData,
     });
   } catch (err) {
-    console.error("Dodo checkout proxy failed:", err instanceof Error ? err.message : String(err));
     return res.status(502).json({ error: "checkout_failed" });
   }
 });
 
-app.post("/dodo/meter", (req, res) => {
-  const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-  return res.json({ ok: true, accepted: true, event: body });
+app.post("/dodo/meter", express.json({ limit: "1mb" }), (req, res) => {
+  return res.json({ ok: true, accepted: true, event: req.body });
 });
 
 app.listen(PORT, () => {
   console.log(`Dodo MCP server listening on http://127.0.0.1:${PORT}`);
+  console.log(`SSE endpoint established at http://127.0.0.1:${PORT}/sse`);
 });
