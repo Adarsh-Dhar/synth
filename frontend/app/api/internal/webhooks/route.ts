@@ -7,6 +7,32 @@ import { requireEnv } from "@/lib/env";
 // Requires a shared secret in the Authorization header.
 export async function POST(req: NextRequest) {
   try {
+    const dodoSignature = req.headers.get("x-dodo-signature");
+    if (dodoSignature) {
+      const rawBody = await req.text();
+      const dodoSecret = requireEnv("DODO_WEBHOOK_SECRET");
+      const proxyResponse = await fetch(new URL("/api/internal/dodo-payments", req.url), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${dodoSecret}`,
+          "x-dodo-signature": dodoSignature,
+          ...(req.headers.get("x-dodo-timestamp")
+            ? { "x-dodo-timestamp": req.headers.get("x-dodo-timestamp") as string }
+            : {}),
+        },
+        body: rawBody,
+      });
+
+      const responseBody = await proxyResponse.text();
+      return new NextResponse(responseBody, {
+        status: proxyResponse.status,
+        headers: {
+          "content-type": proxyResponse.headers.get("content-type") ?? "application/json",
+        },
+      });
+    }
+
     // ── 1. Security gate ──────────────────────────────────────────────────────
     const authHeader = req.headers.get("authorization");
     const expectedToken = `Bearer ${requireEnv("INTERNAL_WEBHOOK_SECRET")}`;

@@ -4,6 +4,7 @@ import {
   stopAgent,
   normalizeAgentEvent,
   deliverAgentEvent,
+  deliverAgentWebhook,
   getAgentStatus,
   getAgentLogs,
   listRunningAgents,
@@ -101,6 +102,18 @@ app.post("/agents/:id/event", requireAuth, async (req, res) => {
       event,
       receivedAt: Date.now(),
     });
+    return res.json({ success: true, delivered: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ success: false, error: message });
+  }
+});
+
+// ── Inbound webhook payload delivery ────────────────────────────────────────
+app.post("/agents/:id/webhook", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    await deliverAgentWebhook(id.toString(), req.body);
     return res.json({ success: true, delivered: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

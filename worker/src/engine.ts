@@ -3,6 +3,7 @@ import {
   startAgent as startDockerAgent,
   stopAgent as stopDockerAgent,
   deliverEventToAgent,
+  deliverWebhookPayloadToAgent,
   getLogs as getRunnerLogs,
   isAgentRunning,
   listRunningAgentIds,
@@ -177,6 +178,13 @@ function stopGoldRushSubscription(agentId: string): void {
 
 export async function deliverAgentEvent(trigger: AgentEventTrigger): Promise<void> {
   await routeEventToRunningAgent(trigger);
+}
+
+export async function deliverAgentWebhook(agentId: string, payload: unknown): Promise<void> {
+  const delivery = await deliverWebhookPayloadToAgent(agentId, payload);
+  if (!delivery.ok) {
+    throw new Error(delivery.error ?? "Failed to deliver webhook payload to agent container");
+  }
 }
 
 export function normalizeAgentEvent(agentId: string, raw: unknown): GoldRushStreamEvent | null {

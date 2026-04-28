@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { requireEnv } from "@/lib/env";
 
 const WEBHOOK_TOLERANCE_SECONDS = Number(process.env.DODO_WEBHOOK_TOLERANCE_SECONDS || 300);
 
@@ -54,6 +55,33 @@ function tierFromPlan(plan: string | null | undefined): string {
   if (normalized.includes("ENTERPRISE")) return "ENTERPRISE";
   if (normalized.includes("PRO")) return "PRO";
   return "FREE";
+}
+
+function resolveBotId(body: Record<string, unknown>, metadataCandidate?: Record<string, unknown>): string {
+  return String(
+    body.agentId ||
+      body.botId ||
+      metadataCandidate?.botId ||
+      metadataCandidate?.agentId ||
+      metadataCandidate?.bot_id ||
+      "",
+  ).trim();
+}
+
+async function forwardWebhookToWorker(agentId: string, payload: Record<string, unknown>) {
+  const workerUrl = String(process.env.WORKER_URL || "http://localhost:4001").trim().replace(/\/+$/, "");
+  const workerSecret = requireEnv("WORKER_SECRET");
+
+  await fetch(`${workerUrl}/agents/${agentId}/webhook`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${workerSecret}`,
+    },
+    body: JSON.stringify(payload),
+  }).catch((error) => {
+    console.warn("[/api/internal/dodo-payments] failed to forward webhook to worker:", error);
+  });
 }
 
 async function upsertSubscriptionByReference(args: {
@@ -206,7 +234,7 @@ export async function POST(req: NextRequest) {
 
   const metadataCandidate = (body.metadata ?? body.data) as Record<string, unknown> | undefined;
 
-  const agentId = String(body.agentId || metadataCandidate?.agentId || "").trim();
+  const agentId = resolveBotId(body, metadataCandidate);
   const customerId = String(body.customerId || metadataCandidate?.customerId || "").trim();
   const externalReference = String(
     body.externalReference || body.orderId || body.paymentId || metadataCandidate?.externalReference || "",
@@ -253,6 +281,11 @@ export async function POST(req: NextRequest) {
     await syncUserTierFromAgent(agentId, tierFromPlan(subscription.plan));
 
     await maybeDeliverX402(agentId, externalReference, metadata);
+    await forwardWebhookToWorker(agentId, {
+      ...body,
+      metadata: typeof metadataCandidate === "object" && metadataCandidate ? metadataCandidate : body.metadata,
+      source: "dodo",
+    });
 
     return NextResponse.json(
       {
@@ -295,6 +328,11 @@ export async function POST(req: NextRequest) {
     });
 
     await syncUserTierFromAgent(updated.agentId, "FREE");
+    await forwardWebhookToWorker(updated.agentId, {
+      ...body,
+      metadata: typeof metadataCandidate === "object" && metadataCandidate ? metadataCandidate : body.metadata,
+      source: "dodo",
+    });
 
     return NextResponse.json(
       { ok: true, subscriptionId: updated.id, status: updated.status, provider: updated.provider, event: eventName },
@@ -319,6 +357,11 @@ export async function POST(req: NextRequest) {
     });
 
     await syncUserTierFromAgent(updated.agentId, tierFromPlan(plan));
+    await forwardWebhookToWorker(updated.agentId, {
+      ...body,
+      metadata: typeof metadataCandidate === "object" && metadataCandidate ? metadataCandidate : body.metadata,
+      source: "dodo",
+    });
     return NextResponse.json({ ok: true, event: eventName, tier: tierFromPlan(plan) }, { status: 200 });
   }
 

@@ -38,9 +38,11 @@ const docker = new Docker({
 });
 
 const DOCKER_IMAGE = process.env.AGENT_DOCKER_IMAGE ?? "node:20-alpine";
-const DOCKER_MEMORY_BYTES = parseInt(process.env.AGENT_DOCKER_MEMORY_BYTES ?? "536870912", 10);
-const DOCKER_NANO_CPUS = parseInt(process.env.AGENT_DOCKER_NANO_CPUS ?? "1000000000", 10);
-const DEFAULT_AGENT_EVENT_ENDPOINT = process.env.AGENT_EVENT_ENDPOINT ?? "http://127.0.0.1:7777/agent-event";
+const DOCKER_MEMORY_BYTES = 256 * 1024 * 1024;
+const DOCKER_MEMORY_SWAP_BYTES = 256 * 1024 * 1024;
+const DOCKER_CPU_QUOTA = 50000;
+const DOCKER_CPU_PERIOD = 100000;
+const DOCKER_PIDS_LIMIT = parseInt(process.env.AGENT_DOCKER_PIDS_LIMIT ?? "256", 10);
 
 const MAX_LOG_LINES = 2000;
 
@@ -123,9 +125,75 @@ function resolveEntryPoint(files: Array<{ filepath: string }>): string {
 function buildContainerCommand(files: Array<{ filepath: string }>, entryPoint: string): string {
   const hasPackageJson = files.some((f) => f.filepath === "package.json" || f.filepath === "./package.json");
   if (hasPackageJson) {
-    return `npm install --legacy-peer-deps --no-fund --loglevel=error && npx tsx ${entryPoint}`;
+    return `npm install --legacy-peer-deps --no-fund --loglevel=error --no-save tsx && node /workspace/.agent-launcher.mjs`;
   }
-  return `npm install --no-package-lock --no-fund --loglevel=error tsx typescript @types/node && npx tsx ${entryPoint}`;
+  return `npm install --no-package-lock --no-fund --loglevel=error tsx typescript @types/node && node /workspace/.agent-launcher.mjs`;
+}
+
+function buildLauncherScript(entryPoint: string): string {
+  return `import { spawn } from "node:child_process";
+import { createInterface } from "node:readline";
+
+const entryPoint = ${JSON.stringify(entryPoint)};
+
+const child = spawn(process.execPath, ["--import", "tsx", entryPoint], {
+  cwd: "/workspace",
+  env: process.env,
+  stdio: ["ignore", "pipe", "pipe", "ipc"],
+});
+
+child.stdout.on("data", (chunk) => {
+  process.stdout.write(chunk);
+});
+
+child.stderr.on("data", (chunk) => {
+  process.stderr.write(chunk);
+});
+
+child.on("error", (error) => {
+  process.stderr.write("[launcher] child error: " + (error instanceof Error ? error.stack ?? error.message : String(error)) + "\n");
+  process.exit(1);
+});
+
+child.on("exit", (code, signal) => {
+  if (signal) {
+    process.exit(1);
+    return;
+  }
+  process.exit(code ?? 1);
+});
+
+const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
+input.on("line", (line) => {
+  const trimmed = line.trim();
+  if (!trimmed) return;
+  try {
+    const payload = JSON.parse(trimmed);
+    if (!child.send(payload)) {
+      process.stderr.write("[launcher] child IPC channel closed\n");
+    }
+  } catch (error) {
+    process.stderr.write("[launcher] invalid payload: " + (error instanceof Error ? error.message : String(error)) + "\n");
+  }
+});
+
+const relaySignal = (signal: NodeJS.Signals) => {
+  if (!child.killed) {
+    child.kill(signal);
+  }
+};
+
+process.on("SIGINT", () => relaySignal("SIGINT"));
+process.on("SIGTERM", () => relaySignal("SIGTERM"));
+
+process.stdin.resume();
+`.replace(/^\n/, "");
+}
+
+function writeLauncherFile(workDir: string, entryPoint: string): string {
+  const launcherPath = path.join(workDir, ".agent-launcher.mjs");
+  fs.writeFileSync(launcherPath, buildLauncherScript(entryPoint), "utf8");
+  return launcherPath;
 }
 
 function pushLine(logBuffer: LogEntry[], line: string, level: "stdout" | "stderr") {
@@ -185,31 +253,31 @@ async function waitForExecExit(container: Container, execId: string): Promise<nu
   return 1;
 }
 
-export async function deliverEventToAgent(
+async function deliverPayloadToRunningAgent(
   agentId: string,
-  event: GoldRushStreamEvent,
-  endpoint: string = DEFAULT_AGENT_EVENT_ENDPOINT,
+  payload: unknown,
 ): Promise<EventDeliveryResult> {
   const agent = running.get(agentId);
   if (!agent) {
     return { ok: false, error: `Agent ${agentId} is not running` };
   }
 
-  const payloadB64 = Buffer.from(JSON.stringify(event), "utf8").toString("base64");
+  const serialized = JSON.stringify(payload);
+  if (serialized == null) {
+    return { ok: false, error: "Payload is not JSON serializable" };
+  }
+
+  const payloadB64 = Buffer.from(serialized, "utf8").toString("base64");
   const exec = await agent.container.exec({
     AttachStdout: true,
     AttachStderr: true,
+    AttachStdin: false,
     Cmd: [
-      "node",
-      "-e",
-      "const endpoint=process.env.EVENT_ENDPOINT||'http://127.0.0.1:7777/agent-event';"
-        + "const raw=Buffer.from(process.env.EVENT_PAYLOAD_B64||'', 'base64').toString('utf8');"
-        + "const payload=JSON.parse(raw||'{}');"
-        + "fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})"
-        + ".then((res)=>{if(!res.ok){throw new Error('HTTP '+res.status);}})"
-        + ".catch((err)=>{console.error(err?.message||String(err));process.exit(1);});",
+      "sh",
+      "-lc",
+      "node -e \"process.stdout.write(Buffer.from(process.env.EVENT_PAYLOAD_B64 || '', 'base64').toString('utf8'))\" > /proc/1/fd/0",
     ],
-    Env: [`EVENT_ENDPOINT=${endpoint}`, `EVENT_PAYLOAD_B64=${payloadB64}`],
+    Env: [`EVENT_PAYLOAD_B64=${payloadB64}`],
   });
 
   await exec.start({ Detach: false, Tty: false });
@@ -219,6 +287,20 @@ export async function deliverEventToAgent(
   }
 
   return { ok: true };
+}
+
+export async function deliverEventToAgent(
+  agentId: string,
+  event: GoldRushStreamEvent,
+): Promise<EventDeliveryResult> {
+  return deliverPayloadToRunningAgent(agentId, event);
+}
+
+export async function deliverWebhookPayloadToAgent(
+  agentId: string,
+  payload: unknown,
+): Promise<EventDeliveryResult> {
+  return deliverPayloadToRunningAgent(agentId, payload);
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
@@ -289,12 +371,20 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
     process.env.GOLDRUSH_MCP_URL ||
     "";
   const allowlistedDomains = resolveAllowlistedDomains(resolvedGoldrushMcpUrl);
+  const fastFrankfurtRpcUrl = String(process.env.INTERNAL_RPC_FAST_FRANKFURT_URL ?? "").trim();
+  if (!fastFrankfurtRpcUrl) {
+    throw new Error("Missing required environment variable: INTERNAL_RPC_FAST_FRANKFURT_URL");
+  }
+
+  writeLauncherFile(workDir, entryPoint);
 
   // ── 4. Start isolated container ────────────────────────────────────────────
   const childEnv: NodeJS.ProcessEnv = {
     ...decryptedEnv,
     NODE_ENV: "production",
-    AGENT_EVENT_ENDPOINT: DEFAULT_AGENT_EVENT_ENDPOINT,
+    SOLANA_RPC_URL: fastFrankfurtRpcUrl,
+    SOLANA_NETWORK: "mainnet-beta",
+    AGENT_EVENT_ENDPOINT: "http://127.0.0.1:7777/agent-event",
     GOLDRUSH_MCP_URL: resolvedGoldrushMcpUrl,
     AGENT_ALLOWED_OUTBOUND_DOMAINS: allowlistedDomains,
   };
@@ -305,18 +395,26 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
     WorkingDir: "/workspace",
     Env: listEnvPairs(childEnv as Record<string, string>),
     AttachStdout: true,
+    AttachStdin: true,
     AttachStderr: true,
     Tty: false,
+    OpenStdin: true,
+    StdinOnce: false,
     HostConfig: {
       AutoRemove: true,
       Binds: [`${workDir}:/workspace`],
       ReadonlyRootfs: true,
+      Tmpfs: {
+        "/tmp": "rw,size=65536k,nosuid,nodev,noexec",
+      },
       Memory: DOCKER_MEMORY_BYTES,
-      NanoCpus: DOCKER_NANO_CPUS,
+      MemorySwap: DOCKER_MEMORY_SWAP_BYTES,
+      CpuQuota: DOCKER_CPU_QUOTA,
+      CpuPeriod: DOCKER_CPU_PERIOD,
       NetworkMode: process.env.AGENT_DOCKER_NETWORK_MODE ?? "bridge",
       CapDrop: ["ALL"],
       SecurityOpt: ["no-new-privileges"],
-      PidsLimit: parseInt(process.env.AGENT_DOCKER_PIDS_LIMIT ?? "256", 10),
+      PidsLimit: DOCKER_PIDS_LIMIT,
     },
     User: process.env.AGENT_DOCKER_USER ?? "node",
   });

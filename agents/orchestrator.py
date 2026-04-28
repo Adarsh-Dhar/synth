@@ -348,6 +348,7 @@ CORE RULES:
 9. Handle SIGINT / SIGTERM for graceful shutdown.
 10. Never hardcode addresses — read everything from process.env.
 11. DODO: If the user requests payment, metering, or profit-splitting flows, implement a Dodo webhook handler that verifies incoming webhook HMACs and exposes a `/dodo/webhook` route.
+    In the secure sandbox, do not create an HTTP listener for the webhook. Instead, handle inbound webhook payloads via `process.on("message")` and keep the bot process ready to receive IPC messages from the worker launcher.
 
 SOLANA MCP TOOL REFERENCE:
   Responsibility split:
@@ -529,8 +530,8 @@ class MetaAgent:
         _log("ERROR", "All Dodo doc fetch attempts failed. Using hardcoded fallback.", trace_id)
         return """
         FALLBACK DODO INSTRUCTIONS:
-        To implement payments or profit splits, you MUST expose an Express webhook at /dodo/webhook.
-        You MUST verify the HMAC using process.env.DODO_WEBHOOK_SECRET.
+        To implement payments or profit splits, you MUST handle inbound webhook payloads via process.on("message") rather than opening an Express server.
+        You MUST verify the HMAC using process.env.DODO_WEBHOOK_SECRET when processing webhook payloads.
         To generate checkout links, use callMcpTool("dodo", "dodo_checkout", { planId: "..." }).
         """
     # ── LLM wrapper ────────────────────────────────────────────────────────────
