@@ -37,6 +37,9 @@ export interface BotEnvConfig {
   MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL?: string;
   UMBRA_PROGRAM_ADDRESS?: string;
   UMBRA_NETWORK?: string;
+  DODO_PLAN_PRO_ID?: string;
+  DODO_WEBHOOK_SECRET?: string;
+  DODO_DOCS_MCP_URL?: string;
   // Generic
   USER_WALLET_ADDRESS: string;
   RECIPIENT_ADDRESS?: string;
@@ -65,6 +68,9 @@ export const DEFAULT_BOT_ENV_CONFIG: BotEnvConfig = {
   MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL: "",
   UMBRA_PROGRAM_ADDRESS: "",
   UMBRA_NETWORK: "devnet",
+  DODO_PLAN_PRO_ID: "",
+  DODO_WEBHOOK_SECRET: "",
+  DODO_DOCS_MCP_URL: "http://127.0.0.1:5002",
   USER_WALLET_ADDRESS: "",
   RECIPIENT_ADDRESS: "",
   KEYPAIR_PATH: "",
@@ -106,6 +112,7 @@ export function getRequiredEnvFields(
   const useGoldRush = intent?.dataProvider === "goldrush" || mcps.includes("goldrush");
   const useMagicBlock = Boolean(intent?.privateExecution) || strategy.includes("private") || mcps.includes("magicblock");
   const useUmbra = strategy.includes("shield") || strategy.includes("anonymous") || mcps.includes("umbra");
+  const useDodo = strategy.includes("meter") || strategy.includes("payment") || strategy.includes("split") || mcps.includes("dodo");
 
   const fields: EnvFieldDef[] = [
     {
@@ -291,6 +298,32 @@ export function getRequiredEnvFields(
         type: "text",
         required: true,
         placeholder: "devnet",
+      },
+    );
+  }
+
+  if (useDodo) {
+    fields.push(
+      {
+        key: "DODO_PLAN_PRO_ID",
+        label: "Dodo Plan ID",
+        type: "text",
+        required: true,
+        placeholder: "plan_pro_xxx",
+      },
+      {
+        key: "DODO_WEBHOOK_SECRET",
+        label: "Dodo Webhook Secret",
+        type: "password",
+        required: true,
+        placeholder: "whsec_...",
+      },
+      {
+        key: "DODO_DOCS_MCP_URL",
+        label: "Dodo Docs MCP URL",
+        type: "text",
+        required: false,
+        placeholder: "http://127.0.0.1:5002",
       },
     );
   }

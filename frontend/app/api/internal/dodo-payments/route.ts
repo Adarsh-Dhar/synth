@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 
+const WEBHOOK_TOLERANCE_SECONDS = Number(process.env.DODO_WEBHOOK_TOLERANCE_SECONDS || 300);
+
 function pickStatus(raw: unknown): string {
   const value = String(raw || "").trim().toLowerCase();
   if (value === "active" || value === "paid" || value === "settled") return "ACTIVE";
@@ -10,10 +12,27 @@ function pickStatus(raw: unknown): string {
 }
 
 function safeEqHex(expectedHex: string, providedHex: string): boolean {
+  const hexPattern = /^[0-9a-f]+$/i;
+  if (!hexPattern.test(expectedHex) || !hexPattern.test(providedHex)) return false;
+  if (expectedHex.length % 2 !== 0 || providedHex.length % 2 !== 0) return false;
   const a = Buffer.from(expectedHex, "hex");
   const b = Buffer.from(providedHex, "hex");
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
+}
+
+function normalizeSignature(raw: string): string {
+  const value = String(raw || "").trim().toLowerCase();
+  if (!value) return "";
+  if (value.startsWith("sha256=")) return value.slice("sha256=".length).trim();
+  return value;
+}
+
+function hasFreshTimestamp(rawTimestamp: string): boolean {
+  const ts = Number(String(rawTimestamp || "").trim());
+  if (!Number.isFinite(ts) || ts <= 0) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return Math.abs(now - ts) <= WEBHOOK_TOLERANCE_SECONDS;
 }
 
 function validDateOrNull(value: unknown): Date | null {
@@ -144,7 +163,8 @@ async function syncUserTierFromAgent(agentId: string, tier: string) {
 export async function POST(req: NextRequest) {
   const expectedSecret = String(process.env.DODO_WEBHOOK_SECRET || "").trim();
   const authHeader = String(req.headers.get("authorization") || "").trim();
-  const signatureHeader = String(req.headers.get("x-dodo-signature") || "").trim().toLowerCase();
+  const signatureHeader = normalizeSignature(String(req.headers.get("x-dodo-signature") || ""));
+  const timestampHeader = String(req.headers.get("x-dodo-timestamp") || "").trim();
 
   if (!expectedSecret) {
     return NextResponse.json({ error: "server_not_configured" }, { status: 500 });
@@ -159,8 +179,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing_signature" }, { status: 401 });
   }
 
-  const computedSig = createHmac("sha256", expectedSecret).update(rawBody).digest("hex");
-  if (!safeEqHex(computedSig, signatureHeader)) {
+  if (timestampHeader && !hasFreshTimestamp(timestampHeader)) {
+    return NextResponse.json({ error: "stale_timestamp" }, { status: 401 });
+  }
+
+  // Prefer timestamped signature payload when provided; fallback to raw body compatibility.
+  const timestampedPayload = timestampHeader ? `${timestampHeader}.${rawBody}` : "";
+  const computedSigTimestamped = timestampedPayload
+    ? createHmac("sha256", expectedSecret).update(timestampedPayload).digest("hex")
+    : "";
+  const computedSigRaw = createHmac("sha256", expectedSecret).update(rawBody).digest("hex");
+  const validSig = safeEqHex(computedSigTimestamped, signatureHeader) || safeEqHex(computedSigRaw, signatureHeader);
+
+  if (!validSig) {
     return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
   }
 

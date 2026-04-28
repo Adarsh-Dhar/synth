@@ -31,6 +31,8 @@ DEFAULT_CONFIG = {
     "dataProvider": "goldrush",
     "privateExecution": False,
     "maxRiskScore": 20,
+    # Dodo payment/pro plans
+    "dodoPlanProId": "",
 }
 
 CHAIN_IDS = {
@@ -45,6 +47,7 @@ TOKEN_DENOMS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a Solana bot")
+    parser.add_argument("--strategy", type=str, help="Optional strategy override (arbitrage, yield_sweeper, etc.)")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--config", type=str, help="JSON string of bot configuration")
     group.add_argument("--config-file", type=str, help="Path to a JSON config file")
@@ -53,6 +56,8 @@ def parse_args() -> argparse.Namespace:
 
 def load_config(args: argparse.Namespace) -> dict:
     config = dict(DEFAULT_CONFIG)
+    if getattr(args, 'strategy', None):
+        config['strategy'] = args.strategy
     if args.config:
         try:
             config.update(json.loads(args.config))

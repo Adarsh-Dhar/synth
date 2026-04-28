@@ -46,6 +46,10 @@ PLANNER_ENABLED      = os.environ.get("PLANNER_ENABLED", "true").lower() != "fal
 JUPITER_DOCS_MCP_URL = os.environ.get("JUPITER_DOCS_MCP_URL", "http://127.0.0.1:5001").rstrip("/")
 JUPITER_DOCS_TIMEOUT_SECONDS = float(os.environ.get("JUPITER_DOCS_TIMEOUT_SECONDS", "8"))
 JUPITER_DOCS_MAX_CHARS = int(os.environ.get("JUPITER_DOCS_MAX_CHARS", "4000"))
+DODO_DOCS_MCP_URL = os.environ.get("DODO_DOCS_MCP_URL", "http://127.0.0.1:5002").rstrip("/")
+DODO_DOCS_TIMEOUT_SECONDS = float(os.environ.get("DODO_DOCS_TIMEOUT_SECONDS", "6"))
+DODO_DOCS_MAX_CHARS = int(os.environ.get("DODO_DOCS_MAX_CHARS", "4000"))
+CONTEXT_INJECTION_MAX_CHARS = int(os.environ.get("CONTEXT_INJECTION_MAX_CHARS", "12000"))
 
 
 def _log(level: str, message: str, trace_id: Optional[str] = None) -> None:
@@ -335,12 +339,20 @@ CORE RULES:
 4. Import "dotenv/config" at the very top of src/index.ts.
 5. All money arithmetic uses BigInt — never floats.
 6. SIMULATION_MODE = process.env.SIMULATION_MODE !== "false" (default true).
-7. TRADING: For any token swaps, you MUST use the Jupiter CLI via Node's `child_process.execSync`.
-    Example:
-    import { execSync } from 'child_process';
-    // Note: amount is in standard units for the CLI, not lamports
-    const cmd = `jupiter-cli swap --input-mint ${tokenIn} --output-mint ${tokenOut} --amount ${amount} --slippage-bps 50`;
-    if (!SIMULATION_MODE) { execSync(cmd, { stdio: 'inherit' }); } else { console.log("SIMULATE:", cmd); }
+7. TRADING: Do NOT execute local CLIs. For Jupiter swaps use the Jupiter V6 HTTP API (quote-api.jup.ag/v6):
+    - Step A: POST `/quote` to obtain a routing quote for input/output mints and amount.
+    - Step B: POST `/swap` to build a transaction bundle for the quote.
+    - Step C: Serialize/encode the returned transaction and send via the MCP tool: `callMcpTool("solana", "send_raw_transaction", { network, raw })`.
+    - Always use `axios` for Jupiter HTTP calls. Do NOT call `child_process.execSync` or any local CLI.
+8. Use an inFlight boolean guard to prevent overlapping poll cycles.
+9. Handle SIGINT / SIGTERM for graceful shutdown.
+10. Never hardcode addresses — read everything from process.env.
+11. For Jupiter API amounts, convert smallest units to decimal-normalized standard token units as required by the quote endpoint.
+12. `--input-mint` and `--output-mint` must come from env mint addresses only (never symbolic aliases like SOL/USDC).
+
+ADDITIONAL RULES:
+- DODO: If the user requests payment, metering, or profit-splitting flows, implement a Dodo webhook handler that verifies incoming webhook HMACs and exposes a `/dodo/webhook` route.
+- SECURITY: Under no circumstances use Node's `child_process`, `execSync`, or similar APIs to run external CLIs.
 8. Use an inFlight boolean guard to prevent overlapping poll cycles.
 9. Handle SIGINT / SIGTERM for graceful shutdown.
 10. Never hardcode addresses — read everything from process.env.
@@ -420,21 +432,35 @@ class MetaAgent:
         self._http_client = httpx.Client(timeout=LLM_TIMEOUT_SECONDS)
 
     def _fetch_jupiter_docs_context(self, prompt: str, trace_id: Optional[str] = None) -> str:
-        query = str(prompt or "").strip()
-        if not query:
+        raw = str(prompt or "").strip()
+        if not raw:
             return ""
+
+        # Use LLM-based keyword extraction first (avoid sending entire prompt to MCP search)
+        try:
+            kw_system = "You are a compact keyword extractor. Return a comma-separated list of keywords." \
+                        " Return only keywords, no explanation."
+            kw_user = f"Extract concise keywords for MCP docs search from this user prompt:\n\n{raw}\n\n" \
+                      "Limit to 12 keywords."
+            kws = self._llm(kw_system, kw_user, temperature=0.0, max_tokens=128, operation="keywords", trace_id=trace_id)
+            keywords = re.sub(r"[^0-9A-Za-z,\-_/]+", " ", kws or "").strip()
+            if not keywords:
+                keywords = ""
+        except Exception:
+            keywords = ""
 
         # Prefer MCP-compatible route, fallback to a generic docs-search route if available.
         candidates = [
             f"{JUPITER_DOCS_MCP_URL}/mcp/jupiter/docs",
             f"{JUPITER_DOCS_MCP_URL}/jupiter/docs/search",
+            f"{JUPITER_DOCS_MCP_URL}/search",
         ]
 
         headers = {
             "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "true",
         }
-        payload = {"query": query}
+        payload = {"query": keywords or raw}
 
         for url in candidates:
             try:
@@ -462,6 +488,54 @@ class MetaAgent:
                     return text[:JUPITER_DOCS_MAX_CHARS]
             except Exception as exc:
                 _log("WARN", f"Jupiter docs lookup failed via {url}: {exc}", trace_id)
+
+        return ""
+
+    def _fetch_dodo_context(self, prompt: str, trace_id: Optional[str] = None) -> str:
+        """Fetch Dodo docs/context from the Dodo MCP server. Returns empty string on failure."""
+        raw = str(prompt or "").strip()
+        if not raw:
+            return ""
+
+        candidates = [
+            f"{DODO_DOCS_MCP_URL}/mcp/dodo/docs",
+            f"{DODO_DOCS_MCP_URL}/dodo/docs/search",
+            f"{DODO_DOCS_MCP_URL}/search",
+        ]
+
+        headers = {"Content-Type": "application/json", "ngrok-skip-browser-warning": "true"}
+        # Use keywords similar to Jupiter to avoid large payloads
+        try:
+            kw_system = "You are a compact keyword extractor. Return a comma-separated list of keywords." \
+                        " Return only keywords, no explanation."
+            kw_user = f"Extract concise keywords for Dodo MCP docs search from this user prompt:\n\n{raw}\n\n" \
+                      "Limit to 12 keywords."
+            kws = self._llm(kw_system, kw_user, temperature=0.0, max_tokens=128, operation="keywords", trace_id=trace_id)
+            keywords = re.sub(r"[^0-9A-Za-z,\-_/]+", " ", kws or "").strip()
+        except Exception:
+            keywords = ""
+
+        payload = {"query": keywords or raw}
+
+        for url in candidates:
+            try:
+                resp = self._http_client.post(url, json=payload, headers=headers, timeout=DODO_DOCS_TIMEOUT_SECONDS)
+                if resp.status_code == 404:
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                if isinstance(data, dict) and isinstance(data.get("result"), dict):
+                    content = data["result"].get("content", [])
+                    if isinstance(content, list) and content:
+                        first = content[0]
+                        text = first.get("text", "") if isinstance(first, dict) else ""
+                        if isinstance(text, str) and text.strip():
+                            return text[:DODO_DOCS_MAX_CHARS]
+                text = json.dumps(data, ensure_ascii=True)
+                if text:
+                    return text[:DODO_DOCS_MAX_CHARS]
+            except Exception as exc:
+                _log("WARN", f"Dodo docs lookup failed via {url}: {exc}", trace_id)
 
         return ""
 
@@ -648,12 +722,31 @@ class MetaAgent:
         }
 
         chain_ctx = self._chain_context(network, plan.strategy_type)
+        # Fetch RAG contexts (Jupiter + Dodo) and respect a combined context budget.
         jupiter_docs = self._fetch_jupiter_docs_context(enriched_prompt, trace_id=trace_id)
-        jupiter_ctx = (
-            f"JUPITER DOCS CONTEXT (live MCP):\n{jupiter_docs}\n\n"
-            if jupiter_docs else
-            "JUPITER DOCS CONTEXT: unavailable for this request.\n\n"
-        )
+        # Only fetch Dodo context when prompt mentions payments, split, meter, or checkout flows
+        if re.search(r"\b(payment|payments|split|splits|profit|profits|pay|pays|meter|metering|dodo|checkout)\b", enriched_prompt, re.I):
+            dodo_docs = self._fetch_dodo_context(enriched_prompt, trace_id=trace_id)
+        else:
+            dodo_docs = ""
+
+        combined = ""
+        parts = []
+        if jupiter_docs:
+            parts.append(("JUPITER DOCS CONTEXT (live MCP):\n", jupiter_docs, JUPITER_DOCS_MAX_CHARS))
+        if dodo_docs:
+            parts.append(("DODO DOCS CONTEXT (live MCP):\n", dodo_docs, DODO_DOCS_MAX_CHARS))
+
+        remaining = CONTEXT_INJECTION_MAX_CHARS
+        for header, text, limit in parts:
+            take = min(limit, len(text), remaining)
+            if take <= 0:
+                continue
+            combined += f"{header}{text[:take]}\n\n"
+            remaining -= take
+
+        if not combined:
+            combined = "JUPITER + DODO DOCS CONTEXT: unavailable for this request.\n\n"
         params_txt = "\n".join(f"  {k}={v}" for k, v in plan.collected_parameters.items())
         user_msg = (
             f"Bot name: {intent['bot_name']}\n"
@@ -661,7 +754,7 @@ class MetaAgent:
             f"Strategy: {plan.strategy_type}\n"
             f"Verified parameters:\n{params_txt}\n\n"
             f"User intent: {enriched_prompt}\n\n"
-            f"{jupiter_ctx}"
+            f"{combined}"
             f"{chain_ctx}\n\nGenerate the 2 files now."
         )
 

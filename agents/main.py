@@ -10,6 +10,7 @@ import time
 import traceback
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -80,6 +81,18 @@ async def health():
 @app.get("/mcp/health")
 async def mcp_health():
     return {"status": "ok", "service": "solana-mcp-compat"}
+
+
+@app.get("/health/dodo")
+async def health_dodo():
+    """Ping configured DODO docs MCP URL for quick health check."""
+    dodo = os.environ.get("DODO_DOCS_MCP_URL", "http://127.0.0.1:5002").rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.get(dodo)
+            return {"status": "ok", "dodo": dodo, "upstream_status": resp.status_code}
+    except Exception as exc:
+        return {"status": "unavailable", "dodo": dodo, "detail": str(exc)}
 
 
 @app.post("/mcp/{server}/{tool}")

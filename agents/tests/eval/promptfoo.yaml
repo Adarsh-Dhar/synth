@@ -1,0 +1,55 @@
+description: Agentia generated bot evals
+prompts:
+  - |
+    Build a Solana {{strategy}} bot.
+    Requirements:
+    - Use axios to call Jupiter quote-api.jup.ag/v6 endpoints (/quote then /swap)
+    - Never use child_process, execSync, or jupiter-cli
+    - Use BigInt for monetary values
+    - No hardcoded addresses, read from env
+    {{#if dodoRequested}}
+    - Include Dodo webhook handler for payment/profit split events
+    {{/if}}
+providers:
+  - id: openai:gpt-4o-mini
+    config:
+      apiKey: ${OPENAI_API_KEY}
+tests:
+  - vars:
+      strategy: arbitrage
+      dodoRequested: false
+    assert:
+      - type: contains
+        value: quote-api.jup.ag
+      - type: icontains-any
+        value:
+          - axios
+      - type: not-contains
+        value: execSync
+      - type: not-contains
+        value: child_process
+      - type: not-contains
+        value: jupiter-cli
+      - type: contains
+        value: BigInt
+  - vars:
+      strategy: yield sweeper
+      dodoRequested: false
+    assert:
+      - type: contains
+        value: quote-api.jup.ag
+      - type: not-contains
+        value: execSync
+      - type: contains
+        value: BigInt
+  - vars:
+      strategy: profit-splitting
+      dodoRequested: true
+    assert:
+      - type: contains
+        value: webhook
+      - type: icontains-any
+        value:
+          - dodo
+      - type: not-contains
+        value: jupiter-cli

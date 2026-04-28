@@ -2,6 +2,22 @@ import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
 
+const DISCOVERY_KEYS = [
+  "MCP_GATEWAY_URL",
+  "RPC_PROVIDER_URL",
+  "SOLANA_RPC_URL",
+  "SOLANA_NETWORK",
+  "JUPITER_DOCS_MCP_URL",
+  "DODO_DOCS_MCP_URL",
+  "DODO_PLAN_PRO_ID",
+  "DODO_WEBHOOK_SECRET",
+  "GOLDRUSH_API_KEY",
+  "GOLDRUSH_STREAM_URL",
+  "GOLDRUSH_MCP_URL",
+  "MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL",
+  "UMBRA_PROGRAM_ADDRESS",
+] as const;
+
 function parseEnvText(text: string): Record<string, string> {
   const out: Record<string, string> = {};
   const lines = text.split(/\r?\n/);
@@ -33,7 +49,7 @@ function parseEnvText(text: string): Record<string, string> {
 
 export async function GET() {
   try {
-    const values: Record<string, string> = {};
+    const loaded: Record<string, string> = {};
     const candidates = [
       path.resolve(process.cwd(), "../agents/.env"),
       path.resolve(process.cwd(), "../agents/.env.local"),
@@ -43,13 +59,22 @@ export async function GET() {
       try {
         if (!fs.existsSync(file)) continue;
         const envText = fs.readFileSync(file, "utf8");
-        Object.assign(values, parseEnvText(envText));
+        Object.assign(loaded, parseEnvText(envText));
       } catch {
         // ignore unreadable files
       }
     }
 
+    const values: Record<string, string> = {};
+    for (const key of DISCOVERY_KEYS) {
+      const fromLoaded = String(loaded[key] ?? "").trim();
+      const fromProc = String(process.env[key] ?? "").trim();
+      const value = fromLoaded || fromProc;
+      if (value) values[key] = value;
+    }
+
     const mcpCandidates = [
+      loaded["MCP_GATEWAY_URL"],
       values["MCP_GATEWAY_URL"],
       process.env["MCP_GATEWAY_URL"],
       process.env["NEXT_PUBLIC_MCP_GATEWAY_URL"],

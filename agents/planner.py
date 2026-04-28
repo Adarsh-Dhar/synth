@@ -143,6 +143,7 @@ MCP VERIFICATION RULES:
 3. .sol domain provided → resolve with: mcp_tool="resolve_sns", payload={network, name: "<domain>.sol"}
 4. GoldRush data checks → mcp_tool="goldrush_token_balances" with wallet + network.
 5. MagicBlock private transfer checks → mcp_tool="magicblock_transfer" with from/to/mint/amount.
+6. Dodo metering/checkout checks → mcp_tool="dodo_metering" or "dodo_checkout" with plan and wallet info.
 4. Never invent MCP results — only set needs_mcp_query=true and let the orchestrator call MCP.
 
 FLOW:
@@ -190,6 +191,9 @@ class SolanaMCPClient:
             "magicblock_withdraw": "/magicblock/withdraw",
             "umbra_shield": "/umbra/shield",
             "umbra_transfer": "/umbra/transfer",
+                "dodo_checkout": "/dodo/checkout",
+                "dodo_webhook": "/dodo/webhook",
+                "dodo_metering": "/dodo/meter",
         }
         path = endpoint_map.get(tool, "/solana/get_balance")
         url  = f"{self.base_url}{path}"
