@@ -1,13 +1,13 @@
 import express from "express";
-import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 dotenv.config();
 
 const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.text({ type: "*/*" }));
+app.use("/dodo/webhook", express.raw({ type: "*/*", limit: "1mb" }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 const PORT = Number(process.env.PORT || 5002);
 const DODO_WEBHOOK_SECRET = String(process.env.DODO_WEBHOOK_SECRET || "").trim();
@@ -36,9 +36,9 @@ function buildDocsAnswer(query: string): string {
   const includesMetering = /meter|usage|threshold/.test(q);
 
   const sections: string[] = [];
-  sections.push("Dodo MCP docs: use HTTP APIs and signed webhooks only.");
+  sections.push("Dodo MCP docs: use signed HTTP APIs and webhook verification over the raw request body.");
   if (includesCheckout) {
-    sections.push("Checkout: POST /v1/checkout with planId, customerId, successUrl, cancelUrl, metadata.");
+    sections.push("Checkout: create a subscription session with planId, customerId, successUrl, cancelUrl, and metadata using the Dodo payments API.");
   }
   if (includesWebhook) {
     sections.push("Webhook: verify x-dodo-signature using HMAC-SHA256 over raw body or timestamp.rawBody.");
@@ -49,6 +49,7 @@ function buildDocsAnswer(query: string): string {
   if (!includesCheckout && !includesWebhook && !includesMetering) {
     sections.push("Skills: checkout creation, webhook verification, and usage metering events.");
   }
+  sections.push("Reference: docs.dodopayments.com for public product guidance and API concepts.");
   return sections.join(" ");
 }
 
@@ -69,39 +70,13 @@ app.get("/mcp/dodo/skills", (req, res) => {
 
 app.post(["/mcp/dodo/docs", "/dodo/docs/search", "/search"], async (req, res) => {
   const q = (req.body && req.body.query) || req.query.q || "";
-
-  const DODO_API_KEY = String(process.env.DODO_API_KEY || "").trim();
-
-  try {
-    if (!DODO_API_KEY) throw new Error("DODO_API_KEY not configured");
-
-    const dodoResponse = await fetch("https://api.dodo.dev/v1/ai/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DODO_API_KEY}`,
-      },
-      body: JSON.stringify({ query: String(q).slice(0, 1000) }),
-    });
-
-    if (!dodoResponse.ok) {
-      throw new Error(`Dodo upstream returned ${dodoResponse.status}`);
+  const text = buildDocsAnswer(String(q));
+  return res.json({
+    result: {
+      isError: false,
+      content: [{ type: "text", text }]
     }
-
-    const dodoData = await dodoResponse.json();
-
-    // Normalize to MCP response schema expected by orchestrator
-    const text = (dodoData.answer || dodoData.context || dodoData.summary || JSON.stringify(dodoData)).toString();
-    return res.json({ result: { content: [{ text }] } });
-  } catch (err) {
-    console.error("Dodo MCP Error:", err instanceof Error ? err.message : String(err));
-    // Fallback to minimal instructions if the API fails
-    return res.json({
-      result: {
-        content: [{ text: "Dodo API Unavailable. Fallback: To use Dodo, POST to /v1/checkout." }]
-      }
-    });
-  }
+  });
 });
 
 app.post("/dodo/webhook", (req, res) => {
@@ -111,7 +86,11 @@ app.post("/dodo/webhook", (req, res) => {
 
   const signature = normalizeSignature(String(req.headers["x-dodo-signature"] || ""));
   const timestamp = String(req.headers["x-dodo-timestamp"] || "").trim();
-  const rawBody = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? {});
+  const rawBody = Buffer.isBuffer(req.body)
+    ? req.body.toString("utf8")
+    : typeof req.body === "string"
+      ? req.body
+      : JSON.stringify(req.body ?? {});
 
   if (!signature) {
     return res.status(401).json({ error: "missing_signature" });
@@ -131,16 +110,60 @@ app.post("/dodo/webhook", (req, res) => {
   return res.json({ status: "ok", verified: true });
 });
 
-app.post("/dodo/checkout", (req, res) => {
+app.post("/dodo/checkout", async (req, res) => {
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
   const planId = String(body.planId || process.env.DODO_PLAN_PRO_ID || "").trim();
   if (!planId) {
     return res.status(400).json({ error: "missing_plan_id" });
   }
-  return res.json({
-    checkoutUrl: `https://checkout.dodo.dev/session/${encodeURIComponent(planId)}`,
-    overlayToken: `dodo_${Date.now()}`,
-  });
+  const checkoutBase = String(process.env.DODO_CHECKOUT_API_URL || "https://api.dodopayments.com/v1").trim().replace(/\/+$/, "");
+  const checkoutUrl = `${checkoutBase}/subscriptions`;
+  const successUrl = String(body.successUrl || process.env.DODO_CHECKOUT_SUCCESS_URL || "http://localhost:3000/dashboard/billing?status=success").trim();
+  const cancelUrl = String(body.cancelUrl || process.env.DODO_CHECKOUT_CANCEL_URL || "http://localhost:3000/dashboard/billing?status=cancelled").trim();
+  const apiKey = String(process.env.DODO_API_KEY || "").trim();
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "DODO_API_KEY not configured" });
+  }
+
+  const customerId = String(body.customerId || process.env.DODO_CUSTOMER_ID || "").trim();
+  const metadata = typeof body.metadata === "object" && body.metadata ? body.metadata : {};
+
+  try {
+    const upstream = await fetch(checkoutUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        planId,
+        customerId,
+        successUrl,
+        cancelUrl,
+        metadata,
+      }),
+    });
+
+    if (!upstream.ok) {
+      const detail = await upstream.text().catch(() => "");
+      return res.status(502).json({ error: "checkout_failed", detail: detail.slice(0, 500) });
+    }
+
+    const upstreamData = await upstream.json().catch(() => ({}));
+    const normalized = upstreamData as Record<string, unknown>;
+
+    return res.json({
+      checkoutUrl: String(normalized.checkoutUrl || normalized.url || normalized.checkout_url || ""),
+      overlayToken: String(normalized.overlayToken || normalized.sessionId || `dodo_${Date.now()}`),
+      provider: "dodo",
+      mode: "live",
+      raw: upstreamData,
+    });
+  } catch (err) {
+    console.error("Dodo checkout proxy failed:", err instanceof Error ? err.message : String(err));
+    return res.status(502).json({ error: "checkout_failed" });
+  }
 });
 
 app.post("/dodo/meter", (req, res) => {

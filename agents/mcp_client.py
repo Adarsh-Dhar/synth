@@ -174,7 +174,9 @@ class MultiMCPClient:
         """Best-effort registration for commonly used MCP endpoints in Synth."""
         sse_targets = [
             ("solana", os.environ.get("SOLANA_MCP_SSE_URL", "").strip()),
+            ("jupiter", os.environ.get("JUPITER_MCP_SSE_URL", "").strip()),
             ("goldrush", os.environ.get("GOLDRUSH_MCP_SSE_URL", "").strip()),
+            ("dodo", os.environ.get("DODO_MCP_SSE_URL", "").strip()),
             ("umbra", os.environ.get("UMBRA_MCP_SSE_URL", "").strip()),
         ]
         for name, url in sse_targets:

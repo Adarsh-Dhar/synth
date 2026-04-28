@@ -17,13 +17,16 @@ const MAX_META_PROMPT_CHARS = Number(process.env.MAX_META_PROMPT_CHARS ?? "1800"
 
 type GeneratedFile = { filepath: string; content: unknown; language?: string };
 
-function compactPromptForMetaAgent(input: string): string {
+function compactPromptForMetaAgent(input: string): { prompt: string; truncated: boolean } {
   const normalized = input.replace(/\r/g, "").trim();
-  if (normalized.length <= MAX_META_PROMPT_CHARS) return normalized;
+  if (normalized.length <= MAX_META_PROMPT_CHARS) return { prompt: normalized, truncated: false };
 
   const head = Math.floor(MAX_META_PROMPT_CHARS * 0.7);
   const tail = Math.max(300, MAX_META_PROMPT_CHARS - head - 64);
-  return `${normalized.slice(0, head)}\n\n[...truncated for model limit...]\n\n${normalized.slice(-tail)}`;
+  return {
+    prompt: `${normalized.slice(0, head)}\n\n[...truncated for model limit...]\n\n${normalized.slice(-tail)}`,
+    truncated: true,
+  };
 }
 
 function parseEnvText(text: string): Record<string, string> {
@@ -1322,7 +1325,12 @@ export async function POST(req: NextRequest) {
     // Always prefer the expanded prompt — it gives the meta-agent far more context.
     const expandedPrompt: string = body.expandedPrompt || body.prompt;
     const originalPrompt: string = body.prompt || expandedPrompt;
-    const boundedPrompt = compactPromptForMetaAgent(expandedPrompt || originalPrompt || "");
+    const promptBundle = compactPromptForMetaAgent(expandedPrompt || originalPrompt || "");
+    const boundedPrompt = promptBundle.prompt;
+    const warnings: string[] = [];
+    if (promptBundle.truncated) {
+      warnings.push("Prompt was truncated before reaching the Meta-Agent; critical details may have been dropped.");
+    }
     const envDefaults = loadAgentEnvDefaults();
     const envConfig: Record<string, string> = {
       ...envDefaults,
@@ -1334,6 +1342,9 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`[generate-bot] [${requestId}] Using prompt length:`, boundedPrompt.length, "chars");
+    if (promptBundle.truncated) {
+      console.warn(`[generate-bot] [${requestId}] User prompt was truncated to ${boundedPrompt.length} chars before meta-agent submission`);
+    }
     console.log(`[generate-bot] [${requestId}] Meta-Agent timeout: ${META_TIMEOUT_MS}ms retries=${META_RETRIES}`);
     if (boundedPrompt.length > 200) {
       console.log(`[generate-bot] [${requestId}] Prompt preview:`, boundedPrompt.slice(0, 300), "...");
@@ -1616,6 +1627,7 @@ export async function POST(req: NextRequest) {
       files,
       thoughts: output.thoughts ?? "Bot generated successfully.",
       intent,
+      warnings,
     });
 
   } catch (err: unknown) {

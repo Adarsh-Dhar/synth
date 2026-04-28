@@ -771,9 +771,22 @@ class MetaAgent:
 
             return jup_res or "", dodo_res or ""
 
+        def run_fetch_all_contexts() -> tuple[str, str]:
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(fetch_all_contexts())
+            finally:
+                try:
+                    loop.run_until_complete(loop.shutdown_asyncgens())
+                except Exception:
+                    pass
+                asyncio.set_event_loop(None)
+                loop.close()
+
         # Execute the async fetches in the sync orchestrator
         try:
-            jupiter_docs, dodo_docs = asyncio.run(fetch_all_contexts())
+            jupiter_docs, dodo_docs = run_fetch_all_contexts()
         except Exception as e:
             _log("WARN", f"Context fetch failed: {e}", trace_id)
             jupiter_docs, dodo_docs = "", ""

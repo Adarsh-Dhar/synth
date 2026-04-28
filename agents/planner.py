@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 SOLANA_MCP_BASE           = os.environ.get("SOLANA_MCP_URL", "http://127.0.0.1:8001")
+DODO_MCP_BASE             = os.environ.get("DODO_MCP_URL", "http://127.0.0.1:5002")
 MCP_TIMEOUT               = float(os.environ.get("SOLANA_MCP_TIMEOUT_SECONDS", "10"))
 PLANNER_HISTORY_MAX_TURNS = int(os.environ.get("PLANNER_HISTORY_MAX_TURNS", "6"))
 PLANNER_HISTORY_MAX_CHARS = int(os.environ.get("PLANNER_HISTORY_MAX_CHARS", "3000"))
@@ -191,12 +192,13 @@ class SolanaMCPClient:
             "magicblock_withdraw": "/magicblock/withdraw",
             "umbra_shield": "/umbra/shield",
             "umbra_transfer": "/umbra/transfer",
-                "dodo_checkout": "/dodo/checkout",
-                "dodo_webhook": "/dodo/webhook",
-                "dodo_metering": "/dodo/meter",
+            "dodo_checkout": "/dodo/checkout",
+            "dodo_webhook": "/dodo/webhook",
+            "dodo_metering": "/dodo/meter",
         }
         path = endpoint_map.get(tool, "/solana/get_balance")
-        url  = f"{self.base_url}{path}"
+        base_url = DODO_MCP_BASE if tool.startswith("dodo_") else self.base_url
+        url  = f"{base_url.rstrip('/')}{path}"
 
         # Strip internal planner-only fields before forwarding
         fwd = {k: v for k, v in payload.items() if k not in {"mcp_tool", "verification_purpose"}}
