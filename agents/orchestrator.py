@@ -481,51 +481,6 @@ class MetaAgent:
         # Reuse an httpx client for LLM calls
         self._http_client = httpx.Client(timeout=LLM_TIMEOUT_SECONDS)
 
-    async def _fetch_live_docs_contexts(
-        self,
-        prompt: str,
-        trace_id: Optional[str] = None,
-    ) -> tuple[str, str]:
-        mcp = MultiMCPClient()
-        try:
-            await mcp.connect_default_sessions()
-        except Exception:
-            pass
-
-        jupiter_task: Optional[asyncio.Task[str]] = None
-        dodo_task: Optional[asyncio.Task[str]] = None
-
-        if "jupiter" in mcp.sessions:
-            jupiter_task = asyncio.create_task(
-                mcp.call_tool("jupiter", "jupiter_docs", {"query": prompt})
-            )
-
-        if (
-            "dodo" in mcp.sessions
-            and re.search(r"\b(payment|payments|split|splits|profit|profits|pay|pays|meter|metering|dodo|checkout)\b", prompt, re.I)
-        ):
-            dodo_task = asyncio.create_task(
-                mcp.call_tool("dodo", "dodo_docs", {"query": prompt})
-            )
-
-        try:
-            jupiter_docs = await jupiter_task if jupiter_task else ""
-        except Exception as exc:
-            _log("WARN", f"Jupiter MCP jupiter_docs failed: {exc}", trace_id)
-            jupiter_docs = ""
-
-        try:
-            dodo_docs = await dodo_task if dodo_task else ""
-        except Exception as exc:
-            _log("WARN", f"Dodo MCP dodo_docs failed: {exc}", trace_id)
-            dodo_docs = ""
-
-        try:
-            await mcp.shutdown()
-        except Exception:
-            pass
-
-        return jupiter_docs or "", dodo_docs or ""
     # ── LLM wrapper ────────────────────────────────────────────────────────────
 
     def _llm(
@@ -710,9 +665,36 @@ class MetaAgent:
 
         chain_ctx = self._chain_context(network, plan.strategy_type)
 
-        # Execute the async fetches natively
+        # 1. Fetch RAG context explicitly using correct MCP tool names.
+        async def fetch_all_contexts() -> tuple[str, str]:
+            mcp = MultiMCPClient()
+            try:
+                await mcp.connect_default_sessions()
+            except Exception:
+                pass
+
+            try:
+                jup_res = await mcp.call_tool("jupiter", "jupiter_docs", {"query": enriched_prompt})
+            except Exception as exc:
+                _log("WARN", f"Jupiter MCP jupiter_docs failed: {exc}", trace_id)
+                jup_res = ""
+
+            try:
+                dodo_res = await mcp.call_tool("dodo", "dodo_docs", {"query": enriched_prompt})
+            except Exception as exc:
+                _log("WARN", f"Dodo MCP dodo_docs failed: {exc}", trace_id)
+                dodo_res = ""
+
+            try:
+                await mcp.shutdown()
+            except Exception:
+                pass
+
+            return jup_res or "", dodo_res or ""
+
+        # 2. Execute natively (no asyncio.new_event_loop() hack).
         try:
-            jupiter_docs, dodo_docs = await self._fetch_live_docs_contexts(enriched_prompt, trace_id)
+            jupiter_docs, dodo_docs = await fetch_all_contexts()
         except Exception as e:
             _log("WARN", f"Context fetch failed: {e}", trace_id)
             jupiter_docs, dodo_docs = "", ""

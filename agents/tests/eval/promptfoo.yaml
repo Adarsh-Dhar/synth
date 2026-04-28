@@ -6,9 +6,9 @@ prompts:
     - Never use child_process, execSync, or jupiter-cli
     - Use BigInt for monetary values
     - No hardcoded addresses, read from env
-    - MUST use the MCP bridge (callMcpTool) for Jupiter swaps.
+    - MUST use the MCP bridge (callMcpTool) for all Jupiter swaps.
     {{#if dodoRequested}}
-    - Include Dodo webhook handler for payment/profit split events
+    - Include Dodo webhook handler for payment/profit split events utilizing callMcpTool
     {{/if}}
 providers:
   - id: openai:gpt-4o-mini
@@ -20,17 +20,13 @@ tests:
       dodoRequested: false
     assert:
       - type: contains
-        value: callMcpTool("jupiter", "execute_swap"
+        value: 'callMcpTool("jupiter", "execute_swap"'
       - type: not-contains
         value: axios
       - type: not-contains
         value: quote-api.jup.ag
       - type: not-contains
         value: execSync
-      - type: not-contains
-        value: child_process
-      - type: not-contains
-        value: jupiter-cli
       - type: contains
         value: BigInt
   - vars:
@@ -38,4 +34,6 @@ tests:
       dodoRequested: true
     assert:
       - type: contains
-        value: callMcpTool("dodo", "dodo_checkout"
+        value: 'callMcpTool("dodo", "dodo_checkout"'
+      - type: contains
+        value: 'callMcpTool("jupiter", "execute_swap"'

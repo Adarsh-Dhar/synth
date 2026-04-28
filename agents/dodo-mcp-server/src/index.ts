@@ -31,12 +31,27 @@ function safeEqHex(expectedHex: string, providedHex: string): boolean {
 function buildDocsAnswer(query: string): string {
   void query;
   return `=== DODO PAYMENTS MCP SCHEMA ===
-interface DodoCheckoutArgs { planId: string; customerId?: string; successUrl?: string; cancelUrl?: string; }
-interface DodoMeterArgs { customerId: string; event: string; amount: number; }
+// Use these strict interfaces for all monetization workflows.
+interface DodoCheckoutArgs {
+  planId: string;
+  customerId?: string;
+  successUrl?: string;
+  cancelUrl?: string;
+}
 
-// To create a checkout, call: await callMcpTool("dodo", "dodo_checkout", args: DodoCheckoutArgs)
-// To log billing usage, call: await callMcpTool("dodo", "dodo_meter", args: DodoMeterArgs)
-// Webhook signature verification MUST use HMAC-SHA256 over the raw request body.`;
+interface DodoMeterArgs {
+  customerId: string;
+  event: string;
+  amount: number;
+}
+
+// To create a checkout link, call:
+// const { checkoutUrl } = await callMcpTool("dodo", "dodo_checkout", args: DodoCheckoutArgs)
+
+// To log billing usage, call:
+// await callMcpTool("dodo", "dodo_meter", args: DodoMeterArgs)
+
+// WEBHOOK RULE: Webhook signature verification MUST use HMAC-SHA256 over the raw request body comparing against the x-dodo-signature header.`;
 }
 
 // ==========================================

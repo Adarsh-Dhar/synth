@@ -12,6 +12,7 @@ const PORT = Number(process.env.PORT || 5001);
 function buildDocsAnswer(query: string): string {
   void query;
   return `=== JUPITER MCP SCHEMA ===
+// Use these strict interfaces when generating execution code.
 interface JupiterExecuteArgs {
   inputMint: string;
   outputMint: string;
@@ -19,9 +20,13 @@ interface JupiterExecuteArgs {
   userWallet: string;
   slippageBps?: number;
 }
-// To execute a swap, use the MCP Tool: await callMcpTool("jupiter", "execute_swap", args: JupiterExecuteArgs)
-// The MCP handles quote routing, simulated slippage, and signing natively.
-// FATAL RULE: Do NOT use axios or quote-api.jup.ag manually.`;
+// To execute a swap, use the MCP Tool:
+// await callMcpTool("jupiter", "execute_swap", args: JupiterExecuteArgs)
+
+// FATAL RULES FOR BOT CODE:
+// 1. Do NOT use axios or quote-api.jup.ag manually.
+// 2. The MCP bridge handles quote routing, simulated slippage, and transaction signing natively.
+// 3. Always wrap amount in BigInt if converting from lamports/decimals before passing to Tool.`;
 }
 
 // ==========================================
