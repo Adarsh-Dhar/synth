@@ -379,6 +379,11 @@ SOLANA MCP TOOL REFERENCE:
         callUmbraShield({ network, wallet, mint, amount })
         callUmbraTransfer({ network, sender, recipient, mint, amount })
 
+    Dodo Payments path:
+        callMcpTool("dodo", "dodo_checkout", { planId }) -> { checkoutUrl, overlayToken }
+        callMcpTool("dodo", "dodo_meter", { customerId, event, amount })
+    
+
 ENV VARS your bot should read:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
   USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS,
@@ -521,9 +526,13 @@ class MetaAgent:
                     return text[:DODO_DOCS_MAX_CHARS]
             except Exception as exc:
                 _log("WARN", f"Dodo docs lookup failed via {url}: {exc}", trace_id)
-
-        return ""
-
+        _log("ERROR", "All Dodo doc fetch attempts failed. Using hardcoded fallback.", trace_id)
+        return """
+        FALLBACK DODO INSTRUCTIONS:
+        To implement payments or profit splits, you MUST expose an Express webhook at /dodo/webhook.
+        You MUST verify the HMAC using process.env.DODO_WEBHOOK_SECRET.
+        To generate checkout links, use callMcpTool("dodo", "dodo_checkout", { planId: "..." }).
+        """
     # ── LLM wrapper ────────────────────────────────────────────────────────────
 
     def _llm(
