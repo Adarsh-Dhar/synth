@@ -6,27 +6,43 @@ import { z } from "zod";
 
 dotenv.config();
 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const docsPath = path.resolve(__dirname, "../docs.json");
+let rawDocs: any[] = [];
+try {
+  rawDocs = JSON.parse(fs.readFileSync(docsPath, "utf-8"));
+} catch (err) {
+  console.warn("Jupiter docs.json not found or invalid:", err);
+  rawDocs = [];
+}
+
 const app = express();
 const PORT = Number(process.env.PORT || 5001);
 
 function buildDocsAnswer(query: string): string {
-  void query;
-  return `=== JUPITER MCP SCHEMA ===
-// Use these strict interfaces when generating execution code.
-interface JupiterExecuteArgs {
-  inputMint: string;
-  outputMint: string;
-  amount: number;
-  userWallet: string;
-  slippageBps?: number;
-}
-// To execute a swap, use the MCP Tool:
-// await callMcpTool("jupiter", "execute_swap", args: JupiterExecuteArgs)
+  const q = String(query || "").trim();
+  if (!q) return "Please provide specific keywords to search the Jupiter docs.";
 
-// FATAL RULES FOR BOT CODE:
-// 1. Do NOT use axios or quote-api.jup.ag manually.
-// 2. The MCP bridge handles quote routing, simulated slippage, and transaction signing natively.
-// 3. Always wrap amount in BigInt if converting from lamports/decimals before passing to Tool.`;
+  const normalizedQuery = q.toLowerCase();
+  const relevantDocs = rawDocs.filter((doc: any) =>
+    Array.isArray(doc.keywords) && doc.keywords.some((kw: string) => normalizedQuery.includes(kw))
+  );
+
+  if (relevantDocs.length === 0) {
+    return "No specific schema found for your query. Refer to Jupiter core skills: execute_swap, trigger_api, flashloan.";
+  }
+
+  let response = `=== JUPITER MCP SCHEMA ===\n`;
+  relevantDocs.forEach((doc: any) => {
+    response += `${doc.schema}\n\n`;
+  });
+  response += "// FATAL RULE: Do NOT use axios or quote-api.jup.ag manually. Use MCP bridge for execution.";
+  return response;
 }
 
 // ==========================================

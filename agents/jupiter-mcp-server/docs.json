@@ -1,0 +1,17 @@
+[
+  {
+    "id": "execute_swap",
+    "keywords": ["swap", "execute", "route", "execute_swap", "swap_api"],
+    "schema": "interface JupiterExecuteArgs { inputMint: string; outputMint: string; amount: number; userWallet: string; slippageBps?: number; }\n// Use: await callMcpTool(\"jupiter\", \"execute_swap\", args: JupiterExecuteArgs)"
+  },
+  {
+    "id": "quote",
+    "keywords": ["quote", "price", "quote-api", "jup"],
+    "schema": "// QUOTE: Do not call quote-api.jup.ag directly; use MCP for quotes where possible."
+  },
+  {
+    "id": "flashloan",
+    "keywords": ["flashloan", "borrow", "flash loan"],
+    "schema": "// Flashloan orchestration: borrow, execute, repay with fee accounting. Use MCP skills for safety."
+  }
+]

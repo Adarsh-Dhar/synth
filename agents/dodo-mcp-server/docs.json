@@ -1,0 +1,14 @@
+[
+  {
+    "keywords": ["checkout", "payment", "buy", "planId"],
+    "schema": "interface DodoCheckoutArgs { planId: string; customerId?: string; successUrl?: string; cancelUrl?: string; }\n// Usage: await callMcpTool('dodo', 'dodo_checkout', args: DodoCheckoutArgs)"
+  },
+  {
+    "keywords": ["meter", "usage", "billing", "event"],
+    "schema": "interface DodoMeterArgs { customerId: string; event: string; amount: number; }\n// Usage: await callMcpTool('dodo', 'dodo_meter', args: DodoMeterArgs)"
+  },
+  {
+    "keywords": ["webhook", "split", "profit", "hmac"],
+    "schema": "// Webhook signature verification MUST use HMAC-SHA256 over the raw request body comparing against x-dodo-signature."
+  }
+]

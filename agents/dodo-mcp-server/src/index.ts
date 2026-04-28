@@ -7,6 +7,24 @@ import { z } from "zod";
 
 dotenv.config();
 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Helper to get local directory in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load dynamic knowledge base
+const docsPath = path.resolve(__dirname, "../docs.json");
+let rawDocs: any[] = [];
+try {
+  rawDocs = JSON.parse(fs.readFileSync(docsPath, "utf-8"));
+} catch (err) {
+  console.warn("Dodo docs.json not found or invalid:", err);
+  rawDocs = [];
+}
+
 const app = express();
 const PORT = Number(process.env.PORT || 5002);
 const DODO_WEBHOOK_SECRET = String(process.env.DODO_WEBHOOK_SECRET || "").trim();
@@ -29,29 +47,28 @@ function safeEqHex(expectedHex: string, providedHex: string): boolean {
 }
 
 function buildDocsAnswer(query: string): string {
-  void query;
-  return `=== DODO PAYMENTS MCP SCHEMA ===
-// Use these strict interfaces for all monetization workflows.
-interface DodoCheckoutArgs {
-  planId: string;
-  customerId?: string;
-  successUrl?: string;
-  cancelUrl?: string;
-}
+  const q = String(query || "").trim();
+  if (!q) return "Please provide specific keywords to search the Dodo docs.";
 
-interface DodoMeterArgs {
-  customerId: string;
-  event: string;
-  amount: number;
-}
+  const normalizedQuery = q.toLowerCase();
 
-// To create a checkout link, call:
-// const { checkoutUrl } = await callMcpTool("dodo", "dodo_checkout", args: DodoCheckoutArgs)
+  // 1. Dynamic Retrieval: Filter only relevant schemas
+  const relevantDocs = rawDocs.filter((doc: any) =>
+    Array.isArray(doc.keywords) && doc.keywords.some((kw: string) => normalizedQuery.includes(kw))
+  );
 
-// To log billing usage, call:
-// await callMcpTool("dodo", "dodo_meter", args: DodoMeterArgs)
+  // 2. Fallback: If no match, return a generic pointer
+  if (relevantDocs.length === 0) {
+    return "No specific schema found for your query. Ensure you are using core Dodo features (checkout, meter, webhooks).";
+  }
 
-// WEBHOOK RULE: Webhook signature verification MUST use HMAC-SHA256 over the raw request body comparing against the x-dodo-signature header.`;
+  // 3. Assemble specifically tailored context
+  let responseString = `=== DODO PAYMENTS MCP SCHEMA ===\n`;
+  relevantDocs.forEach((doc: any) => {
+    responseString += `${doc.schema}\n\n`;
+  });
+
+  return responseString;
 }
 
 // ==========================================
