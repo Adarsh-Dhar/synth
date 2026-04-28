@@ -20,6 +20,8 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import tempfile
+import subprocess
 
 from dotenv import load_dotenv
 import httpx
@@ -875,14 +877,82 @@ class MetaAgent:
         )
 
         _log("INFO", f"Generator prompt chars={len(user_msg)}", trace_id)
-        raw    = self._llm(GENERATOR_SYSTEM, user_msg, temperature=0.1, max_tokens=self.max_tokens)
-        parsed = self._parse_json(raw)
-        files  = self._assemble_files(parsed.get("files", []), plan.strategy_type)
-
+        # Setup conversation history for potential self-healing
+        messages = [
+            {"role": "system", "content": GENERATOR_SYSTEM},
+            {"role": "user", "content": user_msg}
+        ]
+        
+        MAX_RETRIES = 2
+        
+        for attempt in range(MAX_RETRIES + 1):
+            # 1. Generate the Code
+            raw = self._llm_chat(messages, temperature=0.1, max_tokens=self.max_tokens)
+            parsed = self._parse_json(raw)
+            files = self._assemble_files(parsed.get("files", []), plan.strategy_type)
+            
+            # 2. Extract src/index.ts for validation
+            index_ts_content = next((f["content"] for f in files if f["filepath"] == "src/index.ts"), None)
+            
+            if not index_ts_content:
+                break  # If the LLM failed to output index.ts, break and return what we have
+                
+            # 3. Perform Pre-Flight Syntax Check
+            with tempfile.TemporaryDirectory() as temp_dir:
+                src_dir = os.path.join(temp_dir, "src")
+                os.makedirs(src_dir, exist_ok=True)
+                file_path = os.path.join(src_dir, "index.ts")
+                
+                with open(file_path, "w") as f:
+                    f.write(index_ts_content)
+                
+                try:
+                    # Run a dry-run TypeScript check using npx
+                    result = subprocess.run(
+                        ["npx", "-y", "tsc", "--noEmit", "--target", "es2020", "--moduleResolution", "node", file_path],
+                        capture_output=True,
+                        text=True,
+                        check=False
+                    )
+                    
+                    if result.returncode == 0:
+                        # Success! Code compiles cleanly.
+                        _log("INFO", f"Syntax check passed on attempt {attempt + 1}", trace_id)
+                        return {
+                            "status": "ready",
+                            "files": files,
+                            "plan": plan.to_dict()
+                        }
+                    else:
+                        # Failure! Capture the TS Compiler Error
+                        error_msg = result.stdout + "\n" + result.stderr
+                        _log("WARN", f"Syntax error on attempt {attempt + 1}: {error_msg[:200]}...", trace_id)
+                        
+                        if attempt < MAX_RETRIES:
+                            # Append the error back to the LLM to self-heal
+                            messages.append({"role": "assistant", "content": raw})
+                            messages.append({
+                                "role": "user", 
+                                "content": f"The code you generated failed TypeScript validation with this error:\n\n{error_msg[:1000]}\n\nFix the TypeScript errors and return the FULL updated JSON again."
+                            })
+                        else:
+                            # Out of retries, return the files but flag the error
+                            _log("ERROR", "Max self-healing retries exhausted.", trace_id)
+                            return {
+                                "status": "ready",
+                                "files": files,
+                                "plan": plan.to_dict(),
+                                "warning": "Code generated with TypeScript errors."
+                            }
+                except Exception as e:
+                    _log("WARN", f"Skipping syntax check due to environment error: {e}", trace_id)
+                    break  # Fallback to returning files if npx/tsc isn't installed locally
+        
+        # Fallback return
         return {
             "status": "ready",
-            "intent": intent,
-            "output": {"thoughts": parsed.get("thoughts", ""), "files": files},
+            "files": files,
+            "plan": plan.to_dict()
         }
 
     # ── Public API ─────────────────────────────────────────────────────────────
