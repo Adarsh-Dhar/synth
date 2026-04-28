@@ -335,35 +335,24 @@ CORE RULES:
 1. TypeScript + Node.js (ESM). package.json must set "type": "module".
 2. "start" script must be: "tsx src/index.ts"
 3. Dependencies: axios ^1.7.4, dotenv ^16.4.0, tsx (dev), typescript (dev), @types/node (dev).
-    Do NOT include @solana/web3.js — all chain access goes through MCP tools and CLIs.
+    Do NOT include @solana/web3.js — all chain access goes through MCP tools.
 4. Import "dotenv/config" at the very top of src/index.ts.
 5. All money arithmetic uses BigInt — never floats.
 6. SIMULATION_MODE = process.env.SIMULATION_MODE !== "false" (default true).
-7. TRADING: Do NOT execute local CLIs. For Jupiter swaps use the Jupiter V6 HTTP API (quote-api.jup.ag/v6):
+7. TRADING: For Jupiter swaps, YOU MUST use the Jupiter V6 HTTP API (quote-api.jup.ag/v6):
     - Step A: POST `/quote` to obtain a routing quote for input/output mints and amount.
     - Step B: POST `/swap` to build a transaction bundle for the quote.
     - Step C: Serialize/encode the returned transaction and send via the MCP tool: `callMcpTool("solana", "send_raw_transaction", { network, raw })`.
-    - Always use `axios` for Jupiter HTTP calls. Do NOT call `child_process.execSync` or any local CLI.
+    - Always use `axios` for HTTP calls. Do NOT call `child_process.execSync` or any local CLI.
 8. Use an inFlight boolean guard to prevent overlapping poll cycles.
 9. Handle SIGINT / SIGTERM for graceful shutdown.
 10. Never hardcode addresses — read everything from process.env.
-11. For Jupiter API amounts, convert smallest units to decimal-normalized standard token units as required by the quote endpoint.
-12. `--input-mint` and `--output-mint` must come from env mint addresses only (never symbolic aliases like SOL/USDC).
-
-ADDITIONAL RULES:
-- DODO: If the user requests payment, metering, or profit-splitting flows, implement a Dodo webhook handler that verifies incoming webhook HMACs and exposes a `/dodo/webhook` route.
-- SECURITY: Under no circumstances use Node's `child_process`, `execSync`, or similar APIs to run external CLIs.
-8. Use an inFlight boolean guard to prevent overlapping poll cycles.
-9. Handle SIGINT / SIGTERM for graceful shutdown.
-10. Never hardcode addresses — read everything from process.env.
-11. For Jupiter CLI amounts, convert smallest units to decimal-normalized standard token units before building `--amount`.
-12. `--input-mint` and `--output-mint` must come from env mint addresses only (never symbolic aliases like SOL/USDC).
+11. DODO: If the user requests payment, metering, or profit-splitting flows, implement a Dodo webhook handler that verifies incoming webhook HMACs and exposes a `/dodo/webhook` route.
 
 SOLANA MCP TOOL REFERENCE:
   Responsibility split:
-     - Use MCP tools for balances, account reads, SNS resolution, and generic RPC methods.
-     - Use Jupiter CLI (`jupiter-cli swap ...`) for swap execution path.
-      - When Jupiter CLI swap path is used, do NOT emit swap execution via `callMcpTool(..., "send_raw_transaction", ...)`.
+     - Use MCP tools for balances, account reads, SNS resolution, generic RPC methods, AND transaction broadcasting (`send_raw_transaction`).
+     - Use Axios HTTP calls for off-chain API data (like Jupiter routing).
 
   Read SOL balance:
     getSolBalance(network, walletAddress)  → bigint (lamports)
@@ -390,9 +379,6 @@ SOLANA MCP TOOL REFERENCE:
         callUmbraShield({ network, wallet, mint, amount })
         callUmbraTransfer({ network, sender, recipient, mint, amount })
 
-    Dodo usage metering hook:
-        Emit a best-effort usage event at bot start and stop via configured billing endpoint.
-
 ENV VARS your bot should read:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
   USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS,
@@ -400,7 +386,6 @@ ENV VARS your bot should read:
   TRADE_AMOUNT_LAMPORTS, MIN_PROFIT_LAMPORTS,
   POLL_INTERVAL_MS (default 15000), SIMULATION_MODE
 """
-
 
 # ─── MetaAgent ────────────────────────────────────────────────────────────────
 
