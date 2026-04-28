@@ -23,6 +23,9 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 import httpx
+import asyncio
+
+from mcp_client import MultiMCPClient
 
 from planner import (
     PlannerAgent,
@@ -339,11 +342,11 @@ CORE RULES:
 4. Import "dotenv/config" at the very top of src/index.ts.
 5. All money arithmetic uses BigInt — never floats.
 6. SIMULATION_MODE = process.env.SIMULATION_MODE !== "false" (default true).
-7. TRADING: For Jupiter swaps, YOU MUST use the Jupiter V6 HTTP API (quote-api.jup.ag/v6):
-    - Step A: POST `/quote` to obtain a routing quote for input/output mints and amount.
-    - Step B: POST `/swap` to build a transaction bundle for the quote.
-    - Step C: Serialize/encode the returned transaction and send via the MCP tool: `callMcpTool("solana", "send_raw_transaction", { network, raw })`.
-    - Always use `axios` for HTTP calls. Do NOT call `child_process.execSync` or any local CLI.
+7. TRADING: For Jupiter swaps, YOU MUST use the Jupiter Agent Skills via MCP.
+    - Do NOT use raw axios to quote-api.jup.ag.
+    - Do NOT build manual transactions.
+    - Simply call the MCP tool: `await callMcpTool("jupiter", "execute_swap", { inputMint, outputMint, amount, userWallet })`
+    - The MCP handles the routing, quoting, and transaction signing orchestration natively.
 8. Use an inFlight boolean guard to prevent overlapping poll cycles.
 9. Handle SIGINT / SIGTERM for graceful shutdown.
 10. Never hardcode addresses — read everything from process.env.
@@ -699,7 +702,7 @@ class MetaAgent:
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         network = plan.collected_parameters.get("SOLANA_NETWORK", "devnet")
-        mcps = ["solana"]
+        mcps = ["solana", "jupiter"]
         if plan.collected_parameters.get("GOLDRUSH_API_KEY"):
             mcps.append("goldrush")
         if plan.collected_parameters.get("MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL"):
@@ -717,13 +720,64 @@ class MetaAgent:
         }
 
         chain_ctx = self._chain_context(network, plan.strategy_type)
-        # Fetch RAG contexts (Jupiter + Dodo) and respect a combined context budget.
-        jupiter_docs = self._fetch_jupiter_docs_context(enriched_prompt, trace_id=trace_id)
-        # Only fetch Dodo context when prompt mentions payments, split, meter, or checkout flows
-        if re.search(r"\b(payment|payments|split|splits|profit|profits|pay|pays|meter|metering|dodo|checkout)\b", enriched_prompt, re.I):
-            dodo_docs = self._fetch_dodo_context(enriched_prompt, trace_id=trace_id)
-        else:
-            dodo_docs = ""
+
+        # --- NEW PARALLEL MCP FETCHING LOGIC ---
+        async def fetch_all_contexts():
+            mcp = MultiMCPClient()
+            try:
+                await mcp.connect_default_sessions()
+            except Exception:
+                # proceed — connect_default_sessions is best-effort
+                pass
+
+            # Prefer MCP-backed docs if the sessions are registered; otherwise
+            # fall back to the existing synchronous fetch helpers (keeps tests happy).
+            if "jupiter" in mcp.sessions:
+                jupiter_task = asyncio.create_task(
+                    mcp.call_tool("jupiter", "search_docs", {"query": enriched_prompt})
+                )
+            else:
+                jupiter_task = asyncio.create_task(
+                    asyncio.to_thread(self._fetch_jupiter_docs_context, enriched_prompt, trace_id)
+                )
+
+            dodo_task = None
+            if re.search(r"\b(payment|payments|split|splits|profit|profits|pay|pays|meter|metering|dodo|checkout)\b", enriched_prompt, re.I):
+                if "dodo" in mcp.sessions:
+                    dodo_task = asyncio.create_task(
+                        mcp.call_tool("dodo", "search_docs", {"query": enriched_prompt})
+                    )
+                else:
+                    dodo_task = asyncio.create_task(
+                        asyncio.to_thread(self._fetch_dodo_context, enriched_prompt, trace_id)
+                    )
+
+            try:
+                jup_res = await jupiter_task if jupiter_task else ""
+            except Exception as exc:
+                _log("WARN", f"Jupiter MCP search_docs failed: {exc}", trace_id)
+                jup_res = ""
+
+            try:
+                dodo_res = await dodo_task if dodo_task else ""
+            except Exception as exc:
+                _log("WARN", f"Dodo MCP search_docs failed: {exc}", trace_id)
+                dodo_res = ""
+
+            try:
+                await mcp.shutdown()
+            except Exception:
+                pass
+
+            return jup_res or "", dodo_res or ""
+
+        # Execute the async fetches in the sync orchestrator
+        try:
+            jupiter_docs, dodo_docs = asyncio.run(fetch_all_contexts())
+        except Exception as e:
+            _log("WARN", f"Context fetch failed: {e}", trace_id)
+            jupiter_docs, dodo_docs = "", ""
+        # ---------------------------------------
 
         combined = ""
         parts = []

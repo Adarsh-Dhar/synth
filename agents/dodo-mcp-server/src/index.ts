@@ -67,16 +67,41 @@ app.get("/mcp/dodo/skills", (req, res) => {
   });
 });
 
-app.post(["/mcp/dodo/docs", "/dodo/docs/search", "/search"], (req, res) => {
+app.post(["/mcp/dodo/docs", "/dodo/docs/search", "/search"], async (req, res) => {
   const q = (req.body && req.body.query) || req.query.q || "";
-  const sample = {
-    result: {
-      content: [
-        { text: buildDocsAnswer(String(q).slice(0, 500)) }
-      ]
+
+  const DODO_API_KEY = String(process.env.DODO_API_KEY || "").trim();
+
+  try {
+    if (!DODO_API_KEY) throw new Error("DODO_API_KEY not configured");
+
+    const dodoResponse = await fetch("https://api.dodo.dev/v1/ai/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${DODO_API_KEY}`,
+      },
+      body: JSON.stringify({ query: String(q).slice(0, 1000) }),
+    });
+
+    if (!dodoResponse.ok) {
+      throw new Error(`Dodo upstream returned ${dodoResponse.status}`);
     }
-  };
-  res.json(sample);
+
+    const dodoData = await dodoResponse.json();
+
+    // Normalize to MCP response schema expected by orchestrator
+    const text = (dodoData.answer || dodoData.context || dodoData.summary || JSON.stringify(dodoData)).toString();
+    return res.json({ result: { content: [{ text }] } });
+  } catch (err) {
+    console.error("Dodo MCP Error:", err instanceof Error ? err.message : String(err));
+    // Fallback to minimal instructions if the API fails
+    return res.json({
+      result: {
+        content: [{ text: "Dodo API Unavailable. Fallback: To use Dodo, POST to /v1/checkout." }]
+      }
+    });
+  }
 });
 
 app.post("/dodo/webhook", (req, res) => {
