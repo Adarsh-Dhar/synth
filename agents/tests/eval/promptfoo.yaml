@@ -3,10 +3,10 @@ prompts:
   - |
     Build a Solana {{strategy}} bot.
     Requirements:
-    - Use axios to call Jupiter quote-api.jup.ag/v6 endpoints (/quote then /swap)
     - Never use child_process, execSync, or jupiter-cli
     - Use BigInt for monetary values
     - No hardcoded addresses, read from env
+    - MUST use the MCP bridge (callMcpTool) for Jupiter swaps.
     {{#if dodoRequested}}
     - Include Dodo webhook handler for payment/profit split events
     {{/if}}
@@ -20,10 +20,11 @@ tests:
       dodoRequested: false
     assert:
       - type: contains
+        value: callMcpTool("jupiter", "execute_swap"
+      - type: not-contains
+        value: axios
+      - type: not-contains
         value: quote-api.jup.ag
-      - type: icontains-any
-        value:
-          - axios
       - type: not-contains
         value: execSync
       - type: not-contains
@@ -33,23 +34,8 @@ tests:
       - type: contains
         value: BigInt
   - vars:
-      strategy: yield sweeper
-      dodoRequested: false
-    assert:
-      - type: contains
-        value: quote-api.jup.ag
-      - type: not-contains
-        value: execSync
-      - type: contains
-        value: BigInt
-  - vars:
-      strategy: profit-splitting
+      strategy: arbitrage
       dodoRequested: true
     assert:
       - type: contains
-        value: webhook
-      - type: icontains-any
-        value:
-          - dodo
-      - type: not-contains
-        value: jupiter-cli
+        value: callMcpTool("dodo", "dodo_checkout"

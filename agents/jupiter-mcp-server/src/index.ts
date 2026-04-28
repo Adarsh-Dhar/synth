@@ -10,29 +10,18 @@ const app = express();
 const PORT = Number(process.env.PORT || 5001);
 
 function buildDocsAnswer(query: string): string {
-  const q = String(query || "").toLowerCase();
-  const mentionsSwap = /swap|route|trade|execute/.test(q);
-  const mentionsFlashloan = /flashloan|flash loan|borrow/.test(q);
-  const mentionsTrigger = /trigger api|trigger|automation|recurring/.test(q);
-
-  const sections: string[] = [];
-  sections.push("Jupiter MCP docs: prefer local docs lookups and deterministic execution paths for bots.");
-
-  if (mentionsSwap) {
-    sections.push("Swap skill: use execute_swap with input mint, output mint, amount, slippageBps, and a route or quote context.");
-  }
-  if (mentionsFlashloan) {
-    sections.push("Flash loan skill: structure borrow, execute, and repay steps with clear risk limits and fee accounting.");
-  }
-  if (mentionsTrigger) {
-    sections.push("Trigger API skill: use explicit schedules, conditions, or event gates before dispatching a trade action.");
-  }
-  if (!mentionsSwap && !mentionsFlashloan && !mentionsTrigger) {
-    sections.push("Skills: execute_swap, trigger_api, flashloan orchestration, and quote-driven routing.");
-  }
-
-  sections.push("Reference: docs.jup.ag for public product guidance and API concepts.");
-  return sections.join(" ");
+  void query;
+  return `=== JUPITER MCP SCHEMA ===
+interface JupiterExecuteArgs {
+  inputMint: string;
+  outputMint: string;
+  amount: number;
+  userWallet: string;
+  slippageBps?: number;
+}
+// To execute a swap, use the MCP Tool: await callMcpTool("jupiter", "execute_swap", args: JupiterExecuteArgs)
+// The MCP handles quote routing, simulated slippage, and signing natively.
+// FATAL RULE: Do NOT use axios or quote-api.jup.ag manually.`;
 }
 
 // ==========================================

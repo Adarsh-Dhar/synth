@@ -162,7 +162,7 @@ async def create_bot(req: PromptRequest, request: Request):
     print(f"[create-bot] [{rid}] chars={len(req.prompt)}")
     try:
         result = await asyncio.wait_for(
-            asyncio.to_thread(agent.build_bot, req.prompt, rid),
+            agent.build_bot(req.prompt, rid),
             timeout=CREATE_BOT_TIMEOUT,
         )
         print(f"[create-bot] [{rid}] done in {round(time.monotonic()-t0,2)}s")
@@ -185,7 +185,7 @@ async def create_bot_chat(req: ChatRequest, request: Request):
 
     try:
         raw: Dict[str, Any] = await asyncio.wait_for(
-            asyncio.to_thread(agent.build_bot_with_history, hist, rid),
+            agent.build_bot_with_history(hist, rid),
             timeout=CREATE_BOT_TIMEOUT,
         )
     except asyncio.TimeoutError:

@@ -481,118 +481,51 @@ class MetaAgent:
         # Reuse an httpx client for LLM calls
         self._http_client = httpx.Client(timeout=LLM_TIMEOUT_SECONDS)
 
-    def _fetch_jupiter_docs_context(self, prompt: str, trace_id: Optional[str] = None) -> str:
-        raw = str(prompt or "").strip()
-        if not raw:
-            return ""
-
-        # Use LLM-based keyword extraction first (avoid sending entire prompt to MCP search)
+    async def _fetch_live_docs_contexts(
+        self,
+        prompt: str,
+        trace_id: Optional[str] = None,
+    ) -> tuple[str, str]:
+        mcp = MultiMCPClient()
         try:
-            kw_system = "You are a compact keyword extractor. Return a comma-separated list of keywords." \
-                        " Return only keywords, no explanation."
-            kw_user = f"Extract concise keywords for MCP docs search from this user prompt:\n\n{raw}\n\n" \
-                      "Limit to 12 keywords."
-            kws = self._llm(kw_system, kw_user, temperature=0.0, max_tokens=128, operation="keywords", trace_id=trace_id)
-            keywords = re.sub(r"[^0-9A-Za-z,\-_/]+", " ", kws or "").strip()
-            if not keywords:
-                keywords = ""
+            await mcp.connect_default_sessions()
         except Exception:
-            keywords = ""
+            pass
 
-        # Prefer MCP-compatible route, fallback to a generic docs-search route if available.
-        candidates = [
-            f"{JUPITER_DOCS_MCP_URL}/mcp/jupiter/docs",
-            f"{JUPITER_DOCS_MCP_URL}/jupiter/docs/search",
-            f"{JUPITER_DOCS_MCP_URL}/search",
-        ]
+        jupiter_task: Optional[asyncio.Task[str]] = None
+        dodo_task: Optional[asyncio.Task[str]] = None
 
-        headers = {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
-        }
-        payload = {"query": keywords or raw}
+        if "jupiter" in mcp.sessions:
+            jupiter_task = asyncio.create_task(
+                mcp.call_tool("jupiter", "jupiter_docs", {"query": prompt})
+            )
 
-        for url in candidates:
-            try:
-                resp = self._http_client.post(
-                    url,
-                    json=payload,
-                    headers=headers,
-                    timeout=JUPITER_DOCS_TIMEOUT_SECONDS,
-                )
-                if resp.status_code == 404:
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
+        if (
+            "dodo" in mcp.sessions
+            and re.search(r"\b(payment|payments|split|splits|profit|profits|pay|pays|meter|metering|dodo|checkout)\b", prompt, re.I)
+        ):
+            dodo_task = asyncio.create_task(
+                mcp.call_tool("dodo", "dodo_docs", {"query": prompt})
+            )
 
-                if isinstance(data, dict) and isinstance(data.get("result"), dict):
-                    content = data["result"].get("content", [])
-                    if isinstance(content, list) and content:
-                        first = content[0]
-                        text = first.get("text", "") if isinstance(first, dict) else ""
-                        if isinstance(text, str) and text.strip():
-                            return text[:JUPITER_DOCS_MAX_CHARS]
-
-                text = json.dumps(data, ensure_ascii=True)
-                if text:
-                    return text[:JUPITER_DOCS_MAX_CHARS]
-            except Exception as exc:
-                _log("WARN", f"Jupiter docs lookup failed via {url}: {exc}", trace_id)
-
-        return ""
-
-    def _fetch_dodo_context(self, prompt: str, trace_id: Optional[str] = None) -> str:
-        """Fetch Dodo docs/context from the Dodo MCP server. Returns empty string on failure."""
-        raw = str(prompt or "").strip()
-        if not raw:
-            return ""
-
-        candidates = [
-            f"{DODO_DOCS_MCP_URL}/mcp/dodo/docs",
-            f"{DODO_DOCS_MCP_URL}/dodo/docs/search",
-            f"{DODO_DOCS_MCP_URL}/search",
-        ]
-
-        headers = {"Content-Type": "application/json", "ngrok-skip-browser-warning": "true"}
-        # Use keywords similar to Jupiter to avoid large payloads
         try:
-            kw_system = "You are a compact keyword extractor. Return a comma-separated list of keywords." \
-                        " Return only keywords, no explanation."
-            kw_user = f"Extract concise keywords for Dodo MCP docs search from this user prompt:\n\n{raw}\n\n" \
-                      "Limit to 12 keywords."
-            kws = self._llm(kw_system, kw_user, temperature=0.0, max_tokens=128, operation="keywords", trace_id=trace_id)
-            keywords = re.sub(r"[^0-9A-Za-z,\-_/]+", " ", kws or "").strip()
+            jupiter_docs = await jupiter_task if jupiter_task else ""
+        except Exception as exc:
+            _log("WARN", f"Jupiter MCP jupiter_docs failed: {exc}", trace_id)
+            jupiter_docs = ""
+
+        try:
+            dodo_docs = await dodo_task if dodo_task else ""
+        except Exception as exc:
+            _log("WARN", f"Dodo MCP dodo_docs failed: {exc}", trace_id)
+            dodo_docs = ""
+
+        try:
+            await mcp.shutdown()
         except Exception:
-            keywords = ""
+            pass
 
-        payload = {"query": keywords or raw}
-
-        for url in candidates:
-            try:
-                resp = self._http_client.post(url, json=payload, headers=headers, timeout=DODO_DOCS_TIMEOUT_SECONDS)
-                if resp.status_code == 404:
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
-                if isinstance(data, dict) and isinstance(data.get("result"), dict):
-                    content = data["result"].get("content", [])
-                    if isinstance(content, list) and content:
-                        first = content[0]
-                        text = first.get("text", "") if isinstance(first, dict) else ""
-                        if isinstance(text, str) and text.strip():
-                            return text[:DODO_DOCS_MAX_CHARS]
-                text = json.dumps(data, ensure_ascii=True)
-                if text:
-                    return text[:DODO_DOCS_MAX_CHARS]
-            except Exception as exc:
-                _log("WARN", f"Dodo docs lookup failed via {url}: {exc}", trace_id)
-        _log("ERROR", "All Dodo doc fetch attempts failed. Using hardcoded fallback.", trace_id)
-        return """
-        FALLBACK DODO INSTRUCTIONS:
-        To implement payments or profit splits, you MUST handle inbound webhook payloads via process.on("message") rather than opening an Express server.
-        You MUST verify the HMAC using process.env.DODO_WEBHOOK_SECRET when processing webhook payloads.
-        To generate checkout links, use callMcpTool("dodo", "dodo_checkout", { planId: "..." }).
-        """
+        return jupiter_docs or "", dodo_docs or ""
     # ── LLM wrapper ────────────────────────────────────────────────────────────
 
     def _llm(
@@ -686,7 +619,7 @@ class MetaAgent:
 
     # ── Planner orchestration loop ─────────────────────────────────────────────
 
-    def orchestrate_bot_creation(
+    async def orchestrate_bot_creation(
         self,
         chat_history: List[Dict[str, str]],
         trace_id: Optional[str] = None,
@@ -738,7 +671,7 @@ class MetaAgent:
             # Step 4 — generate
             enriched = plan.enriched_prompt or history[-1].get("content", "")
             _log("INFO", "All parameters verified — generating code.", trace_id)
-            return self._generate_code_with_plan(plan, enriched, trace_id)
+            return await self._generate_code_with_plan(plan, enriched, trace_id)
 
         # Exhausted loops
         return {
@@ -751,7 +684,7 @@ class MetaAgent:
 
     # ── Code generation ────────────────────────────────────────────────────────
 
-    def _generate_code_with_plan(
+    async def _generate_code_with_plan(
         self,
         plan: PlannerState,
         enriched_prompt: str,
@@ -777,72 +710,9 @@ class MetaAgent:
 
         chain_ctx = self._chain_context(network, plan.strategy_type)
 
-        # --- NEW PARALLEL MCP FETCHING LOGIC ---
-        async def fetch_all_contexts():
-            mcp = MultiMCPClient()
-            try:
-                await mcp.connect_default_sessions()
-            except Exception:
-                # proceed — connect_default_sessions is best-effort
-                pass
-
-            # Prefer MCP-backed docs if the sessions are registered; otherwise
-            # fall back to the existing synchronous fetch helpers (keeps tests happy).
-            if "jupiter" in mcp.sessions:
-                jupiter_task = asyncio.create_task(
-                    mcp.call_tool("jupiter", "search_docs", {"query": enriched_prompt})
-                )
-            else:
-                jupiter_task = asyncio.create_task(
-                    asyncio.to_thread(self._fetch_jupiter_docs_context, enriched_prompt, trace_id)
-                )
-
-            dodo_task = None
-            if re.search(r"\b(payment|payments|split|splits|profit|profits|pay|pays|meter|metering|dodo|checkout)\b", enriched_prompt, re.I):
-                if "dodo" in mcp.sessions:
-                    dodo_task = asyncio.create_task(
-                        mcp.call_tool("dodo", "search_docs", {"query": enriched_prompt})
-                    )
-                else:
-                    dodo_task = asyncio.create_task(
-                        asyncio.to_thread(self._fetch_dodo_context, enriched_prompt, trace_id)
-                    )
-
-            try:
-                jup_res = await jupiter_task if jupiter_task else ""
-            except Exception as exc:
-                _log("WARN", f"Jupiter MCP search_docs failed: {exc}", trace_id)
-                jup_res = ""
-
-            try:
-                dodo_res = await dodo_task if dodo_task else ""
-            except Exception as exc:
-                _log("WARN", f"Dodo MCP search_docs failed: {exc}", trace_id)
-                dodo_res = ""
-
-            try:
-                await mcp.shutdown()
-            except Exception:
-                pass
-
-            return jup_res or "", dodo_res or ""
-
-        def run_fetch_all_contexts() -> tuple[str, str]:
-            loop = asyncio.new_event_loop()
-            try:
-                asyncio.set_event_loop(loop)
-                return loop.run_until_complete(fetch_all_contexts())
-            finally:
-                try:
-                    loop.run_until_complete(loop.shutdown_asyncgens())
-                except Exception:
-                    pass
-                asyncio.set_event_loop(None)
-                loop.close()
-
-        # Execute the async fetches in the sync orchestrator
+        # Execute the async fetches natively
         try:
-            jupiter_docs, dodo_docs = run_fetch_all_contexts()
+            jupiter_docs, dodo_docs = await self._fetch_live_docs_contexts(enriched_prompt, trace_id)
         except Exception as e:
             _log("WARN", f"Context fetch failed: {e}", trace_id)
             jupiter_docs, dodo_docs = "", ""
@@ -974,11 +844,11 @@ class MetaAgent:
         intent.setdefault("requires_openai", False)
         return intent
 
-    def build_bot(self, prompt: str, trace_id: Optional[str] = None) -> Dict[str, Any]:
+    async def build_bot(self, prompt: str, trace_id: Optional[str] = None) -> Dict[str, Any]:
         _log("INFO", f"build_bot prompt_chars={len(prompt)}", trace_id)
 
         if PLANNER_ENABLED:
-            result = self.orchestrate_bot_creation(
+            result = await self.orchestrate_bot_creation(
                 [{"role": "user", "content": prompt}], trace_id=trace_id
             )
             if result.get("status") == "ready":
@@ -996,7 +866,7 @@ class MetaAgent:
             f"Chain: solana | Network: {network}\n"
             f"Strategy: {strategy}\n"
             f"User intent: {prompt}\n\n"
-            f"JUPITER DOCS CONTEXT (live MCP):\n{self._fetch_jupiter_docs_context(prompt, trace_id=trace_id) or 'unavailable for this request.'}\n\n"
+            f"JUPITER DOCS CONTEXT (live MCP):\nunavailable for this request.\n\n"
             f"{chain_ctx}\n\nGenerate the 2 files now."
         )
 
@@ -1010,13 +880,13 @@ class MetaAgent:
             "output": {"thoughts": parsed.get("thoughts", ""), "files": files},
         }
 
-    def build_bot_with_history(
+    async def build_bot_with_history(
         self,
         chat_history: List[Dict[str, str]],
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         _log("INFO", f"build_bot_with_history turns={len(chat_history)}", trace_id)
-        return self.orchestrate_bot_creation(chat_history, trace_id=trace_id)
+        return await self.orchestrate_bot_creation(chat_history, trace_id=trace_id)
 
     # ── File assembly ──────────────────────────────────────────────────────────
 

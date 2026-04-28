@@ -29,27 +29,14 @@ function safeEqHex(expectedHex: string, providedHex: string): boolean {
 }
 
 function buildDocsAnswer(query: string): string {
-  const q = String(query || "").toLowerCase();
-  const includesWebhook = /webhook|signature|hmac/.test(q);
-  const includesCheckout = /checkout|plan|billing|payment/.test(q);
-  const includesMetering = /meter|usage|threshold/.test(q);
+  void query;
+  return `=== DODO PAYMENTS MCP SCHEMA ===
+interface DodoCheckoutArgs { planId: string; customerId?: string; successUrl?: string; cancelUrl?: string; }
+interface DodoMeterArgs { customerId: string; event: string; amount: number; }
 
-  const sections: string[] = [];
-  sections.push("Dodo MCP docs: use signed HTTP APIs and webhook verification over the raw request body.");
-  if (includesCheckout) {
-    sections.push("Checkout: create a subscription session with planId, customerId, successUrl, cancelUrl, and metadata using the Dodo payments API.");
-  }
-  if (includesWebhook) {
-    sections.push("Webhook: verify x-dodo-signature using HMAC-SHA256 over raw body or timestamp.rawBody.");
-  }
-  if (includesMetering) {
-    sections.push("Metering: emit usage events to configured billing endpoint with plan/customer metadata.");
-  }
-  if (!includesCheckout && !includesWebhook && !includesMetering) {
-    sections.push("Skills: checkout creation, webhook verification, and usage metering events.");
-  }
-  sections.push("Reference: docs.dodopayments.com for public product guidance and API concepts.");
-  return sections.join(" ");
+// To create a checkout, call: await callMcpTool("dodo", "dodo_checkout", args: DodoCheckoutArgs)
+// To log billing usage, call: await callMcpTool("dodo", "dodo_meter", args: DodoMeterArgs)
+// Webhook signature verification MUST use HMAC-SHA256 over the raw request body.`;
 }
 
 // ==========================================
