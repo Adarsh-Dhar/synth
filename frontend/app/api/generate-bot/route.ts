@@ -824,73 +824,6 @@ function buildMcpBridgeTs(): string {
   ].join("\n");
 }
 
-function normalizeRuntimeVarNames(files: GeneratedFile[], intent: Record<string, unknown>): GeneratedFile[] {
-  const chain = String(intent.chain ?? "").toLowerCase();
-  return files.map((file) => {
-    if (typeof file.content !== "string") return file;
-    const cleanPath = file.filepath.replace(/^[./]+/, "");
-
-    // Map RPC placeholders to chain-specific env keys
-    let patched = file.content;
-    if (chain === "solana") {
-      patched = patched.replace(/\bRPC_PROVIDER_URL\b/g, "SOLANA_RPC_URL").replace(/\bRPC_URL\b/g, "SOLANA_RPC_URL");
-    } else if (chain === "solana") {
-      patched = patched.replace(/\bRPC_PROVIDER_URL\b/g, "SOLANA_RPC_URL").replace(/\bRPC_URL\b/g, "SOLANA_RPC_URL");
-    } else {
-      patched = patched.replace(/\bRPC_PROVIDER_URL\b/g, "RPC_URL").replace(/\bRPC_URL\b/g, "RPC_URL");
-    }
-
-    // Solana-specific rewrites: convert common Solana move_execute sweep patterns
-    // emitted by model-generated code into a Solana signing-relay request shape.
-    if (chain === "solana") {
-      patched = patched.replace(
-        /await\s+callMcpTool\(\s*["']solana["']\s*,\s*["']move_execute["']\s*,\s*\{[^\}]*args:\s*(\[[^\]]+\])[^\}]*\}\s*\)/gs,
-        'await callSigningRelay({ network: "solana", programId: String(process.env.SOLANA_BRIDGE_PROGRAM_ID ?? ""), instructionData: Buffer.from(JSON.stringify({ method: "sweep_to_l1", args: $1 })).toString("base64"), accounts: [{ pubkey: String(process.env.SOLANA_BRIDGE_ACCOUNT ?? ""), isWritable: true }], function: "sweep_to_l1", args: $1 })'
-      );
-    }
-
-    // Solana-specific rewrites only when intent.chain == solana
-    if (chain === "solana") {
-      // Map hardcoded tokens directly to your actual .env keys
-      patched = patched.replace(/(["'])0x1::coin::uusdc\1/g, 'String(process.env.SOLANA_USDC_METADATA_ADDRESS ?? process.env.SOLANA_USDC_METADATA_ADDRESS ?? process.env.SOLANA_USDC_METADATA_ADDRESS ?? process.env.SOLANA_USDC_METADATA_ADDRESS)');
-      patched = patched.replace(/(["'])0x1::coin::uinit\1/g, 'String(process.env.SOLANA_INIT_METADATA_ADDRESS ?? process.env.SOLANA_INIT_METADATA_ADDRESS ?? process.env.SOLANA_INIT_METADATA_ADDRESS ?? process.env.SOLANA_INIT_METADATA_ADDRESS)');
-
-      // NUCLEAR BRIDGE EXECUTION FIX: Overwrite the entire sweep payload.
-      patched = patched.replace(
-        /await\s+callMcpTool\(\s*["']solana["']\s*,\s*["']move_execute["']\s*,\s*\{[^\}]*(?:sweep_to_l1|FUNCTION_NAME|FUNCTION|SWEEP_FUNCTION)[^\}]*args:\s*(\[[^\]]+\])[^\}]*\}\s*\)/gs,
-        'await callMcpTool("solana", "move_execute", { network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "solana-testnet"), address: String(process.env.SOLANA_BRIDGE_ADDRESS ?? process.env.SOLANA_BRIDGE_ADDRESS ?? process.env.SOLANA_BRIDGE_ADDRESS ?? process.env.SOLANA_BRIDGE_ADDRESS), module: "interwoven_bridge", function: "sweep_to_l1", type_args: ["0x1::fungible_asset::Metadata"], args: $1 })'
-      );
-
-      // Convert legacy coin/fungible/token balance calls to primary_fungible_store
-      patched = patched.replace(
-        /module:\s*["'](?:coin|fungible_asset)["'],\s*function:\s*["'](?:balance|get_balance)["'],\s*type_args:\s*\[(.*?)\],\s*args:\s*\[(.*?)\]/gs,
-        'module: "primary_fungible_store", function: "balance", type_args: ["0x1::fungible_asset::Metadata"], args: [$2, $1]'
-      );
-
-      // Fix the network ID hallucination
-      patched = patched.replace(/\bSOLANA_NETWORK_ID\b/g, "SOLANA_NETWORK");
-    }
-
-    // Neutralize strict validation crashes for common entry files
-    if (cleanPath === "src/config.ts" || cleanPath === "src/config.js" || cleanPath === "src/index.ts") {
-      patched = patched.replace(/process\.exit\(1\);/g, 'console.warn("Warning: Missing environment variable but continuing...");');
-    }
-
-    // Prevent BigInt([object Object]) by extracting a numeric string from nested JSON.
-    patched = patched.replace(
-      /BigInt\(([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*\.result)\)/g,
-      'BigInt((function(val){ try { const s = typeof val === "string" ? val : JSON.stringify(val || {}); const m = s.match(/\\d+/); return m ? m[0] : "0"; } catch { return "0"; } })($1))'
-    );
-
-    // Map legacy generated env keys to SOLANA_* in generated templates (no legacy fallbacks)
-    const legacyPrefix = ['I', 'N', 'I', 'T', 'I', 'A'].join('');
-    patched = patched.replace(new RegExp('process\\.env\\.' + legacyPrefix + '_([A-Z0-9_]+)', 'g'), 'process.env.SOLANA_$1');
-    patched = patched.replace(new RegExp('\\bconfig\\.' + legacyPrefix + '_([A-Z0-9_]+)', 'g'), 'config.SOLANA_$1');
-
-    return { ...file, content: patched };
-  });
-}
-
 function sanitizeLegacyIndexTemplates(files: GeneratedFile[], intent: Record<string, unknown>): GeneratedFile[] {
   // Support Solana-first deterministic fallbacks as well as legacy Solana.
   const chain = String(intent.chain ?? "").toLowerCase();
@@ -1311,12 +1244,14 @@ export async function POST(req: NextRequest) {
   const requestId = crypto.randomUUID().slice(0, 8);
   const requestStartedAt = Date.now();
   console.log(`[generate-bot] [${requestId}] Received request`);
+
   try {
     const auth = await requireWalletAuth(req);
     if (auth.error || !auth.user) {
       return auth.error ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
+    const userId = auth.user.id; // Capture early for type safety
     const body = await req.json();
     console.log(`[generate-bot] [${requestId}] Body keys:`, Object.keys(body));
     const granterWalletAddress = typeof body.walletAddress === "string" ? body.walletAddress.trim() : "";
@@ -1345,291 +1280,101 @@ export async function POST(req: NextRequest) {
     if (promptBundle.truncated) {
       console.warn(`[generate-bot] [${requestId}] User prompt was truncated to ${boundedPrompt.length} chars before meta-agent submission`);
     }
-    console.log(`[generate-bot] [${requestId}] Meta-Agent timeout: ${META_TIMEOUT_MS}ms retries=${META_RETRIES}`);
-    if (boundedPrompt.length > 200) {
-      console.log(`[generate-bot] [${requestId}] Prompt preview:`, boundedPrompt.slice(0, 300), "...");
-    }
 
-    // Fast preflight: verify Meta-Agent is reachable before a long generation call.
-    // Retry a few times to absorb transient startup/busy spikes.
-    let healthOk = false;
-    let lastHealthError = "unknown error";
-    for (let attempt = 1; attempt <= HEALTH_RETRIES + 1; attempt += 1) {
-      const healthController = new AbortController();
-      const healthTimer = setTimeout(() => healthController.abort(), HEALTH_TIMEOUT_MS);
-      try {
-        const healthRes = await fetch(`${META_AGENT_URL}/health`, {
-          method: "GET",
-          headers: { accept: "application/json" },
-          signal: healthController.signal,
-        });
-        clearTimeout(healthTimer);
+    // ── Stream backend response via SSE ────────────────────────────────────
+    console.log(`[generate-bot] [${requestId}] Initiating SSE stream to backend`);
 
-        if (healthRes.ok) {
-          healthOk = true;
-          console.log(`[generate-bot] [${requestId}] Meta-Agent health check passed on attempt ${attempt}`);
-          break;
-        }
+    const metaResponse = await fetch(`${META_AGENT_URL}/generate-stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-request-id": requestId,
+      },
+      body: JSON.stringify({ prompt: boundedPrompt }),
+    });
 
-        const healthText = await healthRes.text().catch(() => "");
-        lastHealthError = `health ${healthRes.status}: ${healthText.slice(0, 200)}`;
-      } catch (healthErr: unknown) {
-        clearTimeout(healthTimer);
-        const msg = healthErr instanceof Error ? healthErr.message : String(healthErr);
-        const isAbort = healthErr instanceof DOMException && healthErr.name === "AbortError";
-        lastHealthError = isAbort ? "health check timed out" : msg;
-      }
-
-      if (attempt <= HEALTH_RETRIES) {
-        await delay(400 * attempt);
-      }
-    }
-
-    if (!healthOk) {
-      console.error(`[generate-bot] [${requestId}] Meta-Agent health check failed:`, lastHealthError);
+    if (!metaResponse.ok || !metaResponse.body) {
+      const errText = await metaResponse.text().catch(() => "");
+      console.error(`[generate-bot] [${requestId}] Backend stream failed: ${metaResponse.status}`, errText);
       return NextResponse.json(
-        {
-          error:
-            `Meta-Agent is unavailable (${lastHealthError}) at ${META_AGENT_URL}. ` +
-            "Please ensure it is running: cd agents && uvicorn main:app --reload --port 8000",
-        },
-        { status: 503 }
+        { error: `Meta-Agent streaming failed: ${metaResponse.status}` },
+        { status: metaResponse.status || 500 }
       );
     }
 
-    // ── Call the Python Universal Meta-Agent ──────────────────────────────
-    // We send the EXPANDED prompt so the code-generator has full context.
-    // Retry once on timeout/temporary connectivity issue.
+    // Create a streaming response that pipes SSE events from backend
+    // and intercepts the final 'complete' event to save the agent to the database
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = metaResponse.body!.getReader();
+        const decoder = new TextDecoder();
+        let finalPayload: Record<string, unknown> | null = null;
+        let agentId: string | null = null;
 
-    let metaData: {
-      output: { files?: Array<{ filepath: string; content: unknown; language?: string }>; thoughts?: string };
-      intent: Record<string, unknown>;
-      tools_used?: string[];
-    } | null = null;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-    let lastMetaError = "unknown error";
-    let lastMetaStatus = 500;
-    for (let attempt = 1; attempt <= META_RETRIES + 1; attempt += 1) {
-      const metaController = new AbortController();
-      const metaTimer = setTimeout(() => metaController.abort(), META_TIMEOUT_MS);
-      const attemptStartedAt = Date.now();
-      console.log(`[generate-bot] [${requestId}] Meta-Agent attempt ${attempt}/${META_RETRIES + 1} started`);
-      try {
-        const metaResponse = await fetch(`${META_AGENT_URL}/create-bot`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", accept: "application/json", "x-request-id": requestId },
-          body: JSON.stringify({ prompt: boundedPrompt }),
-          signal: metaController.signal,
-        });
+            const chunk = decoder.decode(value, { stream: true });
+            controller.enqueue(new TextEncoder().encode(chunk));
 
-        clearTimeout(metaTimer);
+            // Parse SSE events and intercept the final completion event
+            if (chunk.includes('"status": "complete"')) {
+              try {
+                // Extract JSON from SSE format: data: {...}\n\n
+                const jsonMatch = chunk.match(/data:\s*(\{[\s\S]*?\})/);
+                if (jsonMatch && jsonMatch[1]) {
+                  finalPayload = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
+                  console.log(`[generate-bot] [${requestId}] Intercepted complete event, saving to DB`);
 
-        if (!metaResponse.ok) {
-          const errText = await metaResponse.text().catch(() => "");
-          lastMetaError = `Meta-Agent HTTP ${metaResponse.status}: ${errText.slice(0, 300)}`;
-          lastMetaStatus = metaResponse.status;
-          console.error(`[generate-bot] [${requestId}] Meta-Agent attempt ${attempt} failed status=${metaResponse.status} elapsed=${Date.now() - attemptStartedAt}ms`, errText.slice(0, 300));
-          if (metaResponse.status === 504) {
-            break;
+                  // Save the completed bot to Prisma in the background (no await)
+                  try {
+                    agentId = await saveBotToDatabase(
+                      requestId,
+                      finalPayload,
+                      granterWalletAddress,
+                      originalPrompt,
+                      expandedPrompt,
+                      envConfig,
+                      envDefaults,
+                      userId,
+                    );
+                    console.log(`[generate-bot] [${requestId}] Saved bot with agentId: ${agentId}`);
+                  } catch (dbErr) {
+                    const msg = dbErr instanceof Error ? dbErr.message : String(dbErr);
+                    console.error(`[generate-bot] [${requestId}] Failed to save bot to DB:`, msg);
+                    // Continue streaming even if DB save fails
+                  }
+                }
+              } catch (parseErr) {
+                console.warn(`[generate-bot] [${requestId}] Failed to parse complete event:`, parseErr);
+              }
+            }
           }
-        } else {
-          metaData = await metaResponse.json();
-          console.log(`[generate-bot] [${requestId}] Meta-Agent attempt ${attempt} succeeded in ${Date.now() - attemptStartedAt}ms`);
-          break;
+
+          // Emit final event with agentId if available
+          if (finalPayload && agentId) {
+            const finalEvent = `data: ${JSON.stringify({ ...finalPayload, agentId })}\n\n`;
+            controller.enqueue(new TextEncoder().encode(finalEvent));
+          }
+
+          controller.close();
+        } catch (streamErr) {
+          const msg = streamErr instanceof Error ? streamErr.message : String(streamErr);
+          console.error(`[generate-bot] [${requestId}] Stream error:`, msg);
+          controller.error(streamErr);
         }
-      } catch (fetchErr: unknown) {
-        clearTimeout(metaTimer);
-        const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
-        const isAbort = fetchErr instanceof DOMException && fetchErr.name === "AbortError";
-        lastMetaError = msg;
-
-        if (isAbort || msg.toLowerCase().includes("abort")) {
-          lastMetaStatus = 504;
-        } else if (msg.includes("fetch failed") || msg.includes("ECONNREFUSED")) {
-          lastMetaStatus = 503;
-        } else {
-          lastMetaStatus = 500;
-        }
-        console.error(`[generate-bot] [${requestId}] Meta-Agent attempt ${attempt} threw after ${Date.now() - attemptStartedAt}ms:`, msg);
-        if (lastMetaStatus === 504) {
-          break;
-        }
-      }
-
-      if (attempt <= META_RETRIES) {
-        await delay(750 * attempt);
-      }
-    }
-
-    let usedDeterministicFallback = false;
-
-    if (!metaData) {
-      console.error(`[generate-bot] [${requestId}] Meta-Agent generation failed status=${lastMetaStatus} error=${lastMetaError}`);
-      if (lastMetaStatus === 504) {
-        console.warn(`[generate-bot] [${requestId}] Falling back to deterministic bot files after Meta-Agent timeout`);
-        const fallbackIntent = deriveFallbackIntent(boundedPrompt || originalPrompt || "");
-        const useLegacyFallback = shouldUseLegacyDeterministicFallback();
-        metaData = {
-          output: {
-            thoughts:
-              "Meta-Agent timed out, so the deterministic fallback generator was used. " +
-              "This preserves the bot build flow while keeping the timeout reason visible in logs.",
-            files: useLegacyFallback ? assembleSolanaBotFiles() : assembleBotFiles(),
-          },
-          intent: fallbackIntent,
-          tools_used: ["deterministic-fallback"],
-        };
-        usedDeterministicFallback = true;
-      }
-
-      if (lastMetaStatus === 503 || lastMetaError.includes("fetch failed") || lastMetaError.includes("ECONNREFUSED")) {
-        return NextResponse.json(
-          {
-            error: `Cannot reach the Python Meta-Agent at ${META_AGENT_URL}. ` +
-              "Please ensure it is running: cd agents && uvicorn main:app --reload --port 8000",
-          },
-          { status: 503 }
-        );
-      }
-
-      if (!usedDeterministicFallback) {
-        return NextResponse.json({ error: lastMetaError }, { status: 500 });
-      }
-
-      console.log(`[generate-bot] [${requestId}] Deterministic fallback will continue through save/response path`);
-    }
-
-
-    const resolvedMetaData = metaData ?? {
-      output: { thoughts: "Deterministic fallback used.", files: [] },
-      intent: {},
-      tools_used: [],
-    };
-
-    console.log(`[generate-bot] [${requestId}] Received meta-agent response in ${Date.now() - requestStartedAt}ms`);
-    // Fallback to metaData itself if the agent returned a flat structure
-    const output = resolvedMetaData.output || resolvedMetaData;
-    const intent = sanitizeIntentMcpLists((resolvedMetaData.intent || {}) as Record<string, unknown>);
-    const botName: string = (intent.bot_name as string) || (intent.bot_type as string) || "Universal DeFi Bot";
-
-    // Extract files safely from varying model response shapes
-    const fallbackFiles = metaData && typeof metaData === "object" && "files" in metaData
-      ? (metaData as unknown as { files?: unknown }).files
-      : [];
-    const filesList = output.files || fallbackFiles || [];
-    const normalizedFiles: GeneratedFile[] = (Array.isArray(filesList) ? filesList : [])
-      .map((raw: unknown, idx: number) => {
-        const candidate = raw as Record<string, unknown>;
-        const filepath =
-          (typeof candidate?.filepath === "string" && candidate.filepath.trim()) ||
-          (typeof candidate?.path === "string" && candidate.path.trim()) ||
-          (typeof candidate?.filename === "string" && candidate.filename.trim()) ||
-          `generated_${idx + 1}.txt`;
-
-        const content = candidate?.content ?? candidate?.code ?? candidate?.text ?? "";
-        const language = typeof candidate?.language === "string" ? candidate.language : undefined;
-
-        return language ? { filepath, content, language } : { filepath, content };
-      })
-      .filter((f: { filepath: string }) => ![".env", ".env.example"].includes(f.filepath));
-
-    let files = normalizedFiles;
-    files = patchLegacyStrategyBotFiles(files, intent, `${originalPrompt}\n${expandedPrompt}`);
-    files = patchSentimentBotFiles(files, intent);
-    files = normalizeRuntimeVarNames(files, intent);
-    files = sanitizeLegacyIndexTemplates(files, intent);
-
-    console.log(`[generate-bot] [${requestId}] Generated files:`, files.map((f: { filepath: string }) => f.filepath).join(", "));
-
-    // ── Build .env content ─────────────────────────────────────────────────
-    const publicGatewayFallback = pickPublicGateway(
-      envDefaults.MCP_GATEWAY_URL || process.env.MCP_GATEWAY_URL || "",
-      "http://localhost:8000/mcp",
-    );
-
-    const finalEnv: Record<string, string> = {
-      ...envConfig,
-      MCP_GATEWAY_URL: pickPublicGateway(envConfig.MCP_GATEWAY_URL || "", publicGatewayFallback),
-      SIMULATION_MODE: "false",
-    };
-
-    const sessionKeyMode = String(finalEnv.SESSION_KEY_MODE || "").toLowerCase() === "true";
-    if (sessionKeyMode) {
-      finalEnv.SESSION_KEY_MODE = "true";
-    }
-
-    let envPlaintext = "";
-    for (const [key, val] of Object.entries(finalEnv)) {
-      if (val) envPlaintext += `${key}=${val}\n`;
-    }
-    const encryptedEnv = encryptEnvConfig(envPlaintext);
-
-    // ── Save agent + files to DB ───────────────────────────────────────────
-    const userId = auth.user.id;
-
-    const configRecord: Prisma.InputJsonObject = {
-      generatedAt:    new Date().toISOString(),
-      intent:         intent as Prisma.InputJsonValue,
-      toolsUsed:      (resolvedMetaData.tools_used ?? []) as Prisma.InputJsonValue,
-      originalPrompt, // Keep original for display
-    };
-
-    const agentCreateData: Prisma.AgentCreateInput = {
-      name:          botName,
-      user:          { connect: { id: userId } },
-      status:        "STOPPED" as const,
-      walletAddress: granterWalletAddress,
-      configuration: configRecord,
-      envConfig:     encryptedEnv,
-      files: {
-        create: files.map((f: GeneratedFile) => ({
-          filepath: typeof f.filepath === "string" && f.filepath.trim()
-            ? f.filepath
-            : "generated.txt",
-          content:
-            typeof f.content === "object"
-              ? JSON.stringify(f.content, null, 2)
-              : String(f.content),
-          language: (() => {
-            const fp = typeof f.filepath === "string" ? f.filepath : "";
-            return (
-              f.language ??
-              (fp.endsWith(".ts") ? "typescript"
-                : fp.endsWith(".py") ? "python"
-                : fp.endsWith(".json") ? "json"
-                : "plaintext")
-            );
-          })(),
-        })),
       },
-    };
-
-    console.log(`[generate-bot] [${requestId}] Persisting fallback/meta-agent output to DB`);
-    let agent: Awaited<ReturnType<typeof prisma.agent.create>>;
-    try {
-      agent = await prisma.agent.create({ data: agentCreateData });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const missingWalletAddressColumn =
-        msg.includes("walletAddress") && msg.includes("does not exist");
-
-      if (!missingWalletAddressColumn) throw err;
-
-      await ensureAgentWalletAddressColumn(requestId);
-      agent = await prisma.agent.create({ data: agentCreateData });
-    }
-
-    console.log(`[generate-bot] [${requestId}] Saved agent: ${agent.id} with ${files.length} files in ${Date.now() - requestStartedAt}ms`);
-
-    return NextResponse.json({
-      agentId:  agent.id,
-      botName,
-      files,
-      thoughts: output.thoughts ?? "Bot generated successfully.",
-      intent,
-      warnings,
     });
 
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+      },
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[generate-bot] [${requestId}] Error:`, msg);
@@ -1638,4 +1383,114 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper: Save completed bot to database
+async function saveBotToDatabase(
+  requestId: string,
+  finalPayload: Record<string, unknown>,
+  granterWalletAddress: string,
+  originalPrompt: string,
+  expandedPrompt: string,
+  envConfig: Record<string, string>,
+  envDefaults: Record<string, string>,
+  userId: string,
+): Promise<string> {
+  const intent = sanitizeIntentMcpLists((finalPayload.intent || {}) as Record<string, unknown>);
+  const botName: string = (intent.bot_name as string) || (intent.bot_type as string) || "Universal DeFi Bot";
+  const filesList = finalPayload.files || [];
+
+  const normalizedFiles: GeneratedFile[] = (Array.isArray(filesList) ? filesList : [])
+    .map((raw: unknown, idx: number) => {
+      const candidate = raw as Record<string, unknown>;
+      const filepath =
+        (typeof candidate?.filepath === "string" && candidate.filepath.trim()) ||
+        (typeof candidate?.path === "string" && candidate.path.trim()) ||
+        (typeof candidate?.filename === "string" && candidate.filename.trim()) ||
+        `generated_${idx + 1}.txt`;
+
+      const content = candidate?.content ?? candidate?.code ?? candidate?.text ?? "";
+      const language = typeof candidate?.language === "string" ? candidate.language : undefined;
+
+      return language ? { filepath, content, language } : { filepath, content };
+    })
+    .filter((f: { filepath: string }) => ![".env", ".env.example"].includes(f.filepath));
+
+  // Build final environment config
+  const publicGatewayFallback = pickPublicGateway(
+    envDefaults.MCP_GATEWAY_URL || process.env.MCP_GATEWAY_URL || "",
+    "http://localhost:8000/mcp",
+  );
+
+  const finalEnv: Record<string, string> = {
+    ...envConfig,
+    MCP_GATEWAY_URL: pickPublicGateway(envConfig.MCP_GATEWAY_URL || "", publicGatewayFallback),
+    SIMULATION_MODE: "false",
+  };
+
+  const sessionKeyMode = String(finalEnv.SESSION_KEY_MODE || "").toLowerCase() === "true";
+  if (sessionKeyMode) {
+    finalEnv.SESSION_KEY_MODE = "true";
+  }
+
+  let envPlaintext = "";
+  for (const [key, val] of Object.entries(finalEnv)) {
+    if (val) envPlaintext += `${key}=${val}\n`;
+  }
+  const encryptedEnv = encryptEnvConfig(envPlaintext);
+
+  // Create agent record in database
+  const configRecord: Prisma.InputJsonObject = {
+    generatedAt: new Date().toISOString(),
+    intent: intent as Prisma.InputJsonValue,
+    toolsUsed: (finalPayload.tools_used ?? []) as Prisma.InputJsonValue,
+    originalPrompt,
+  };
+
+  const agentCreateData: Prisma.AgentCreateInput = {
+    name: botName,
+    user: { connect: { id: userId } },
+    status: "STOPPED" as const,
+    walletAddress: granterWalletAddress,
+    configuration: configRecord,
+    envConfig: encryptedEnv,
+    files: {
+      create: normalizedFiles.map((f: GeneratedFile) => ({
+        filepath: typeof f.filepath === "string" && f.filepath.trim()
+          ? f.filepath
+          : "generated.txt",
+        content:
+          typeof f.content === "object"
+            ? JSON.stringify(f.content, null, 2)
+            : String(f.content),
+        language: (() => {
+          const fp = typeof f.filepath === "string" ? f.filepath : "";
+          return (
+            f.language ??
+            (fp.endsWith(".ts") ? "typescript"
+              : fp.endsWith(".py") ? "python"
+              : fp.endsWith(".json") ? "json"
+              : "plaintext")
+          );
+        })(),
+      })),
+    },
+  };
+
+  let agent: Awaited<ReturnType<typeof prisma.agent.create>>;
+  try {
+    agent = await prisma.agent.create({ data: agentCreateData });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const missingWalletAddressColumn =
+      msg.includes("walletAddress") && msg.includes("does not exist");
+
+    if (!missingWalletAddressColumn) throw err;
+
+    await ensureAgentWalletAddressColumn(requestId);
+    agent = await prisma.agent.create({ data: agentCreateData });
+  }
+
+  console.log(`[generate-bot] [${requestId}] Saved agent: ${agent.id} with ${normalizedFiles.length} files`);
+  return agent.id;
 }
