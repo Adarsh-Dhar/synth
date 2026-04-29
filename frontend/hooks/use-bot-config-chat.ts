@@ -653,8 +653,79 @@ export function useBotConfigChat() {
           throw new Error(`Save failed (${saveRes.status}): ${errText.slice(0, 300)}`);
         }
 
-        const saved = await saveRes.json();
-        const agentId = String(saved.agentId ?? "");
+        if (!saveRes.body) {
+          throw new Error("Streaming response did not include a body.");
+        }
+
+        const decoder = new TextDecoder();
+        const reader = saveRes.body.getReader();
+        let buffer = "";
+        let finalPayload: Record<string, unknown> | null = null;
+        const seenStatuses = new Set<string>();
+
+        const emitStatus = (payload: Record<string, unknown>) => {
+          const status = String(payload.status ?? "");
+          const message = String(payload.message ?? "");
+          if (status) {
+            if (status === "analyzing_intent" || status === "fetching_context") {
+              setStep("planning");
+            } else if (status === "generating_code" || status === "validating_syntax" || status === "self_healing") {
+              setStep("generating");
+            }
+            if (message && !seenStatuses.has(status)) {
+              seenStatuses.add(status);
+              appendAssistant(message);
+            }
+          }
+        };
+
+        const processBuffer = (text: string) => {
+          const chunks = text.split(/\r?\n\r?\n/);
+          const remainder = chunks.pop() ?? "";
+          for (const chunk of chunks) {
+            const raw = chunk
+              .split(/\r?\n/)
+              .filter((line) => line.startsWith("data:"))
+              .map((line) => line.slice(5).trimStart())
+              .join("\n")
+              .trim();
+            if (!raw) continue;
+
+            let payload: Record<string, unknown>;
+            try {
+              payload = JSON.parse(raw) as Record<string, unknown>;
+            } catch {
+              continue;
+            }
+
+            if (payload.error) {
+              throw new Error(String(payload.error));
+            }
+
+            emitStatus(payload);
+            if (payload.status === "complete") {
+              finalPayload = payload;
+            }
+          }
+          return remainder;
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          buffer = processBuffer(buffer);
+        }
+
+        buffer += decoder.decode();
+        buffer = processBuffer(buffer);
+
+        if (!finalPayload) {
+          throw new Error("Stream ended without a final payload.");
+        }
+
+        const completedPayload = finalPayload as Record<string, unknown>;
+        const agentId = String(completedPayload.agentId ?? "");
         if (!agentId) throw new Error("No agentId returned from save endpoint.");
 
         setGeneratedAgentId(agentId);

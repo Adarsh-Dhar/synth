@@ -15,6 +15,7 @@ from uuid import uuid4
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from orchestrator import MetaAgent
 
@@ -36,6 +37,10 @@ MCP_UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MCP_UPSTREAM_TIMEOUT_SECOND
 # ─── Models ───────────────────────────────────────────────────────────────────
 
 class PromptRequest(BaseModel):
+    prompt: str
+
+
+class GenerateRequest(BaseModel):
     prompt: str
 
 
@@ -172,6 +177,15 @@ async def create_bot(req: PromptRequest, request: Request):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(500 if "timeout" not in str(e).lower() else 504, str(e))
+
+
+@app.post("/generate-stream")
+async def generate_bot_stream(req: GenerateRequest):
+    """Streams the bot creation process via Server-Sent Events (SSE)."""
+    return StreamingResponse(
+        agent.orchestrate_bot_creation_stream(req.prompt),
+        media_type="text/event-stream",
+    )
 
 
 # ── Multi-turn endpoint ───────────────────────────────────────────────────────

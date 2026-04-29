@@ -375,74 +375,10 @@ SOLANA MCP TOOL REFERENCE:
   Resolve SNS domain (.sol name) to pubkey:
     callMcpTool("solana", "resolve_sns", { network, name: "alice.sol" })
 
-    === BRIDGE FUNCTION TYPESCRIPT INTERFACES ===
-    When calling internal privacy and indexing functions, strictly adhere to these interfaces:
-
-    // GoldRush
-    // Usage: const balances = await getGoldRushTokenBalances(network, walletAddress);
-    interface TokenBalance {
-      mint: string;
-      decimals: number;
-      balance: bigint; 
-      uiAmount: number;
-    }
-    declare function getGoldRushTokenBalances(network: string, walletAddress: string): Promise<TokenBalance[]>;
-
-    // MagicBlock
-    // Usage: await callMagicBlockPrivateTransfer(args: MagicBlockTransferArgs);
-    interface MagicBlockTransferArgs {
-      network: string;
-      from: string;
-      to: string;
-      mint: string;
-      amount: bigint;
-    }
-
-    // Umbra
-    // Usage: await callUmbraShield(args: UmbraShieldArgs);
-    // Usage: await callUmbraTransfer(args: UmbraTransferArgs);
-    interface UmbraShieldArgs {
-      network: string;
-      wallet: string;
-      mint: string;
-      amount: bigint;
-    }
-
-    interface UmbraTransferArgs {
-      network: string;
-      sender: string;
-      recipient: string;
-      mint: string;
-      amount: bigint;
-    }
-
-    === MCP TOOL TYPESCRIPT INTERFACES ===
-    When calling Jupiter or Dodo tools via callMcpTool, you MUST strictly adhere to these argument interfaces:
-
-    interface JupiterExecuteArgs {
-      inputMint: string;
-      outputMint: string;
-      amount: number;
-      userWallet: string;
-      slippageBps?: number;
-    }
-    // Usage: callMcpTool("jupiter", "execute_swap", args: JupiterExecuteArgs)
-
-    interface DodoCheckoutArgs {
-      planId: string;
-      customerId?: string;
-      successUrl?: string;
-      cancelUrl?: string;
-    }
-    // Usage: callMcpTool("dodo", "dodo_checkout", args: DodoCheckoutArgs) -> returns { checkoutUrl, overlayToken }
-
-    interface DodoMeterArgs {
-      customerId: string;
-      event: string;
-      amount: number;
-    }
-    // Usage: callMcpTool("dodo", "dodo_meter", args: DodoMeterArgs)
-    
+        === DYNAMIC MCP TOOL SCHEMAS ===
+        You will be provided with context from the user's specific query below.
+        You MUST strictly adhere to the TypeScript interfaces provided in that dynamic context.
+        Do not hallucinate parameters.
 
 ENV VARS your bot should read:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
@@ -574,68 +510,214 @@ class MetaAgent:
 
     # ── Planner orchestration loop ─────────────────────────────────────────────
 
-    async def orchestrate_bot_creation(
+    async def orchestrate_bot_creation_stream(
         self,
-        chat_history: List[Dict[str, str]],
+        user_msg: str,
         trace_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        history = list(chat_history)
+    ):
+        def emit(payload: Dict[str, Any]) -> str:
+            return f"data: {json.dumps(payload)}\n\n"
 
+        yield emit({"status": "analyzing_intent", "message": "Analyzing strategy intent..."})
+        await asyncio.sleep(0.1)
+
+        history = [{"role": "user", "content": user_msg}]
+        plan: Optional[PlannerState] = None
         for loop_idx in range(PLANNER_MAX_LOOPS):
-            _log("INFO", f"Planner loop {loop_idx + 1}/{PLANNER_MAX_LOOPS}", trace_id)
-
             try:
-                plan: PlannerState = self.planner.plan(history, trace_id=trace_id)
+                plan = self.planner.plan(history, trace_id=trace_id)
             except Exception as exc:
                 _log("ERROR", f"Planner LLM failed: {exc}", trace_id)
-                return {"status": "error", "message": str(exc)}
+                yield emit({"error": str(exc)})
+                return
 
-            _log("INFO",
-                 f"Plan: strategy={plan.strategy_type} ready={plan.is_ready_for_code_generation} "
-                 f"mcp={plan.verification_step.needs_mcp_query if plan.verification_step else False} "
-                 f"missing={plan.missing_parameters}",
-                 trace_id)
+            _log(
+                "INFO",
+                f"Plan: strategy={plan.strategy_type} ready={plan.is_ready_for_code_generation} "
+                f"mcp={plan.verification_step.needs_mcp_query if plan.verification_step else False} "
+                f"missing={plan.missing_parameters}",
+                trace_id,
+            )
 
-            # Step 2 — on-chain verification via Solana MCP
             vs = plan.verification_step
             if vs and vs.needs_mcp_query and vs.mcp_payload:
                 purpose = vs.verification_purpose or "on-chain verification"
-                _log("INFO", f"Querying Solana MCP: {purpose}", trace_id)
                 try:
-                    result  = self.mcp_client.query(vs.mcp_payload)
+                    result = self.mcp_client.query(vs.mcp_payload)
                     summary = summarise_mcp_result(purpose, vs.mcp_payload, result)
-                    _log("INFO", f"MCP summary: {summary}", trace_id)
                 except Exception as exc:
-                    summary = (
-                        f"MCP Verification [{purpose}] FAILED: {exc}. "
-                        "Planner should proceed without this verification or ask user."
-                    )
-                    _log("WARN", summary, trace_id)
+                    summary = f"MCP Verification [{purpose}] FAILED: {exc}. Planner should proceed without this verification or ask user."
                 history.append({"role": "system", "content": summary})
                 continue
 
-            # Step 3 — clarification needed
             if not plan.is_ready_for_code_generation:
                 question = (
                     plan.clarifying_question_for_user
                     or "Could you provide more details about the tokens, pools, or addresses your bot should use?"
                 )
-                _log("INFO", f"Clarification needed: {question}", trace_id)
-                return {"status": "clarification_needed", "question": question}
+                yield emit({"status": "clarification_needed", "question": question})
+                return
 
-            # Step 4 — generate
-            enriched = plan.enriched_prompt or history[-1].get("content", "")
-            _log("INFO", "All parameters verified — generating code.", trace_id)
-            return await self._generate_code_with_plan(plan, enriched, trace_id)
+            break
 
-        # Exhausted loops
-        return {
-            "status": "clarification_needed",
-            "question": (
-                "I need a bit more detail to build this bot. "
-                "Which tokens, pool addresses, or programs should it interact with?"
-            ),
+        if not plan:
+            yield emit({"error": "Planner did not return a usable plan."})
+            return
+
+        network = plan.collected_parameters.get("SOLANA_NETWORK", "devnet")
+        mcps = ["solana", "jupiter"]
+        if plan.collected_parameters.get("GOLDRUSH_API_KEY"):
+            mcps.append("goldrush")
+        if plan.collected_parameters.get("MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL"):
+            mcps.append("magicblock")
+        if plan.collected_parameters.get("UMBRA_PROGRAM_ADDRESS"):
+            mcps.append("umbra")
+        intent = {
+            "chain": "solana",
+            "network": network,
+            "strategy": plan.strategy_type,
+            "mcps": mcps,
+            "bot_name": self._bot_name(plan.strategy_type),
+            "requires_openai": plan.strategy_type == "sentiment",
+            "collected_parameters": plan.collected_parameters,
         }
+
+        normalized_user_msg = user_msg.lower()
+        needs_jupiter = plan.strategy_type in {"arbitrage", "sniping", "dca", "grid", "whale_mirror", "yield_sweeper"} or any(
+            token in normalized_user_msg for token in ("jupiter", "swap", "quote", "trade", "arbitrage")
+        )
+        needs_dodo = plan.strategy_type in {"metered_execution", "private_transfer"} or any(
+            token in normalized_user_msg for token in ("dodo", "payment", "meter", "billing", "invoice", "split", "checkout")
+        )
+
+        yield emit({"status": "fetching_context", "message": "Fetching live SDKs from MCP servers..."})
+
+        async def fetch_all_contexts() -> tuple[str, str]:
+            mcp = MultiMCPClient()
+            try:
+                await mcp.connect_default_sessions()
+            except Exception:
+                pass
+
+            jup_res = ""
+            dodo_res = ""
+
+            if needs_jupiter:
+                try:
+                    jup_res = await mcp.call_tool("jupiter", "jupiter_docs", {"query": user_msg})
+                except Exception as exc:
+                    raise RuntimeError(f"Jupiter MCP unreachable: {exc}") from exc
+
+            if needs_dodo:
+                try:
+                    dodo_res = await mcp.call_tool("dodo", "dodo_docs", {"query": user_msg})
+                except Exception as exc:
+                    raise RuntimeError(f"Dodo MCP unreachable: {exc}") from exc
+
+            try:
+                await mcp.shutdown()
+            except Exception:
+                pass
+
+            return str(jup_res or ""), str(dodo_res or "")
+
+        try:
+            jupiter_docs, dodo_docs = await fetch_all_contexts()
+        except Exception as exc:
+            _log("ERROR", str(exc), trace_id)
+            if "Jupiter" in str(exc):
+                yield emit({"error": "Failed to load Jupiter Agent Skills. The MCP server is unreachable."})
+            else:
+                yield emit({"error": "Failed to load Dodo Payments Agent Skills. The MCP server is unreachable."})
+            return
+
+        enriched_prompt = f"{user_msg}\n\n"
+        if jupiter_docs:
+            enriched_prompt += f"=== JUPITER CONTEXT ===\n{jupiter_docs}\n\n"
+        if dodo_docs:
+            enriched_prompt += f"=== DODO CONTEXT ===\n{dodo_docs}\n\n"
+
+        yield emit({"status": "generating_code", "message": "AI is writing TypeScript code..."})
+
+        prompt_source = enriched_prompt
+        final_files: List[Dict[str, Any]] = []
+        final_warning: Optional[str] = None
+        MAX_RETRIES = 2
+
+        for attempt in range(MAX_RETRIES + 1):
+            raw = self._llm(GENERATOR_SYSTEM, prompt_source, temperature=0.1, max_tokens=self.max_tokens)
+            parsed = self._parse_json(raw)
+            final_files = self._assemble_files(parsed.get("files", []), plan.strategy_type)
+
+            index_ts_content = next((f.get("content") for f in final_files if f.get("filepath") == "src/index.ts"), None)
+            if not index_ts_content:
+                break
+
+            yield emit({"status": "validating_syntax", "message": "Running local TypeScript compiler..."})
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                src_dir = os.path.join(temp_dir, "src")
+                os.makedirs(src_dir, exist_ok=True)
+                file_path = os.path.join(src_dir, "index.ts")
+
+                with open(file_path, "w") as handle:
+                    handle.write(str(index_ts_content))
+
+                result = subprocess.run(
+                    ["npx", "-y", "tsc", "--noEmit", "--target", "es2020", "--moduleResolution", "node", file_path],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+                if result.returncode == 0:
+                    yield emit({"status": "complete", "files": final_files, "plan": plan.to_dict(), "intent": intent})
+                    return
+
+                error_msg = (result.stdout + "\n" + result.stderr).strip()
+                if attempt < MAX_RETRIES:
+                    yield emit({"status": "self_healing", "message": "Syntax error caught. AI is self-healing..."})
+                    prompt_source = (
+                        f"{enriched_prompt}\n\n"
+                        f"The code you generated failed TypeScript validation with this error:\n\n"
+                        f"{error_msg[:1000]}\n\n"
+                        "Fix the TypeScript errors and return the FULL updated JSON again."
+                    )
+                else:
+                    final_warning = "Code generated with TypeScript errors."
+                    break
+
+        yield emit({"status": "complete", "files": final_files, "plan": plan.to_dict(), "intent": intent, "warning": final_warning})
+
+    async def orchestrate_bot_creation(
+        self,
+        chat_history: List[Dict[str, str]],
+        trace_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        user_msg = chat_history[-1].get("content", "") if chat_history else ""
+        final_payload: Optional[Dict[str, Any]] = None
+
+        async for chunk in self.orchestrate_bot_creation_stream(user_msg, trace_id=trace_id):
+            if not chunk.startswith("data:"):
+                continue
+            raw = chunk[5:].strip()
+            if not raw:
+                continue
+            try:
+                payload = json.loads(raw)
+            except Exception:
+                continue
+            if payload.get("status") in {"complete", "clarification_needed", "error"} or payload.get("error"):
+                final_payload = payload
+
+        if not final_payload:
+            return {"status": "error", "message": "Stream ended without a final payload."}
+        if final_payload.get("error"):
+            return {"status": "error", "message": str(final_payload.get("error"))}
+        result = dict(final_payload)
+        if result.get("status") == "complete":
+            result["status"] = "ready"
+        return result
 
     # ── Code generation ────────────────────────────────────────────────────────
 
@@ -739,7 +821,7 @@ class MetaAgent:
         
         for attempt in range(MAX_RETRIES + 1):
             # 1. Generate the Code
-            raw = self._llm_chat(messages, temperature=0.1, max_tokens=self.max_tokens)
+            raw = self._llm(GENERATOR_SYSTEM, user_msg, temperature=0.1, max_tokens=self.max_tokens)
             parsed = self._parse_json(raw)
             files = self._assemble_files(parsed.get("files", []), plan.strategy_type)
             
