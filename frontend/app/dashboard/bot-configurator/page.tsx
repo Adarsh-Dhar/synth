@@ -97,7 +97,7 @@ export default function BotConfiguratorPage() {
   const {
     messages, input, isTyping, isGenerating, chips, bottomRef,
     generatedAgentId, handleSend, handleKeyDown, handleInputChange,
-    submitDynamicKeys, step, envDefaults
+    submitDynamicKeys, submitClarificationKeys, step, envDefaults
   } = useBotConfigChat()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -163,7 +163,7 @@ export default function BotConfiguratorPage() {
                   {msg.card?.type === 'dynamic_credentials_form' && (
                     <DynamicCredentialsCard
                       fields={msg.card.fields ?? []}
-                      onSubmit={submitDynamicKeys}
+                      onSubmit={msg.card.formMode === 'clarification' ? submitClarificationKeys : submitDynamicKeys}
                       disabled={step !== 'ask_keys'}
                       defaultValues={envDefaults}
                     />

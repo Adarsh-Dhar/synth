@@ -36,6 +36,29 @@ class MultiMCPClient:
         self.sessions: dict[str, ClientSession] = {}
         self.exit_stack = AsyncExitStack()
 
+    @staticmethod
+    def expected_default_session_env(name: str) -> str:
+        return {
+            "solana": "SOLANA_MCP_SSE_URL",
+            "jupiter": "JUPITER_MCP_SSE_URL",
+            "goldrush": "GOLDRUSH_MCP_SSE_URL",
+            "dodo": "DODO_MCP_SSE_URL",
+            "umbra": "UMBRA_MCP_SSE_URL",
+        }.get(name, f"{name.upper()}_MCP_SSE_URL")
+
+    def connection_diagnostics(self) -> list[str]:
+        diagnostics = []
+        for name in ("solana", "jupiter", "goldrush", "dodo", "umbra"):
+            env_name = self.expected_default_session_env(name)
+            env_value = os.environ.get(env_name, "").strip()
+            if name in self.sessions:
+                diagnostics.append(f"{name}: connected ({env_name} set={bool(env_value)})")
+            elif env_value:
+                diagnostics.append(f"{name}: not connected ({env_name} is set but session failed to initialize)")
+            else:
+                diagnostics.append(f"{name}: not connected ({env_name} is missing)")
+        return diagnostics
+
     async def connect_to_server(
         self,
         name: str,

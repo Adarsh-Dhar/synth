@@ -39,6 +39,7 @@ export type MessageRole = "user" | "assistant";
 
 export interface ChatCard {
   type: "dynamic_credentials_form" | "success_card";
+  formMode?: "clarification" | "final";
   fields?: CredentialField[];
   agentId?: string;
   botName?: string;
@@ -314,6 +315,111 @@ function toHexWalletAddress(addr: string): string {
   }
 }
 
+function extractUppercaseKeys(text: string): string[] {
+  const matches = text.match(/\b[A-Z][A-Z0-9_]{2,}\b/g) ?? [];
+  return Array.from(new Set(matches));
+}
+
+function normalizeClarificationValue(value: string): string {
+  return value.trim().replace(/^['"`]+|['"`]+$/g, "");
+}
+
+function parseClarificationReply(
+  text: string,
+  expectedKeys: string[]
+): Record<string, string> {
+  const cleaned = text.trim();
+  if (!cleaned) return {};
+
+  const explicitPairs: Record<string, string> = {};
+  const pairPattern = /\b([A-Z][A-Z0-9_]{2,})\b\s*[:=]\s*([^,;\n]+)/g;
+  for (const match of cleaned.matchAll(pairPattern)) {
+    const key = match[1];
+    const value = normalizeClarificationValue(match[2]);
+    if (value) explicitPairs[key] = value;
+  }
+  if (Object.keys(explicitPairs).length > 0) {
+    return explicitPairs;
+  }
+
+  const orderedValues = cleaned
+    .split(/(?:\s*,\s*|\s+and\s+|\n+)/i)
+    .map(normalizeClarificationValue)
+    .filter(Boolean);
+
+  if (expectedKeys.length > 0 && orderedValues.length > 0) {
+    const mapped: Record<string, string> = {};
+    expectedKeys.forEach((key, index) => {
+      if (orderedValues[index]) {
+        mapped[key] = orderedValues[index];
+      }
+    });
+    return mapped;
+  }
+
+  return {};
+}
+
+function humanizeKey(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function buildClarificationFields(keys: string[]): CredentialField[] {
+  const labels: Record<string, { label: string; placeholder: string; type?: "text" | "password" }> = {
+    USER_WALLET_ADDRESS: {
+      label: "User Wallet Address (base58 or 0x hex)",
+      placeholder: "Wallet address",
+    },
+    TOKEN_MINT_ADDRESS: {
+      label: "Token Mint Address (base58)",
+      placeholder: "Mint address",
+    },
+    MIN_BALANCE_THRESHOLD: {
+      label: "Minimum Balance Threshold",
+      placeholder: "e.g. 1% or 0.5 SOL",
+    },
+    YIELD_THRESHOLD: {
+      label: "Yield Threshold",
+      placeholder: "e.g. 2%",
+    },
+    SLIPPAGE_LIMIT: {
+      label: "Slippage Limit",
+      placeholder: "e.g. 5%",
+    },
+  };
+
+  return keys
+    .filter((key) => key !== "USER_WALLET_ADDRESS")
+    .map((key) => {
+      const preset = labels[key];
+      return {
+        key,
+        label: preset?.label ?? humanizeKey(key),
+        placeholder: preset?.placeholder ?? `Enter ${humanizeKey(key)}`,
+        type: preset?.type ?? "text",
+        required: true,
+      };
+    });
+}
+
+function buildClarificationQuestion(keys: string[]): string {
+  const visibleKeys = keys.filter((key) => key !== "USER_WALLET_ADDRESS");
+  if (visibleKeys.length === 0) {
+    return "Could you provide a bit more detail?";
+  }
+
+  if (visibleKeys.length === 1) {
+    return `Please provide your ${visibleKeys[0]}.`;
+  }
+
+  const lastKey = visibleKeys[visibleKeys.length - 1];
+  const head = visibleKeys.slice(0, -1).join(", ");
+  return `Please provide your ${head}, and ${lastKey}.`;
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 interface ServerMessage {
@@ -330,6 +436,7 @@ export function useBotConfigChat() {
 
   const walletAddress = publicKey ? publicKey.toBase58() : "";
   const walletHexAddress = toHexWalletAddress(walletAddress);
+  const plannerWalletAddress = walletAddress || walletHexAddress;
   const walletDisplayAddress = walletHexAddress || walletAddress;
   const isWalletConnected = Boolean(walletAddress) && Boolean(walletHexAddress);
 
@@ -349,6 +456,9 @@ export function useBotConfigChat() {
   const expandedPromptRef = useRef<string>("");
   const requestIdRef = useRef<string>(uuidv4());
   const greetingShownRef = useRef(false);
+  const pendingClarificationKeysRef = useRef<string[]>([]);
+  const pendingStrategyTypeRef = useRef<string>("");
+  const collectedClarificationValuesRef = useRef<Record<string, string>>({});
 
   const pendingBotRef = useRef<{
     files: Record<string, unknown>[];
@@ -459,15 +569,28 @@ export function useBotConfigChat() {
     (extraContext?: string): ServerMessage[] => {
       const systemMessages: ServerMessage[] = [];
 
-      if (walletHexAddress) {
+      if (plannerWalletAddress) {
         systemMessages.push({
           role: "system",
           content:
             `System Context (injected by frontend, not visible to user): ` +
-            `The user's AutoSign wallet address in hex format is "${walletHexAddress}". ` +
+            `The user's AutoSign wallet address in base58 is "${walletAddress}" and hex is "${walletHexAddress}". ` +
             `This FULLY SATISFIES the USER_WALLET_ADDRESS parameter requirement. ` +
             `Do NOT ask the user for their wallet address under any circumstances — it is confirmed. ` +
-            `Treat USER_WALLET_ADDRESS="${walletHexAddress}" as already collected and verified.`,
+            `Treat USER_WALLET_ADDRESS="${plannerWalletAddress}" as already collected and verified.`,
+        });
+      }
+
+      const clarificationValues = collectedClarificationValuesRef.current;
+      if (Object.keys(clarificationValues).length > 0) {
+        systemMessages.push({
+          role: "system",
+          content:
+            `Previously clarified configuration values from the user: ` +
+            Object.entries(clarificationValues)
+              .map(([key, value]) => `${key}=${value}`)
+              .join(", ") +
+            ". Treat these as already collected.",
         });
       }
 
@@ -490,7 +613,7 @@ export function useBotConfigChat() {
       // [wallet context] → [conversation] → [expanded spec] → [extra]
       return [...systemMessages, ...history, ...expandedCtx, ...extraCtx];
     },
-    [walletHexAddress]
+    [plannerWalletAddress, walletAddress, walletHexAddress]
   );
 
   // ── Call /create-bot-chat ─────────────────────────────────────────────────
@@ -525,13 +648,44 @@ export function useBotConfigChat() {
 
         // ── clarification_needed ─────────────────────────────────────────────
         if (data.status === "clarification_needed") {
-          const question = String(data.question ?? "Could you provide more details?");
+          const rawQuestion = String(data.question ?? "Could you provide more details?");
+          const missingParametersRaw = Array.isArray(data.missing_parameters)
+            ? data.missing_parameters.map((value: unknown) => String(value))
+            : extractUppercaseKeys(rawQuestion);
+          if (plannerWalletAddress && missingParametersRaw.includes("USER_WALLET_ADDRESS")) {
+            collectedClarificationValuesRef.current = {
+              ...collectedClarificationValuesRef.current,
+              USER_WALLET_ADDRESS: plannerWalletAddress,
+            };
+          }
+          const missingParameters = missingParametersRaw.filter(
+            (key: string) => !(key === "USER_WALLET_ADDRESS" && plannerWalletAddress)
+          );
+          const question = buildClarificationQuestion(missingParameters);
+          pendingClarificationKeysRef.current = missingParameters.length
+            ? missingParameters
+            : extractUppercaseKeys(question || rawQuestion);
+          pendingStrategyTypeRef.current = String(
+            data.strategy_type ?? pendingStrategyTypeRef.current ?? detectedStrategyRef.current ?? "custom_utility"
+          );
+          if (pendingClarificationKeysRef.current.length === 0) {
+            await callPlannerAgent(
+              `Continue the existing strategy_type=${pendingStrategyTypeRef.current || detectedStrategyRef.current || "custom_utility"}. ` +
+                `Treat USER_WALLET_ADDRESS=${plannerWalletAddress} as fixed and do not ask for it again.`
+            );
+            return;
+          }
+
           setIsTyping(true);
           await sleep(600);
           setIsTyping(false);
-          appendAssistant(question);
+          appendAssistant(question, {
+            type: "dynamic_credentials_form",
+            formMode: "clarification",
+            fields: buildClarificationFields(pendingClarificationKeysRef.current),
+          });
           pushHistory("assistant", question);
-          setStep("idle");
+          setStep("ask_keys");
           return;
         }
 
@@ -549,9 +703,10 @@ export function useBotConfigChat() {
           // Build the base env already containing the wallet address
           const knownValues: Record<string, string> = {
             ...envDefaults,
-            ...(walletHexAddress
-              ? { USER_WALLET_ADDRESS: walletHexAddress }
+            ...(plannerWalletAddress
+              ? { USER_WALLET_ADDRESS: plannerWalletAddress }
               : {}),
+            ...collectedClarificationValuesRef.current,
           };
 
           // Show only fields not already satisfied by env defaults or wallet
@@ -610,6 +765,8 @@ export function useBotConfigChat() {
       envDefaults,
       pushHistory,
       walletDisplayAddress,
+      plannerWalletAddress,
+      walletAddress,
       walletHexAddress,
     ]
   );
@@ -665,6 +822,7 @@ export function useBotConfigChat() {
         const reader = saveRes.body.getReader();
         let buffer = "";
         let finalPayload: Record<string, unknown> | null = null;
+        let clarificationPayload: Record<string, unknown> | null = null;
         const seenStatuses = new Set<string>();
 
         const emitStatus = (payload: Record<string, unknown>) => {
@@ -707,6 +865,9 @@ export function useBotConfigChat() {
             }
 
             emitStatus(payload);
+            if (payload.status === "clarification_needed") {
+              clarificationPayload = payload;
+            }
             if (payload.status === "complete") {
               finalPayload = payload;
             }
@@ -723,6 +884,48 @@ export function useBotConfigChat() {
 
         buffer += decoder.decode();
         buffer = processBuffer(buffer);
+
+        if (!finalPayload && clarificationPayload) {
+          const cp = clarificationPayload as Record<string, unknown>;
+          const rawQuestion = String(
+            cp["question"] ??
+              "I still need a few required parameters before generating this bot."
+          );
+          const missingParametersRaw = Array.isArray(cp["missing_parameters"])
+            ? (cp["missing_parameters"] as unknown[]).map((value: unknown) => String(value))
+            : extractUppercaseKeys(rawQuestion);
+
+          if (plannerWalletAddress && missingParametersRaw.includes("USER_WALLET_ADDRESS")) {
+            collectedClarificationValuesRef.current = {
+              ...collectedClarificationValuesRef.current,
+              USER_WALLET_ADDRESS: plannerWalletAddress,
+            };
+          }
+
+          const missingParameters = missingParametersRaw.filter(
+            (key: string) => !(key === "USER_WALLET_ADDRESS" && plannerWalletAddress)
+          );
+
+          const question = buildClarificationQuestion(missingParameters);
+
+          pendingClarificationKeysRef.current = missingParameters;
+          pendingStrategyTypeRef.current = String(
+            cp["strategy_type"] ??
+              pendingStrategyTypeRef.current ??
+              detectedStrategyRef.current ??
+              "custom_utility"
+          );
+
+          pendingBotRef.current = { files, intent, botName };
+
+          appendAssistant(question, {
+            type: "dynamic_credentials_form",
+            formMode: "clarification",
+            fields: buildClarificationFields(missingParameters),
+          });
+          setStep("ask_keys");
+          return;
+        }
 
         if (!finalPayload) {
           throw new Error("Stream ended without a final payload.");
@@ -747,7 +950,7 @@ export function useBotConfigChat() {
         setStep("idle");
       }
     },
-    [appendAssistant, publicKey, signMessage, walletHexAddress]
+    [appendAssistant, plannerWalletAddress, publicKey, signMessage, walletHexAddress]
   );
 
   // ── submitDynamicKeys ─────────────────────────────────────────────────────
@@ -759,14 +962,14 @@ export function useBotConfigChat() {
 
       const mergedEnv: Record<string, string> = {
         ...envDefaults,
-        ...(walletHexAddress
-          ? { USER_WALLET_ADDRESS: walletHexAddress }
+        ...(plannerWalletAddress
+          ? { USER_WALLET_ADDRESS: plannerWalletAddress }
           : {}),
+        ...collectedClarificationValuesRef.current,
         ...formData,
       };
 
       const contextLine = Object.entries(formData)
-        finalizeBot,
         .filter(([k, v]) => k !== "USER_WALLET_ADDRESS" && v.trim())
         .map(([k, v]) => `${k}=${v}`)
         .join(", ");
@@ -774,7 +977,60 @@ export function useBotConfigChat() {
 
       await finalizeBot({ files, intent, botName, envConfig: mergedEnv });
     },
-    [envDefaults, finalizeBot, pushHistory, walletHexAddress]
+    [envDefaults, finalizeBot, plannerWalletAddress, pushHistory]
+  );
+
+  const submitClarificationKeys = useCallback(
+    async (formData: Record<string, string>) => {
+      const cleaned: Record<string, string> = {};
+      for (const [key, value] of Object.entries(formData)) {
+        const trimmed = value.trim();
+        if (trimmed) cleaned[key] = trimmed;
+      }
+
+      if (Object.keys(cleaned).length === 0) return;
+
+      collectedClarificationValuesRef.current = {
+        ...collectedClarificationValuesRef.current,
+        ...cleaned,
+      };
+
+      const contextLine = Object.entries(cleaned)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(", ");
+
+      if (contextLine) {
+        pushHistory("user", `Clarification values: ${contextLine}`);
+      }
+
+      if (!pendingBotRef.current) {
+        await callPlannerAgent(
+          `Continue the existing strategy_type=${pendingStrategyTypeRef.current || detectedStrategyRef.current || "custom_utility"}. ` +
+            `Do not change strategy_type. Treat these collected parameters as fixed: ${contextLine}.`
+        );
+        return;
+      }
+
+      const mergedEnv: Record<string, string> = {
+        ...envDefaults,
+        ...(plannerWalletAddress ? { USER_WALLET_ADDRESS: plannerWalletAddress } : {}),
+        ...collectedClarificationValuesRef.current,
+      };
+
+      const { files, intent, botName } = pendingBotRef.current;
+      const requiredFields = buildClarificationFields(pendingClarificationKeysRef.current);
+      const missingAfterSubmit = requiredFields.some((field) => !mergedEnv[field.key]?.trim());
+      if (missingAfterSubmit) {
+        await callPlannerAgent(
+          `Continue the existing strategy_type=${pendingStrategyTypeRef.current || detectedStrategyRef.current || "custom_utility"}. ` +
+            `Do not change strategy_type. Treat these collected parameters as fixed: ${contextLine}.`
+        );
+        return;
+      }
+
+      await finalizeBot({ files, intent, botName, envConfig: mergedEnv });
+    },
+    [callPlannerAgent, detectedStrategyRef, envDefaults, finalizeBot, pendingBotRef, plannerWalletAddress, pushHistory]
   );
 
   // ── Main send handler ─────────────────────────────────────────────────────
@@ -808,13 +1064,33 @@ export function useBotConfigChat() {
       pushHistory("user", text);
       setIsTyping(true);
 
+      const clarificationReply = parseClarificationReply(
+        text,
+        pendingClarificationKeysRef.current
+      );
+      if (Object.keys(clarificationReply).length > 0) {
+        collectedClarificationValuesRef.current = {
+          ...collectedClarificationValuesRef.current,
+          ...clarificationReply,
+        };
+      }
+
       try {
         const isFirstUserMessage =
           chatHistoryRef.current.filter((m) => m.role === "user").length === 1;
 
+        const clarificationContext =
+          Object.keys(clarificationReply).length > 0
+            ? `User supplied clarification values: ${Object.entries(clarificationReply)
+                .map(([key, value]) => `${key}=${value}`)
+                .join(", ")}.`
+            : undefined;
+
         if (isFirstUserMessage) {
           // Expand the prompt via classify-intent (non-fatal if it fails)
           let expandedPrompt = text;
+          pendingClarificationKeysRef.current = [];
+          pendingStrategyTypeRef.current = String(detectedStrategyRef.current ?? "custom_utility");
           try {
             const authHeaders = await getWalletAuthHeaders({ publicKey, signMessage });
             const classifyRes = await fetch("/api/classify-intent", {
@@ -841,13 +1117,13 @@ export function useBotConfigChat() {
           pushHistory("assistant", "Analysing…");
 
           await sleep(300);
-          await callPlannerAgent();
+          await callPlannerAgent(clarificationContext);
           return;
         }
 
         // Subsequent turns: re-run planner with updated history
         setIsTyping(false);
-        await callPlannerAgent();
+        await callPlannerAgent(clarificationContext);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         setIsTyping(false);
@@ -901,5 +1177,6 @@ export function useBotConfigChat() {
     handleKeyDown,
     handleInputChange,
     submitDynamicKeys,
+    submitClarificationKeys,
   };
 }

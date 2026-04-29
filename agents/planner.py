@@ -89,7 +89,7 @@ class PlannerState(BaseModel):
 PLANNER_SYSTEM = """\
 You are the Planner Agent for Agentia, a Solana-native DeFi bot platform.
 
-Analyse the conversation and return ONLY a single valid JSON object — no markdown, no preamble:
+Analyse the conversation and return a valid JSON object in this format (plaintext only):
 
 {
   "strategy_type": "<string>",
@@ -139,21 +139,21 @@ REQUIRED PARAMETERS by strategy:
   custom_utility:  only what the user explicitly provided
 
 MCP VERIFICATION RULES:
-1. Wallet address provided → verify with: mcp_tool="get_balance", payload={network, address}
-2. Token mint provided → verify with: mcp_tool="get_account_info", payload={network, address: <mint>}
-3. .sol domain provided → resolve with: mcp_tool="resolve_sns", payload={network, name: "<domain>.sol"}
-4. GoldRush data checks → mcp_tool="goldrush_token_balances" with wallet + network.
-5. MagicBlock private transfer checks → mcp_tool="magicblock_transfer" with from/to/mint/amount.
-6. Dodo metering/checkout checks → mcp_tool="dodo_metering" or "dodo_checkout" with plan and wallet info.
-4. Never invent MCP results — only set needs_mcp_query=true and let the orchestrator call MCP.
+1. Wallet address provided: verify with mcp_tool="get_balance", payload={network, address}
+2. Token mint provided: verify with mcp_tool="get_account_info", payload={network, address: <mint>}
+3. .sol domain provided: resolve with mcp_tool="resolve_sns", payload={network, name: "<domain>.sol"}
+4. GoldRush data checks: mcp_tool="goldrush_token_balances" with wallet and network.
+5. MagicBlock private transfer checks: mcp_tool="magicblock_transfer" with from/to/mint/amount.
+6. Dodo metering/checkout checks: mcp_tool="dodo_metering" or "dodo_checkout" with plan and wallet info.
+7. When uncertain about a value, set needs_mcp_query=true for orchestrator verification.
 
 FLOW:
-1. Missing required params → set missing_parameters + clarifying_question_for_user.
-2. Unverified address/mint → set verification_step.needs_mcp_query=true.
-3. MCP results injected → absorb into collected_parameters, clear verification_step.
-4. All params collected and verified → set is_ready_for_code_generation=true and build enriched_prompt.
+1. If required params are missing: set missing_parameters and clarifying_question_for_user.
+2. If address/mint unverified: set verification_step.needs_mcp_query=true.
+3. After MCP results received: absorb into collected_parameters and clear verification_step.
+4. When all params are collected and verified: set is_ready_for_code_generation=true and build enriched_prompt.
 
-NETWORK: always set SOLANA_NETWORK="devnet" unless user says mainnet.
+NETWORK: Default to SOLANA_NETWORK="devnet" unless the user explicitly requests mainnet.
 """
 
 
@@ -243,10 +243,23 @@ class PlannerAgent:
     @staticmethod
     def _format_history(history: List[Dict[str, str]]) -> str:
         bounded = history[-PLANNER_HISTORY_MAX_TURNS:] if PLANNER_HISTORY_MAX_TURNS > 0 else history
-        return "\n".join(
-            f"[{msg.get('role', 'unknown').upper()}]: {msg.get('content', '')}"
-            for msg in bounded
-        )
+        lines: List[str] = []
+
+        for msg in bounded:
+            role = str(msg.get("role", "unknown")).upper()
+            content = str(msg.get("content", "")).strip()
+            if not content:
+                continue
+
+            if content.startswith("Expanded technical specification:"):
+                content = "Expanded technical specification: [omitted; already summarized by the frontend]"
+
+            if len(content) > 600:
+                content = content[:600].rstrip() + "…"
+
+            lines.append(f"[{role}]: {content}")
+
+        return "\n".join(lines)
 
     @staticmethod
     def _parse(raw: str) -> PlannerState:
@@ -273,6 +286,11 @@ class PlannerAgent:
         data.setdefault("enriched_prompt", None)
         data.setdefault("mcp_results_summary", None)
         data.setdefault("verification_step", None)
+
+        if isinstance(data.get("collected_parameters"), dict):
+            data["collected_parameters"] = {
+                k: str(v) for k, v in data["collected_parameters"].items() if v is not None
+            }
 
         vs = data.get("verification_step")
         if isinstance(vs, dict):

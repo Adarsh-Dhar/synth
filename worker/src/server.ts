@@ -50,7 +50,6 @@ app.post("/agents/:id/start", requireAuth, async (req, res) => {
       agentId: id.toString(),
       files,
       configuration: configuration ?? {},
-      envConfig: typeof envConfig === "string" ? envConfig : null,
     }));
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

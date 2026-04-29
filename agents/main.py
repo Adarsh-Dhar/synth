@@ -57,6 +57,9 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     status: str                              # "clarification_needed" | "ready" | "error"
     question: Optional[str]   = None
+    strategy_type: Optional[str] = None
+    missing_parameters: Optional[List[str]] = None
+    collected_parameters: Optional[Dict[str, str]] = None
     agent_id: Optional[str]   = None
     bot_name: Optional[str]   = None
     files: Optional[List[Dict[str, Any]]] = None
@@ -217,6 +220,9 @@ async def create_bot_chat(req: ChatRequest, request: Request):
         return ChatResponse(
             status="clarification_needed",
             question=raw.get("question", "Could you provide more details?"),
+            strategy_type=raw.get("strategy_type"),
+            missing_parameters=raw.get("missing_parameters", []),
+            collected_parameters=raw.get("collected_parameters", {}),
         )
 
     if raw.get("status") == "ready":

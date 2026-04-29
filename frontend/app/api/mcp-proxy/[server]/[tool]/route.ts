@@ -106,3 +106,79 @@ export async function POST(
     );
   }
 }
+
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ server: string; tool: string }> },
+) {
+  const { server, tool } = await ctx.params;
+  const sessionKeyHeader = String(req.headers.get("x-session-key") || "").trim();
+  const gateway = normalizeGatewayBase(
+    req.headers.get("x-mcp-upstream-url") ||
+    process.env.MCP_GATEWAY_URL ||
+    process.env.NEXT_PUBLIC_MCP_GATEWAY_URL ||
+    "",
+  );
+
+  if (!gateway) {
+    return NextResponse.json(
+      {
+        error: "MCP gateway not configured",
+        hint: "Set MCP_GATEWAY_URL in frontend server environment.",
+      },
+      { status: 500 },
+    );
+  }
+
+  const upstreamCandidates = buildUpstreamCandidates(gateway, server, tool);
+
+  try {
+    let lastBodyText = "";
+    let lastStatus = 502;
+    let lastContentType = "application/json";
+
+    for (const upstreamUrl of upstreamCandidates) {
+      const upstream = await fetch(upstreamUrl, {
+        method: "GET",
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          "Bypass-Tunnel-Reminder": "true",
+          ...(sessionKeyHeader ? { "x-session-key": sessionKeyHeader } : {}),
+        },
+        cache: "no-store",
+      });
+
+      lastStatus = upstream.status;
+      lastContentType = upstream.headers.get("content-type") || "application/json";
+      lastBodyText = await upstream.text();
+
+      if (upstream.status !== 404) {
+        return new NextResponse(lastBodyText, {
+          status: lastStatus,
+          headers: {
+            "Content-Type": lastContentType,
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+    }
+
+    return new NextResponse(lastBodyText, {
+      status: lastStatus,
+      headers: {
+        "Content-Type": lastContentType,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      {
+        error: "Upstream MCP request failed",
+        upstreamUrl: upstreamCandidates[0] || "",
+        details: message,
+      },
+      { status: 502 },
+    );
+  }
+}

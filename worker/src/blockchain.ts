@@ -280,7 +280,7 @@ export async function executeTrade(
       console.log(`  Submitting via Jito bundle…`);
       const bundleId = await submitJitoBundle(signedTxBase64);
       // Jito returns bundle ID; get the actual sig from the signed tx
-      txHash = bs58Encode(Buffer.from(tx.signatures[0]));
+      txHash = bs58.encode(Buffer.from(tx.signatures[0]));
       console.log(`  Jito bundle ID: ${bundleId}`);
     } else {
       // Fallback: send directly via RPC

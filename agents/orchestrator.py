@@ -252,7 +252,7 @@ export async function resolveAddress(nameOrAddress: string): Promise<string> {
 
 CLASSIFIER_SYSTEM = """\
 You are a Solana DeFi bot intent classifier.
-Return ONLY a valid JSON object — no markdown, no preamble.
+Respond with a valid JSON object in this format:
 
 Schema:
 {
@@ -316,7 +316,7 @@ def _normalize_filepath(raw: object) -> str:
 GENERATOR_SYSTEM = """\
 You are an expert Solana bot engineer. Generate production-ready TypeScript for the Agentia platform.
 
-Respond with RAW JSON only — no markdown fences, no preamble, no trailing text.
+Respond with valid JSON in the format below, with no markdown formatting:
 
 Schema:
 {
@@ -327,33 +327,27 @@ Schema:
   ]
 }
 
-Generate EXACTLY these 2 files in this order:
+Generate these 2 files in this order:
   1. package.json
   2. src/index.ts
 
-The files src/mcp_bridge.ts and src/sns_resolver.ts are injected automatically — do NOT generate them.
+Additional files src/mcp_bridge.ts and src/sns_resolver.ts are injected automatically.
 
 Import from bridge: import { callMcpTool, getSolBalance, getTokenBalance } from './mcp_bridge.js';
 Import from resolver (only if needed): import { resolveAddress, isSolDomain } from './sns_resolver.js';
 
 CORE RULES:
-1. TypeScript + Node.js (ESM). package.json must set "type": "module".
-2. "start" script must be: "tsx src/index.ts"
-3. Dependencies: axios ^1.7.4, dotenv ^16.4.0, tsx (dev), typescript (dev), @types/node (dev).
-    Do NOT include @solana/web3.js — all chain access goes through MCP tools.
+1. TypeScript + Node.js (ESM). package.json sets "type": "module".
+2. "start" script is: "tsx src/index.ts"
+3. Dependencies: axios ^1.7.4, dotenv ^16.4.0, tsx (dev), typescript (dev), @types/node (dev). Note: @solana/web3.js is not used; all chain access goes through MCP tools.
 4. Import "dotenv/config" at the very top of src/index.ts.
-5. All money arithmetic uses BigInt — never floats.
+5. All money arithmetic uses BigInt, not floats.
 6. SIMULATION_MODE = process.env.SIMULATION_MODE !== "false" (default true).
-7. TRADING: For Jupiter swaps, YOU MUST use the Jupiter Agent Skills via MCP.
-    - Do NOT use raw axios to quote-api.jup.ag.
-    - Do NOT build manual transactions.
-    - Simply call the MCP tool: `await callMcpTool("jupiter", "execute_swap", { inputMint, outputMint, amount, userWallet })`
-    - The MCP handles the routing, quoting, and transaction signing orchestration natively.
+7. TRADING: For Jupiter swaps, use Jupiter Agent Skills via MCP. Example: `await callMcpTool("jupiter", "execute_swap", { inputMint, outputMint, amount, userWallet })`. Transaction routing, quoting, and signing orchestration are handled by MCP.
 8. Use an inFlight boolean guard to prevent overlapping poll cycles.
 9. Handle SIGINT / SIGTERM for graceful shutdown.
-10. Never hardcode addresses — read everything from process.env.
-11. DODO: If the user requests payment, metering, or profit-splitting flows, implement a Dodo webhook handler that verifies incoming webhook HMACs and exposes a `/dodo/webhook` route.
-    In the secure sandbox, do not create an HTTP listener for the webhook. Instead, handle inbound webhook payloads via `process.on("message")` and keep the bot process ready to receive IPC messages from the worker launcher.
+10. Addresses are read from process.env, not hardcoded.
+11. DODO: If the user requests payment, metering, or profit-splitting flows, implement a Dodo webhook handler that verifies incoming webhook HMACs and exposes a `/dodo/webhook` route. In the secure sandbox, webhook payloads are handled via `process.on("message")` for IPC message reception instead of HTTP listeners.
 
 SOLANA MCP TOOL REFERENCE:
   Responsibility split:
@@ -376,9 +370,9 @@ SOLANA MCP TOOL REFERENCE:
     callMcpTool("solana", "resolve_sns", { network, name: "alice.sol" })
 
         === DYNAMIC MCP TOOL SCHEMAS ===
-        You will be provided with context from the user's specific query below.
-        You MUST strictly adhere to the TypeScript interfaces provided in that dynamic context.
-        Do not hallucinate parameters.
+        The context below provides TypeScript interfaces specific to this user's query.
+        Generated code adheres to these provided interfaces for type safety.
+        Parameters are based on the schemas provided in the context.
 
 ENV VARS your bot should read:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
@@ -386,6 +380,19 @@ ENV VARS your bot should read:
   POOL_ADDRESS, PROGRAM_ID,
   TRADE_AMOUNT_LAMPORTS, MIN_PROFIT_LAMPORTS,
   POLL_INTERVAL_MS (default 15000), SIMULATION_MODE
+  12. SOLANA ENVIRONMENT VARIABLES: Uses `SOLANA_RPC_URL` instead of generic RPC variables. Token addresses are mapped precisely using `SOLANA_USDC_METADATA_ADDRESS` or similar.
+13. SOLANA TRANSACTION EXECUTIONS: For Solana bridge or sweep transactions, use `callSigningRelay` with this shape:
+    ```typescript
+    await callSigningRelay({ 
+      network: "solana", 
+      programId: String(process.env.SOLANA_BRIDGE_PROGRAM_ID ?? ""), 
+      instructionData: Buffer.from(JSON.stringify({ method: "sweep_to_l1", args })).toString("base64"), 
+      accounts: [{ pubkey: String(process.env.SOLANA_BRIDGE_ACCOUNT ?? ""), isWritable: true }], 
+      function: "sweep_to_l1", 
+      args 
+    });
+    ```
+14. TYPE SAFETY: Always wrap `process.env.*` accesses in `String(...)` to prevent TypeScript undefined errors. Avoid `BigInt(Object)` crashes by safely parsing strings.
 """
 
 # ─── MetaAgent ────────────────────────────────────────────────────────────────
@@ -459,7 +466,9 @@ class MetaAgent:
                 "Authorization": f"Bearer {self.model_token}",
             }
             resp = self._http_client.post(url, json=payload, headers=headers, timeout=LLM_TIMEOUT_SECONDS)
-            resp.raise_for_status()
+            if resp.status_code >= 400:
+                detail = resp.text[:1200].strip()
+                raise RuntimeError(f"GitHub Models {resp.status_code}: {detail}")
             return resp.json()
 
         max_attempts = max(1, LLM_MAX_RETRIES + 1)
@@ -481,6 +490,7 @@ class MetaAgent:
                 raise TimeoutError(f"LLM timeout after {LLM_TIMEOUT_SECONDS}s ({operation}, {elapsed}s elapsed)")
             except Exception as exc:
                 executor.shutdown(wait=False, cancel_futures=True)
+                _log("ERROR", f"{operation}: model request failed: {exc}", trace_id)
                 if _retryable(exc) and attempt < max_attempts:
                     delay = round(LLM_RETRY_BASE_DELAY * attempt, 2)
                     _log("WARN", f"{operation}: retrying in {delay}s ({exc})", trace_id)
@@ -555,7 +565,13 @@ class MetaAgent:
                     plan.clarifying_question_for_user
                     or "Could you provide more details about the tokens, pools, or addresses your bot should use?"
                 )
-                yield emit({"status": "clarification_needed", "question": question})
+                yield emit({
+                    "status": "clarification_needed",
+                    "question": question,
+                    "strategy_type": plan.strategy_type,
+                    "missing_parameters": plan.missing_parameters,
+                    "collected_parameters": plan.collected_parameters,
+                })
                 return
 
             break
@@ -606,7 +622,13 @@ class MetaAgent:
                 try:
                     jup_res = await mcp.call_tool("jupiter", "jupiter_docs", {"query": user_msg})
                 except Exception as exc:
-                    raise RuntimeError(f"Jupiter MCP unreachable: {exc}") from exc
+                    diagnostics = "; ".join(mcp.connection_diagnostics())
+                    raise RuntimeError(
+                        "Jupiter MCP unavailable. "
+                        f"Expected env var: {mcp.expected_default_session_env('jupiter')}. "
+                        f"Diagnostics: {diagnostics}. "
+                        f"Root cause: {exc}"
+                    ) from exc
 
             if needs_dodo:
                 try:
@@ -626,9 +648,9 @@ class MetaAgent:
         except Exception as exc:
             _log("ERROR", str(exc), trace_id)
             if "Jupiter" in str(exc):
-                yield emit({"error": "Failed to load Jupiter Agent Skills. The MCP server is unreachable."})
+                yield emit({"error": f"Failed to load Jupiter Agent Skills. {exc}"})
             else:
-                yield emit({"error": "Failed to load Dodo Payments Agent Skills. The MCP server is unreachable."})
+                yield emit({"error": f"Failed to load Dodo Payments Agent Skills. {exc}"})
             return
 
         enriched_prompt = f"{user_msg}\n\n"
@@ -671,7 +693,7 @@ class MetaAgent:
                 )
 
                 if result.returncode == 0:
-                    yield emit({"status": "complete", "files": final_files, "plan": plan.to_dict(), "intent": intent})
+                    yield emit({"status": "complete", "files": final_files, "plan": plan.model_dump(), "intent": intent})
                     return
 
                 error_msg = (result.stdout + "\n" + result.stderr).strip()
@@ -687,7 +709,7 @@ class MetaAgent:
                     final_warning = "Code generated with TypeScript errors."
                     break
 
-        yield emit({"status": "complete", "files": final_files, "plan": plan.to_dict(), "intent": intent, "warning": final_warning})
+        yield emit({"status": "complete", "files": final_files, "plan": plan.model_dump(), "intent": intent, "warning": final_warning})
 
     async def orchestrate_bot_creation(
         self,
@@ -855,7 +877,7 @@ class MetaAgent:
                         return {
                             "status": "ready",
                             "files": files,
-                            "plan": plan.to_dict()
+                            "plan": plan.model_dump()
                         }
                     else:
                         # Failure! Capture the TS Compiler Error
@@ -875,7 +897,7 @@ class MetaAgent:
                             return {
                                 "status": "ready",
                                 "files": files,
-                                "plan": plan.to_dict(),
+                                "plan": plan.model_dump(),
                                 "warning": "Code generated with TypeScript errors."
                             }
                 except Exception as e:
@@ -886,7 +908,7 @@ class MetaAgent:
         return {
             "status": "ready",
             "files": files,
-            "plan": plan.to_dict()
+            "plan": plan.model_dump()
         }
 
     # ── Public API ─────────────────────────────────────────────────────────────
@@ -1089,5 +1111,5 @@ REQUIRED ENV VARS:
 RULES:
 - Every BigInt value is in the token's smallest unit (lamports for SOL).
 - SIMULATION_MODE=true by default — log what would happen, don't send.
-- Do NOT import @solana/web3.js — the MCP bridge handles all RPC calls.
+- @solana/web3.js is not imported; the MCP bridge handles all RPC calls.
 """
