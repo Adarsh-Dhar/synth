@@ -7,7 +7,7 @@ export function assembleBotFiles(): BotFile[] {
   return assembleSolanaBotFiles();
 }
 export function assembleSolanaBotFiles(): BotFile[] {
-  return [
+  const files: BotFile[] = [
     { filepath: "package.json", content: SOLANA_PACKAGE_JSON },
     { filepath: "tsconfig.json", content: SOLANA_TSCONFIG },
     { filepath: ".env.example", content: SOLANA_ENV_EXAMPLE },
@@ -15,6 +15,13 @@ export function assembleSolanaBotFiles(): BotFile[] {
     { filepath: "src/goldrush_mcp.ts", content: SOLANA_GOLDRUSH_MCP_TS },
     { filepath: "src/index.ts", content: SOLANA_INDEX_TS },
   ];
+
+  // Sanitize templates: ensure no hardcoded Solana RPC endpoints remain
+  // and force runtime usage of `process.env.SOLANA_RPC_URL` injected by the worker.
+  const sanitize = (s: string) =>
+    s.replace(/https?:\/\/[^\s"'`]+solana[^\s"'`]*/gi, 'process.env.SOLANA_RPC_URL');
+
+  return files.map((f) => ({ filepath: f.filepath, content: sanitize(f.content) }));
 }
 
 const SOLANA_PACKAGE_JSON = JSON.stringify(
@@ -75,8 +82,11 @@ GOLDRUSH_STREAM_EVENTS=lp_pull,drainer_approval,phishing_airdrop
 const SOLANA_UTILS_TS = `import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import "dotenv/config";
 
-export async function getSolBalance(rpcUrl: string, address: string): Promise<number> {
-  const conn = new Connection(rpcUrl, { commitment: "confirmed" });
+const RPC = process.env.SOLANA_RPC_URL;
+if (!RPC) throw new Error('SOLANA_RPC_URL must be set and provided by the runtime (injected by the worker)');
+
+export async function getSolBalance(address: string): Promise<number> {
+  const conn = new Connection(RPC, { commitment: "confirmed" });
   const pub = new PublicKey(address);
   const bal = await conn.getBalance(pub, "confirmed");
   return bal / LAMPORTS_PER_SOL;
@@ -116,7 +126,8 @@ import { Connection, PublicKey, SystemProgram, Transaction, Keypair, LAMPORTS_PE
 import { getWalletBalanceFromGoldRush } from "./goldrush_mcp";
 import fs from "fs";
 
-const RPC = process.env.SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
+const RPC = process.env.SOLANA_RPC_URL;
+if (!RPC) throw new Error('SOLANA_RPC_URL must be set by the runtime (injected by the worker)');
 const WALLET = process.env.USER_WALLET_ADDRESS ?? "";
 const KEYPAIR_PATH = process.env.KEYPAIR_PATH ?? "";
 const POLL_MS = (Number(process.env.POLL_INTERVAL ?? "15") || 15) * 1000;

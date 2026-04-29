@@ -12,6 +12,7 @@ import * as os from "os";
 import { PassThrough } from "stream";
 import { decryptEnvConfig } from "./crypto-env.js";
 import { GoldRushStreamEvent } from "./types.js";
+import prisma from "./lib/prisma.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,7 +98,7 @@ async function ensureDockerImage(image: string): Promise<void> {
 
   const stream = await docker.pull(image);
   await new Promise<void>((resolve, reject) => {
-    docker.modem.followProgress(stream, (err) => {
+    docker.modem.followProgress(stream, (err: any) => {
       if (err) reject(err);
       else resolve();
     });
@@ -244,9 +245,10 @@ export function getLogs(agentId: string, since?: number): LogEntry[] {
 
 async function waitForExecExit(container: Container, execId: string): Promise<number> {
   for (let i = 0; i < 60; i += 1) {
-    const inspect = await container.getExec(execId).inspect();
-    if (!inspect.Running) {
-      return inspect.ExitCode ?? 1;
+    const inspect = await container.getArchive(execId);
+    // const inspect = await container.getExec(execId).inspect();
+    if (inspect.isPaused() == true) {
+      inspect.resume();
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -439,15 +441,24 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
   docker.modem.demuxStream(stream, stdoutStream, stderrStream);
 
   wireStreamLines(stdoutStream, "stdout", (line, level) => {
-    pushLine(logBuffer, line, level);
-    console.log(`[Agent ${agentId} OUT] ${line}`);
-  });
-  wireStreamLines(stderrStream, "stderr", (line, level) => {
-    pushLine(logBuffer, line, level);
-    console.error(`[Agent ${agentId} ERR] ${line}`);
-  });
+  pushLine(logBuffer, line, level);
+  console.log(`[Agent ${agentId} OUT] ${line}`);
+  // Persist to DB for the user dashboard
+  prisma.terminalLog.create({
+    data: { agentId, line, level, timestamp: new Date() }
+  }).catch(err => console.error("DB Log Error:", err));
+});
 
-  container.wait().then((result) => {
+wireStreamLines(stderrStream, "stderr", (line, level) => {
+  pushLine(logBuffer, line, level);
+  console.error(`[Agent ${agentId} ERR] ${line}`);
+  // Persist to DB for the user dashboard
+  prisma.terminalLog.create({
+    data: { agentId, line, level, timestamp: new Date() }
+  }).catch(err => console.error("DB Log Error:", err));
+});
+
+  container.wait().then((result: { StatusCode: null; }) => {
     const code = result.StatusCode ?? null;
     console.log(`[AgentRunner] Agent ${agentId} container exited with code ${code}`);
     running.delete(agentId);
@@ -457,7 +468,7 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
       // Best-effort cleanup
     }
     onExit?.(code);
-  }).catch((err) => {
+  }).catch((err: { message: any; }) => {
     pushLine(logBuffer, `Container wait failed: ${err instanceof Error ? err.message : String(err)}`, "stderr");
     running.delete(agentId);
     try {
