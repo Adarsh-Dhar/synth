@@ -1308,55 +1308,89 @@ export async function POST(req: NextRequest) {
       async start(controller) {
         const reader = metaResponse.body!.getReader();
         const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        let buffer = "";
         let finalPayload: Record<string, unknown> | null = null;
         let agentId: string | null = null;
+
+        const flushEvent = async (eventText: string): Promise<void> => {
+          const trimmed = eventText.trim();
+          if (!trimmed) return;
+
+          const raw = trimmed
+            .split(/\r?\n/)
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trimStart())
+            .join("\n")
+            .trim();
+
+          if (!raw) {
+            controller.enqueue(encoder.encode(`${trimmed}\n\n`));
+            return;
+          }
+
+          let payload: Record<string, unknown> | null = null;
+          try {
+            payload = JSON.parse(raw) as Record<string, unknown>;
+          } catch {
+            controller.enqueue(encoder.encode(`${trimmed}\n\n`));
+            return;
+          }
+
+          if (payload.status !== "complete") {
+            controller.enqueue(encoder.encode(`${trimmed}\n\n`));
+            return;
+          }
+
+          finalPayload = payload;
+          console.log(`[generate-bot] [${requestId}] Intercepted complete event, saving to DB`);
+
+          try {
+            agentId = await saveBotToDatabase(
+              requestId,
+              finalPayload,
+              granterWalletAddress,
+              originalPrompt,
+              expandedPrompt,
+              envConfig,
+              envDefaults,
+              userId,
+            );
+            console.log(`[generate-bot] [${requestId}] Saved bot with agentId: ${agentId}`);
+          } catch (dbErr) {
+            const msg = dbErr instanceof Error ? dbErr.message : String(dbErr);
+            console.error(`[generate-bot] [${requestId}] Failed to save bot to DB:`, msg);
+          }
+
+          if (finalPayload && agentId) {
+            const finalEvent = `data: ${JSON.stringify({ ...finalPayload, agentId })}\n\n`;
+            controller.enqueue(encoder.encode(finalEvent));
+          }
+        };
 
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
-            controller.enqueue(new TextEncoder().encode(chunk));
+            buffer += decoder.decode(value, { stream: true });
+            const events = buffer.split(/\r?\n\r?\n/);
+            buffer = events.pop() ?? "";
 
-            // Parse SSE events and intercept the final completion event
-            if (chunk.includes('"status": "complete"')) {
-              try {
-                // Extract JSON from SSE format: data: {...}\n\n
-                const jsonMatch = chunk.match(/data:\s*(\{[\s\S]*?\})/);
-                if (jsonMatch && jsonMatch[1]) {
-                  finalPayload = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
-                  console.log(`[generate-bot] [${requestId}] Intercepted complete event, saving to DB`);
-
-                  // Save the completed bot to Prisma in the background (no await)
-                  try {
-                    agentId = await saveBotToDatabase(
-                      requestId,
-                      finalPayload,
-                      granterWalletAddress,
-                      originalPrompt,
-                      expandedPrompt,
-                      envConfig,
-                      envDefaults,
-                      userId,
-                    );
-                    console.log(`[generate-bot] [${requestId}] Saved bot with agentId: ${agentId}`);
-                  } catch (dbErr) {
-                    const msg = dbErr instanceof Error ? dbErr.message : String(dbErr);
-                    console.error(`[generate-bot] [${requestId}] Failed to save bot to DB:`, msg);
-                    // Continue streaming even if DB save fails
-                  }
-                }
-              } catch (parseErr) {
-                console.warn(`[generate-bot] [${requestId}] Failed to parse complete event:`, parseErr);
-              }
+            for (const eventText of events) {
+              await flushEvent(eventText);
             }
           }
 
-          // Emit final event with agentId if available
-          if (finalPayload && agentId) {
-            const finalEvent = `data: ${JSON.stringify({ ...finalPayload, agentId })}\n\n`;
-            controller.enqueue(new TextEncoder().encode(finalEvent));
+          buffer += decoder.decode();
+          const tailEvents = buffer.split(/\r?\n\r?\n/);
+          buffer = tailEvents.pop() ?? "";
+          for (const eventText of tailEvents) {
+            await flushEvent(eventText);
+          }
+
+          if (buffer.trim()) {
+            await flushEvent(buffer);
           }
 
           controller.close();

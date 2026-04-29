@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect, useCallback, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/lib/user-context'
-import { useWallet } from '@solana/wallet-adapter-react'
+import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { useMutation } from '@tanstack/react-query'
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
 import type { AgentPlan, ChatMessage, ConvState, Guardrails } from '../lib/types'
 import {
   delay, makeAssistantMsg, makeUserMsg, strategyLabel,
@@ -12,7 +13,8 @@ import {
 
 export function useDeployChat() {
   const { user } = useUser()
-  const { publicKey, connect } = useWallet()
+  const { publicKey, connect, sendTransaction } = useWallet()
+  const { connection } = useConnection()
   const openConnect = connect
   const walletAddress = publicKey ? publicKey.toBase58() : ''
   const router                                          = useRouter()
@@ -239,7 +241,7 @@ export function useDeployChat() {
 
   // ── Deposit ───────────────────────────────────────────────────────────────
   async function handleDeposit(amount: string) {
-    if (!walletAddress || !agentAddress) return
+    if (!walletAddress || !agentAddress || !publicKey) return
     setIsDepositing(true)
     setDepositError(null)
 
@@ -247,19 +249,24 @@ export function useDeployChat() {
       const parsed = parseFloat(amount)
       if (isNaN(parsed) || parsed <= 0) throw new Error('Invalid deposit amount.')
 
-      // Delegate the actual Solana transfer to a backend endpoint which can
-      // construct and (optionally) sign/send the transaction. Frontend sends
-      // the amount in SOL and the server handles RPC logic.
-      const res = await fetch('/api/solana/send-funds', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: walletAddress, to: agentAddress, amountSol: parsed }),
-      })
+      const lamports = Math.round(parsed * 1_000_000_000)
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: new PublicKey(agentAddress),
+          lamports,
+        })
+      )
+      transaction.feePayer = publicKey
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        throw new Error(`Transfer failed (${res.status}): ${txt.slice(0, 300)}`)
-      }
+      const latest = await connection.getLatestBlockhash('confirmed')
+      transaction.recentBlockhash = latest.blockhash
+
+      const signature = await sendTransaction(transaction, connection)
+      await connection.confirmTransaction(
+        { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+        'confirmed'
+      )
 
       setShowDeposit(false)
       setIsDepositing(false)

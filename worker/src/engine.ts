@@ -237,7 +237,6 @@ export async function startAgent({
   }
 
   await ensureActiveDodoSubscription(agentId);
-  requireWorkerGoldRushEnv();
 
   await prisma.agent.update({
     where: { id: agentId },
@@ -268,13 +267,17 @@ export async function startAgent({
       data:  { status: "RUNNING" },
     });
 
-    const filters = parseStreamFilters(
+    const goldRushConfigRaw = String(
       configuration?.GOLDRUSH_STREAM_EVENTS ??
       configuration?.goldrushStreamFilter ??
       process.env.GOLDRUSH_STREAM_EVENTS ??
       "",
-    );
-    await startGoldRushSubscription(agentId, filters);
+    ).trim();
+    if (goldRushConfigRaw) {
+      requireWorkerGoldRushEnv();
+      const filters = parseStreamFilters(goldRushConfigRaw);
+      await startGoldRushSubscription(agentId, filters);
+    }
 
     return { success: true, message: "Agent started successfully" };
 

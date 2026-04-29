@@ -14,6 +14,7 @@ import {
   VersionedTransaction,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
+import bs58 from "bs58";
 import { Agent, TradeAction, TradeResult } from "./types.js";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -136,7 +137,7 @@ async function submitJitoBundle(
 ): Promise<string> {
   // Jito expects an array of base58-encoded transactions
   const signedTxBytes = Buffer.from(signedTxBase64, "base64");
-  const base58Tx = bs58Encode(signedTxBytes);
+  const base58Tx = bs58.encode(signedTxBytes);
 
   const res = await fetch(JITO_BLOCK_ENGINE_URL, {
     method:  "POST",
@@ -157,35 +158,6 @@ async function submitJitoBundle(
   const data = (await res.json()) as { result?: string; error?: { message: string } };
   if (data.error) throw new Error(`Jito RPC error: ${data.error.message}`);
   return data.result ?? "";
-}
-
-/** Minimal base58 encoder (avoids adding bs58 dep if not already present) */
-function bs58Encode(buffer: Buffer): string {
-  const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-  let carry: number;
-  const digits: number[] = [0];
-
-  for (const byte of buffer) {
-    carry = byte;
-    for (let j = 0; j < digits.length; ++j) {
-      carry += digits[j] << 8;
-      digits[j] = carry % 58;
-      carry = (carry / 58) | 0;
-    }
-    while (carry > 0) {
-      digits.push(carry % 58);
-      carry = (carry / 58) | 0;
-    }
-  }
-
-  let result = "";
-  for (let k = 0; buffer[k] === 0 && k < buffer.length - 1; ++k) {
-    result += "1";
-  }
-  for (let q = digits.length - 1; q >= 0; --q) {
-    result += ALPHABET[digits[q]];
-  }
-  return result;
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────

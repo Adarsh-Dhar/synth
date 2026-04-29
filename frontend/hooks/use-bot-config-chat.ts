@@ -633,6 +633,10 @@ export function useBotConfigChat() {
         setIsTyping(false);
         appendAssistant("⏳ Saving your bot and encrypting credentials…");
 
+        if (!publicKey) {
+          throw new Error("Connect your wallet before generating a bot.");
+        }
+
         const authHeaders = await getWalletAuthHeaders({ publicKey, signMessage });
 
         const saveRes = await fetch("/api/generate-bot", {
@@ -743,7 +747,7 @@ export function useBotConfigChat() {
         setStep("idle");
       }
     },
-    [appendAssistant, walletHexAddress]
+    [appendAssistant, publicKey, signMessage, walletHexAddress]
   );
 
   // ── submitDynamicKeys ─────────────────────────────────────────────────────
@@ -762,6 +766,7 @@ export function useBotConfigChat() {
       };
 
       const contextLine = Object.entries(formData)
+        finalizeBot,
         .filter(([k, v]) => k !== "USER_WALLET_ADDRESS" && v.trim())
         .map(([k, v]) => `${k}=${v}`)
         .join(", ");

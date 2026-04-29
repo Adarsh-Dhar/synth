@@ -311,11 +311,13 @@ export interface StartAgentOptions {
   files: Array<{ filepath: string; content: string }>;
   /** Raw configuration JSON from the Agent row */
   configuration: Record<string, unknown> | null;
+  /** Encrypted env config stored on the Agent row. */
+  envConfig?: string | null;
   onExit?: (code: number | null) => void;
 }
 
 export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent> {
-  const { agentId, files, configuration, onExit } = opts;
+  const { agentId, files, configuration, envConfig, onExit } = opts;
 
   if (running.has(agentId)) {
     throw new Error(`Agent ${agentId} is already running`);
@@ -327,7 +329,9 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
   // ── 1. Decrypt env vars ────────────────────────────────────────────────────
   let decryptedEnv: Record<string, string> = {};
 
-  const encryptedEnv = configuration?.encryptedEnv;
+  const encryptedEnv = typeof envConfig === "string" && envConfig.trim().length > 0
+    ? envConfig
+    : configuration?.encryptedEnv;
   if (typeof encryptedEnv === "string" && encryptedEnv.trim().length > 0) {
     try {
       decryptedEnv = decryptEnvConfig(encryptedEnv);

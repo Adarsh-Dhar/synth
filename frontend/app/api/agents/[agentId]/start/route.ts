@@ -22,6 +22,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
 
     const agent = owned.agent as {
+      envConfig?: string | null;
       configuration?: Record<string, unknown> | null;
       files?: Array<{ filepath?: string; content?: string }>;
     };
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       body: JSON.stringify({
         files,
         configuration: agent.configuration ?? {},
+        envConfig: agent.envConfig ?? null,
       }),
     });
 
