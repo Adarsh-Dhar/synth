@@ -1276,10 +1276,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Prompt is required." }, { status: 400 });
     }
 
-    console.log(`[generate-bot] [${requestId}] Using prompt length:`, boundedPrompt.length, "chars");
+  console.log(`[generate-bot] [${requestId}] Using prompt length:`, boundedPrompt.length, "chars");
     if (promptBundle.truncated) {
       console.warn(`[generate-bot] [${requestId}] User prompt was truncated to ${boundedPrompt.length} chars before meta-agent submission`);
     }
+
+    // Inject verified system parameters AT THE VERY TOP so the planner sees them
+    let injectedParams = "--- VERIFIED SYSTEM PARAMETERS ---\n";
+    if (granterWalletAddress) {
+      injectedParams += `USER_WALLET_ADDRESS=${granterWalletAddress}\n`;
+    }
+    if (envConfig.TOKEN_MINT_ADDRESS) {
+      injectedParams += `TOKEN_MINT_ADDRESS=${envConfig.TOKEN_MINT_ADDRESS}\n`;
+    }
+    if (envConfig.SOLANA_NETWORK) {
+      injectedParams += `SOLANA_NETWORK=${envConfig.SOLANA_NETWORK}\n`;
+    }
+    // PREPEND the parameters instead of appending them so they fall within the planner's truncation window
+    const finalPromptForMetaAgent = injectedParams + "\n\nUSER PROMPT:\n" + boundedPrompt;
 
     // ── Stream backend response via SSE ────────────────────────────────────
     console.log(`[generate-bot] [${requestId}] Initiating SSE stream to backend`);
@@ -1290,7 +1304,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         "x-request-id": requestId,
       },
-      body: JSON.stringify({ prompt: boundedPrompt }),
+      body: JSON.stringify({ prompt: finalPromptForMetaAgent }),
     });
 
     if (!metaResponse.ok || !metaResponse.body) {

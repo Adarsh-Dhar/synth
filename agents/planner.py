@@ -25,6 +25,7 @@ DODO_MCP_BASE             = os.environ.get("DODO_MCP_URL", "http://127.0.0.1:500
 MCP_TIMEOUT               = float(os.environ.get("SOLANA_MCP_TIMEOUT_SECONDS", "10"))
 PLANNER_HISTORY_MAX_TURNS = int(os.environ.get("PLANNER_HISTORY_MAX_TURNS", "6"))
 PLANNER_HISTORY_MAX_CHARS = int(os.environ.get("PLANNER_HISTORY_MAX_CHARS", "3000"))
+PLANNER_MESSAGE_MAX_CHARS = int(os.environ.get("PLANNER_MESSAGE_MAX_CHARS", "600"))
 
 
 # ─── Pydantic schemas ─────────────────────────────────────────────────────────
@@ -260,8 +261,19 @@ class PlannerAgent:
             if content.startswith("Expanded technical specification:"):
                 content = "Expanded technical specification: [omitted; already summarized by the frontend]"
 
-            if len(content) > 600:
-                content = content[:600].rstrip() + "…"
+            # Preserve short verified/system messages intact so injected parameters
+            # (e.g. USER_WALLET_ADDRESS=..., TOKEN_MINT_ADDRESS=...) are never
+            # silently truncated by the planner's history formatter. Allow an
+            # environment override via `PLANNER_MESSAGE_MAX_CHARS`.
+            try:
+                should_skip_trunc = bool(
+                    re.search(r"USER_WALLET_ADDRESS|TOKEN_MINT_ADDRESS|VERIFIED SYSTEM PARAMETERS|System Context \(injected by frontend\)", content)
+                )
+            except Exception:
+                should_skip_trunc = False
+
+            if not should_skip_trunc and len(content) > PLANNER_MESSAGE_MAX_CHARS:
+                content = content[:PLANNER_MESSAGE_MAX_CHARS].rstrip() + "…"
 
             lines.append(f"[{role}]: {content}")
 
