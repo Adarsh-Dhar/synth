@@ -41,8 +41,7 @@ services:
       retries: 5
 
 volumes:
-  db-data:
-  - /var/run/docker.sock:/var/run/docker.sock
+  db-data: {}
 
 secrets:
   db-password:

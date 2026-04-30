@@ -444,6 +444,9 @@ class MetaAgent:
             return any(x in t for x in (
                 "connection aborted", "remotedisconnected", "service response error",
                 "connection reset", "temporarily unavailable", "timed out", "503", "502",
+                # Rate-limits and throttling
+                "429", "too many requests", "rate limit", "rate-limited", "rate limit exceeded",
+                "github models",
             ))
 
         def _complete():
@@ -673,7 +676,16 @@ class MetaAgent:
         MAX_RETRIES = 2
 
         for attempt in range(MAX_RETRIES + 1):
-            raw = self._llm(GENERATOR_SYSTEM, prompt_source, temperature=0.1, max_tokens=self.max_tokens)
+            try:
+                raw = self._llm(GENERATOR_SYSTEM, prompt_source, temperature=0.1, max_tokens=self.max_tokens)
+            except Exception as exc:
+                _log("ERROR", f"Generator LLM failed on attempt {attempt + 1}: {exc}", trace_id)
+                if attempt < MAX_RETRIES:
+                    time.sleep(LLM_RETRY_BASE_DELAY * (attempt + 1))
+                    continue
+                yield emit({"error": f"LLM generation failed: {exc}"})
+                return
+
             parsed = self._parse_json(raw)
             final_files = self._assemble_files(parsed.get("files", []), plan.strategy_type)
 
@@ -849,7 +861,15 @@ class MetaAgent:
         
         for attempt in range(MAX_RETRIES + 1):
             # 1. Generate the Code
-            raw = self._llm(GENERATOR_SYSTEM, user_msg, temperature=0.1, max_tokens=self.max_tokens)
+            try:
+                raw = self._llm(GENERATOR_SYSTEM, user_msg, temperature=0.1, max_tokens=self.max_tokens)
+            except Exception as exc:
+                _log("ERROR", f"Generator LLM failed on attempt {attempt + 1}: {exc}", trace_id)
+                if attempt < MAX_RETRIES:
+                    time.sleep(LLM_RETRY_BASE_DELAY * (attempt + 1))
+                    continue
+                return {"status": "error", "message": f"LLM generation failed: {exc}"}
+
             parsed = self._parse_json(raw)
             files = self._assemble_files(parsed.get("files", []), plan.strategy_type)
             

@@ -102,6 +102,7 @@ export const AgentScalarFieldEnum = {
   privateExecutionEnabled: 'privateExecutionEnabled',
   umbraShieldedMint: 'umbraShieldedMint',
   goldrushPortfolioSnapshot: 'goldrushPortfolioSnapshot',
+  goldrushStreamFilter: 'goldrushStreamFilter',
   configuration: 'configuration',
   envConfig: 'envConfig',
   createdAt: 'createdAt',

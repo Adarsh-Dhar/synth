@@ -36,6 +36,7 @@ export type AgentMinAggregateOutputType = {
   magicBlockValidatorEndpoint: string | null
   privateExecutionEnabled: boolean | null
   umbraShieldedMint: string | null
+  goldrushStreamFilter: string | null
   envConfig: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -53,6 +54,7 @@ export type AgentMaxAggregateOutputType = {
   magicBlockValidatorEndpoint: string | null
   privateExecutionEnabled: boolean | null
   umbraShieldedMint: string | null
+  goldrushStreamFilter: string | null
   envConfig: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -71,6 +73,7 @@ export type AgentCountAggregateOutputType = {
   privateExecutionEnabled: number
   umbraShieldedMint: number
   goldrushPortfolioSnapshot: number
+  goldrushStreamFilter: number
   configuration: number
   envConfig: number
   createdAt: number
@@ -91,6 +94,7 @@ export type AgentMinAggregateInputType = {
   magicBlockValidatorEndpoint?: true
   privateExecutionEnabled?: true
   umbraShieldedMint?: true
+  goldrushStreamFilter?: true
   envConfig?: true
   createdAt?: true
   updatedAt?: true
@@ -108,6 +112,7 @@ export type AgentMaxAggregateInputType = {
   magicBlockValidatorEndpoint?: true
   privateExecutionEnabled?: true
   umbraShieldedMint?: true
+  goldrushStreamFilter?: true
   envConfig?: true
   createdAt?: true
   updatedAt?: true
@@ -126,6 +131,7 @@ export type AgentCountAggregateInputType = {
   privateExecutionEnabled?: true
   umbraShieldedMint?: true
   goldrushPortfolioSnapshot?: true
+  goldrushStreamFilter?: true
   configuration?: true
   envConfig?: true
   createdAt?: true
@@ -218,6 +224,7 @@ export type AgentGroupByOutputType = {
   privateExecutionEnabled: boolean
   umbraShieldedMint: string | null
   goldrushPortfolioSnapshot: runtime.JsonValue | null
+  goldrushStreamFilter: string | null
   configuration: runtime.JsonValue | null
   envConfig: string | null
   createdAt: Date
@@ -258,6 +265,7 @@ export type AgentWhereInput = {
   privateExecutionEnabled?: Prisma.BoolFilter<"Agent"> | boolean
   umbraShieldedMint?: Prisma.StringNullableFilter<"Agent"> | string | null
   goldrushPortfolioSnapshot?: Prisma.JsonNullableFilter<"Agent">
+  goldrushStreamFilter?: Prisma.StringNullableFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
@@ -282,6 +290,7 @@ export type AgentOrderByWithRelationInput = {
   privateExecutionEnabled?: Prisma.SortOrder
   umbraShieldedMint?: Prisma.SortOrderInput | Prisma.SortOrder
   goldrushPortfolioSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  goldrushStreamFilter?: Prisma.SortOrderInput | Prisma.SortOrder
   configuration?: Prisma.SortOrderInput | Prisma.SortOrder
   envConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -309,6 +318,7 @@ export type AgentWhereUniqueInput = Prisma.AtLeast<{
   privateExecutionEnabled?: Prisma.BoolFilter<"Agent"> | boolean
   umbraShieldedMint?: Prisma.StringNullableFilter<"Agent"> | string | null
   goldrushPortfolioSnapshot?: Prisma.JsonNullableFilter<"Agent">
+  goldrushStreamFilter?: Prisma.StringNullableFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
@@ -333,6 +343,7 @@ export type AgentOrderByWithAggregationInput = {
   privateExecutionEnabled?: Prisma.SortOrder
   umbraShieldedMint?: Prisma.SortOrderInput | Prisma.SortOrder
   goldrushPortfolioSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  goldrushStreamFilter?: Prisma.SortOrderInput | Prisma.SortOrder
   configuration?: Prisma.SortOrderInput | Prisma.SortOrder
   envConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -358,6 +369,7 @@ export type AgentScalarWhereWithAggregatesInput = {
   privateExecutionEnabled?: Prisma.BoolWithAggregatesFilter<"Agent"> | boolean
   umbraShieldedMint?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   goldrushPortfolioSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"Agent">
+  goldrushStreamFilter?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableWithAggregatesFilter<"Agent">
   envConfig?: Prisma.StringNullableWithAggregatesFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Agent"> | Date | string
@@ -376,6 +388,7 @@ export type AgentCreateInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -400,6 +413,7 @@ export type AgentUncheckedCreateInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -422,6 +436,7 @@ export type AgentUpdateInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -446,6 +461,7 @@ export type AgentUncheckedUpdateInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -469,6 +485,7 @@ export type AgentCreateManyInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -487,6 +504,7 @@ export type AgentUpdateManyMutationInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -506,6 +524,7 @@ export type AgentUncheckedUpdateManyInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -535,6 +554,7 @@ export type AgentCountOrderByAggregateInput = {
   privateExecutionEnabled?: Prisma.SortOrder
   umbraShieldedMint?: Prisma.SortOrder
   goldrushPortfolioSnapshot?: Prisma.SortOrder
+  goldrushStreamFilter?: Prisma.SortOrder
   configuration?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -553,6 +573,7 @@ export type AgentMaxOrderByAggregateInput = {
   magicBlockValidatorEndpoint?: Prisma.SortOrder
   privateExecutionEnabled?: Prisma.SortOrder
   umbraShieldedMint?: Prisma.SortOrder
+  goldrushStreamFilter?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -570,6 +591,7 @@ export type AgentMinOrderByAggregateInput = {
   magicBlockValidatorEndpoint?: Prisma.SortOrder
   privateExecutionEnabled?: Prisma.SortOrder
   umbraShieldedMint?: Prisma.SortOrder
+  goldrushStreamFilter?: Prisma.SortOrder
   envConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -698,6 +720,7 @@ export type AgentCreateWithoutUserInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -720,6 +743,7 @@ export type AgentUncheckedCreateWithoutUserInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -772,6 +796,7 @@ export type AgentScalarWhereInput = {
   privateExecutionEnabled?: Prisma.BoolFilter<"Agent"> | boolean
   umbraShieldedMint?: Prisma.StringNullableFilter<"Agent"> | string | null
   goldrushPortfolioSnapshot?: Prisma.JsonNullableFilter<"Agent">
+  goldrushStreamFilter?: Prisma.StringNullableFilter<"Agent"> | string | null
   configuration?: Prisma.JsonNullableFilter<"Agent">
   envConfig?: Prisma.StringNullableFilter<"Agent"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
@@ -790,6 +815,7 @@ export type AgentCreateWithoutFilesInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -813,6 +839,7 @@ export type AgentUncheckedCreateWithoutFilesInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -850,6 +877,7 @@ export type AgentUpdateWithoutFilesInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -873,6 +901,7 @@ export type AgentUncheckedUpdateWithoutFilesInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -894,6 +923,7 @@ export type AgentCreateWithoutTradeLogsInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -917,6 +947,7 @@ export type AgentUncheckedCreateWithoutTradeLogsInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -954,6 +985,7 @@ export type AgentUpdateWithoutTradeLogsInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -977,6 +1009,7 @@ export type AgentUncheckedUpdateWithoutTradeLogsInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -998,6 +1031,7 @@ export type AgentCreateWithoutSubscriptionsInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -1021,6 +1055,7 @@ export type AgentUncheckedCreateWithoutSubscriptionsInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -1058,6 +1093,7 @@ export type AgentUpdateWithoutSubscriptionsInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1081,6 +1117,7 @@ export type AgentUncheckedUpdateWithoutSubscriptionsInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1102,6 +1139,7 @@ export type AgentCreateWithoutTerminalLogsInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -1125,6 +1163,7 @@ export type AgentUncheckedCreateWithoutTerminalLogsInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -1162,6 +1201,7 @@ export type AgentUpdateWithoutTerminalLogsInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1185,6 +1225,7 @@ export type AgentUncheckedUpdateWithoutTerminalLogsInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1206,6 +1247,7 @@ export type AgentCreateManyUserInput = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: string | null
   createdAt?: Date | string
@@ -1224,6 +1266,7 @@ export type AgentUpdateWithoutUserInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1246,6 +1289,7 @@ export type AgentUncheckedUpdateWithoutUserInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1268,6 +1312,7 @@ export type AgentUncheckedUpdateManyWithoutUserInput = {
   privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1345,6 +1390,7 @@ export type AgentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: boolean
   goldrushPortfolioSnapshot?: boolean
+  goldrushStreamFilter?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -1370,6 +1416,7 @@ export type AgentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: boolean
   goldrushPortfolioSnapshot?: boolean
+  goldrushStreamFilter?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -1390,6 +1437,7 @@ export type AgentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: boolean
   goldrushPortfolioSnapshot?: boolean
+  goldrushStreamFilter?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
@@ -1410,13 +1458,14 @@ export type AgentSelectScalar = {
   privateExecutionEnabled?: boolean
   umbraShieldedMint?: boolean
   goldrushPortfolioSnapshot?: boolean
+  goldrushStreamFilter?: boolean
   configuration?: boolean
   envConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AgentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "status" | "userId" | "walletAddress" | "umbraViewingKey" | "umbraSpendingKey" | "magicBlockSessionId" | "magicBlockValidatorEndpoint" | "privateExecutionEnabled" | "umbraShieldedMint" | "goldrushPortfolioSnapshot" | "configuration" | "envConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["agent"]>
+export type AgentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "status" | "userId" | "walletAddress" | "umbraViewingKey" | "umbraSpendingKey" | "magicBlockSessionId" | "magicBlockValidatorEndpoint" | "privateExecutionEnabled" | "umbraShieldedMint" | "goldrushPortfolioSnapshot" | "goldrushStreamFilter" | "configuration" | "envConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["agent"]>
 export type AgentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   tradeLogs?: boolean | Prisma.Agent$tradeLogsArgs<ExtArgs>
@@ -1454,6 +1503,7 @@ export type $AgentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     privateExecutionEnabled: boolean
     umbraShieldedMint: string | null
     goldrushPortfolioSnapshot: runtime.JsonValue | null
+    goldrushStreamFilter: string | null
     configuration: runtime.JsonValue | null
     envConfig: string | null
     createdAt: Date
@@ -1898,6 +1948,7 @@ export interface AgentFieldRefs {
   readonly privateExecutionEnabled: Prisma.FieldRef<"Agent", 'Boolean'>
   readonly umbraShieldedMint: Prisma.FieldRef<"Agent", 'String'>
   readonly goldrushPortfolioSnapshot: Prisma.FieldRef<"Agent", 'Json'>
+  readonly goldrushStreamFilter: Prisma.FieldRef<"Agent", 'String'>
   readonly configuration: Prisma.FieldRef<"Agent", 'Json'>
   readonly envConfig: Prisma.FieldRef<"Agent", 'String'>
   readonly createdAt: Prisma.FieldRef<"Agent", 'DateTime'>
