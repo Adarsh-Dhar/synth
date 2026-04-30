@@ -245,6 +245,32 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     return () => clearInterval(t)
   }, [agent, loadAgent])
 
+  const pnlData = React.useMemo<PnLDataPoint[]>(() => {
+    if (!agent?.tradeLogs || agent.tradeLogs.length === 0) return []
+
+    const ordered = [...agent.tradeLogs].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )
+
+    let cumulative = 0
+    const points: PnLDataPoint[] = ordered.map((log) => {
+      const delta = Number.parseFloat(String(log.profitUsd ?? '0'))
+      cumulative += Number.isFinite(delta) ? delta : 0
+      const t = new Date(log.createdAt)
+      const time = [t.getHours(), t.getMinutes()]
+        .map((n) => String(n).padStart(2, '0'))
+        .join(':')
+      return { time, value: Number(cumulative.toFixed(4)) }
+    })
+
+    return points
+  }, [agent?.tradeLogs])
+
+  const latestThreatType = React.useMemo(() => {
+    const last = goldRushEvents[goldRushEvents.length - 1]
+    return last?.type ?? null
+  }, [goldRushEvents])
+
   const handleToggle = async () => {
     if (!agent) return
     if (!authHeaders) return
@@ -301,32 +327,6 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const isRunning    = agent.status === 'RUNNING'
   const inTransition = agent.status === 'STARTING' || agent.status === 'STOPPING'
   const cfg          = agent.configuration as Record<string, unknown> | null
-
-  const pnlData = React.useMemo<PnLDataPoint[]>(() => {
-    if (!agent.tradeLogs || agent.tradeLogs.length === 0) return []
-
-    const ordered = [...agent.tradeLogs].sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    )
-
-    let cumulative = 0
-    const points: PnLDataPoint[] = ordered.map((log) => {
-      const delta = Number.parseFloat(String(log.profitUsd ?? '0'))
-      cumulative += Number.isFinite(delta) ? delta : 0
-      const t = new Date(log.createdAt)
-      const time = [t.getHours(), t.getMinutes()]
-        .map((n) => String(n).padStart(2, '0'))
-        .join(':')
-      return { time, value: Number(cumulative.toFixed(4)) }
-    })
-
-    return points
-  }, [agent.tradeLogs])
-
-  const latestThreatType = React.useMemo(() => {
-    const last = goldRushEvents[goldRushEvents.length - 1]
-    return last?.type ?? null
-  }, [goldRushEvents])
 
   return (
     <div className="min-h-screen bg-background">

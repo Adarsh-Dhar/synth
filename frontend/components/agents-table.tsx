@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Settings2, Play, Square, Loader2 } from 'lucide-react'
+import { Settings2, Play, Square, Loader2, TerminalSquare } from 'lucide-react'
 import { Agent } from '@/lib/api'
 import { AgentsTableProps } from '@/lib/types'
 import { useUser } from '@/lib/user-context'
@@ -267,6 +267,12 @@ export function AgentsTable({ agents, onRefresh }: AgentsTableProps) {
                         )}
                       </Button>
                     )}
+                    <Link href={`/dashboard/deploy/${agent.id}/code`}>
+                      <Button size="sm" variant="outline" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
+                        <TerminalSquare size={14} className="mr-1.5" />
+                        Show Bot
+                      </Button>
+                    </Link>
                     <Link href={`/dashboard/agents/${agent.id}`}>
                       <Button size="sm" variant="outline" className="border-border hover:bg-muted">
                         <Settings2 size={14} className="mr-1.5" />

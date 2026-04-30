@@ -24,17 +24,21 @@ interface AgentFileResponse {
 }
 
 // Singleton to prevent double-boot in React Strict Mode / hot reloads
-let wcInstance: WebContainer | null = null;
 let wcBooting: Promise<WebContainer> | null = null;
 
 async function getWebContainer(): Promise<WebContainer> {
-  if (wcInstance) return wcInstance;
+  if (typeof window !== "undefined" && (window as typeof window & { _wcInstance?: WebContainer })._wcInstance) {
+    return (window as typeof window & { _wcInstance?: WebContainer })._wcInstance as WebContainer;
+  }
   if (wcBooting) return wcBooting;
 
   wcBooting = (async () => {
     const { WebContainer } = await import("@webcontainer/api");
-    wcInstance = await WebContainer.boot();
-    return wcInstance;
+    const wc = await WebContainer.boot();
+    if (typeof window !== "undefined") {
+      (window as typeof window & { _wcInstance?: WebContainer })._wcInstance = wc;
+    }
+    return wc;
   })();
 
   return wcBooting;
@@ -215,7 +219,7 @@ export default function DeployCodePage({
     const term = xtermRef.current;
     if (!term || isRunning) return;
 
-    const wc = wcInstance;
+    const wc = await getWebContainer();
     if (!wc) {
       term.writeln("\x1b[1;31m✗ WebContainer not ready.\x1b[0m");
       return;

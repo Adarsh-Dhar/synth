@@ -1292,6 +1292,15 @@ export async function POST(req: NextRequest) {
     if (envConfig.SOLANA_NETWORK) {
       injectedParams += `SOLANA_NETWORK=${envConfig.SOLANA_NETWORK}\n`;
     }
+
+    // 🚨 ADD THIS DIRECTIVE TO FORCE .ENV GENERATION 🚨
+    injectedParams += `
+CRITICAL SYSTEM REQUIREMENT:
+You MUST output a '.env' file artifact containing the VERIFIED SYSTEM PARAMETERS above, alongside any other environment variables your code requires to run smoothly (e.g., POLL_INTERVAL_MS, TRADE_AMOUNT_LAMPORTS). 
+DO NOT assume the user will create this file. YOU must generate the '.env' file. 
+Ensure your main entry file imports 'dotenv/config' at the top.
+`;
+
     // PREPEND the parameters instead of appending them so they fall within the planner's truncation window
     const finalPromptForMetaAgent = injectedParams + "\n\nUSER PROMPT:\n" + boundedPrompt;
 
@@ -1448,7 +1457,7 @@ async function saveBotToDatabase(
   const botName: string = (intent.bot_name as string) || (intent.bot_type as string) || "Universal DeFi Bot";
   const filesList = finalPayload.files || [];
 
-  const normalizedFiles: GeneratedFile[] = (Array.isArray(filesList) ? filesList : [])
+  let normalizedFiles: GeneratedFile[] = (Array.isArray(filesList) ? filesList : [])
     .map((raw: unknown, idx: number) => {
       const candidate = raw as Record<string, unknown>;
       const filepath =
@@ -1486,6 +1495,11 @@ async function saveBotToDatabase(
     if (val) envPlaintext += `${key}=${val}\n`;
   }
   const encryptedEnv = encryptEnvConfig(envPlaintext);
+
+  // Ensure a deterministic .env file is included so WebContainer receives required envs
+  if (envPlaintext && envPlaintext.trim()) {
+    normalizedFiles.push({ filepath: ".env", content: envPlaintext });
+  }
 
   // Create agent record in database
   const configRecord: Prisma.InputJsonObject = {
