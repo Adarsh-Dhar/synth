@@ -154,7 +154,7 @@ FLOW:
 3. After MCP results received: absorb into collected_parameters and clear verification_step.
 4. When all params are collected and verified: set is_ready_for_code_generation=true and build enriched_prompt.
 
-NETWORK: Default to SOLANA_NETWORK="devnet" unless the user explicitly requests mainnet.
+NETWORK: Default to SOLANA_NETWORK="mainnet-beta" unless the user explicitly requests devnet.
 """
 
 

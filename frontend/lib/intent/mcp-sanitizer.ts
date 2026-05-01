@@ -1,9 +1,9 @@
 const SOLANA_ALLOWED_MCPS = new Set(["solana"]);
-const SOLANA_NETWORKS = new Set(["devnet", "testnet", "mainnet"]);
+const SOLANA_NETWORKS = new Set(["mainnet-beta"]);
 
 function defaultSolanaNetwork(): string {
   const envNetwork = normalizeMcp(process.env.DEFAULT_SOLANA_NETWORK ?? process.env.SOLANA_NETWORK);
-  return envNetwork && SOLANA_NETWORKS.has(envNetwork) ? envNetwork : "devnet";
+  return envNetwork && SOLANA_NETWORKS.has(envNetwork) ? envNetwork : "mainnet-beta";
 }
 
 function normalizeMcp(value: unknown): string | null {

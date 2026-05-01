@@ -68,7 +68,7 @@ function buildSafeYieldSweeperIndexTs(): string {
     '    const wallet = String(process.env.USER_WALLET_ADDRESS ?? "").trim();',
     '    if (!wallet) { log("WARN", "USER_WALLET_ADDRESS not set"); return; }',
     '    const metadata = String(process.env.SOLANA_USDC_METADATA_ADDRESS ?? "").trim();',
-    '    const bal = await getFaBalance(String(process.env.SOLANA_NETWORK ?? "devnet"), wallet, metadata);',
+    '    const bal = await getFaBalance(String(process.env.SOLANA_NETWORK ?? "mainnet-beta"), wallet, metadata);',
     '    log("INFO", "Balance (raw): " + String(bal));',
     '    // placeholder: implement sweep logic as needed',
     '  } catch (err) {',
@@ -253,7 +253,7 @@ function buildSafeSpreadScannerIndexTs(): string {
     '  }',
     '  log("INFO", "[EXECUTE] buy=" + buyEndpointAddress + " sell=" + sellEndpointAddress + " amount=" + EXECUTION_AMOUNT_USDC.toString() + " expectedProfit=" + expectedProfit.toString());',
     '  const result = await safeMcp("solana", "move_execute", {',
-    '    network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "solana-testnet"),',
+    '    network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "mainnet-beta"),',
     '    address: ARBITRAGE_ROUTER_ADDRESS,',
     '    module: ARBITRAGE_ROUTER_MODULE,',
     '    function: ARBITRAGE_ROUTER_FUNCTION,',
@@ -309,7 +309,7 @@ function buildSafeSpreadScannerIndexTs(): string {
     '  let usedCompatibilityQuote = false;',
     '  const buyQuotes = await Promise.allSettled(',
     '    ENDPOINTS.map((endpoint) => safeMcp("solana", "move_view", {',
-    '      network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "solana-testnet"),',
+    '      network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "mainnet-beta"),',
     '      address: PRICE_VIEW_ADDRESS,',
     '      module: PRICE_VIEW_MODULE,',
     '      function: PRICE_VIEW_FUNCTION,',
@@ -350,7 +350,7 @@ function buildSafeSpreadScannerIndexTs(): string {
     '    ENDPOINTS',
     '      .filter((endpoint) => endpoint.address !== bestBuy.address)',
     '      .map((endpoint) => safeMcp("solana", "move_view", {',
-    '        network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "solana-testnet"),',
+    '        network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "mainnet-beta"),',
     '        address: PRICE_VIEW_ADDRESS,',
     '        module: PRICE_VIEW_MODULE,',
     '        function: PRICE_VIEW_FUNCTION,',
@@ -525,7 +525,7 @@ function buildSafeSentimentIndexTs(): string {
     '',
     'async function readPoolBalance(address: string): Promise<bigint | null> {',
     '  const payload = await safeMcp("solana", "move_view", {',
-    '    network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "solana-testnet"),',
+    '    network: String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "mainnet-beta"),',
     '    address: "0x1",',
     '    module: "coin",',
     '    function: "balance",',
@@ -571,7 +571,7 @@ function buildSafeSentimentIndexTs(): string {
     '  if (score > SENTIMENT_BUY_THRESHOLD) {',
     '    log("INFO", "Bullish threshold reached");',
     '    if (!SIMULATION_MODE) {',
-    '      const network = String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "solana-testnet");',
+    '      const network = String(process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? process.env.SOLANA_NETWORK ?? "mainnet-beta");',
     '      await safeMcp("solana", "move_execute", {',
     '        network,',
     '        address: flashPoolAddress,',
@@ -746,7 +746,7 @@ function buildMcpBridgeTs(): string {
     '    submitBody.accounts = args.accounts ?? [];',
     '    submitBody.network = args.network ?? "solana";',
     '  } else {',
-    '    submitBody.network = args.network ?? "solana-testnet";',
+    '    submitBody.network = args.network ?? "mainnet-beta";',
     '    submitBody.moduleAddress = args.address;',
     '    submitBody.moduleName = args.module;',
     '    submitBody.functionName = args.function;',
@@ -875,7 +875,7 @@ function buildSolanaYieldSweeperIndexTs(): string {
     'import { Connection, PublicKey, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";',
     'import fs from "fs";',
     '',
-    'const RPC = process.env.SOLANA_RPC_URL ?? "https://api.devnet.solana.com";',
+    'const RPC = process.env.SOLANA_RPC_URL ?? "http://127.0.0.1:8899";',
     'const WALLET = process.env.USER_WALLET_ADDRESS ?? "";',
     'const KEYPAIR_PATH = process.env.KEYPAIR_PATH ?? "";',
     'const RECIPIENT = process.env.RECIPIENT_ADDRESS ?? "";',
@@ -919,7 +919,7 @@ function buildSolanaSpreadScannerIndexTs(): string {
     'import "dotenv/config";',
     'import { Connection, PublicKey } from "@solana/web3.js";',
     '',
-    'const RPC = process.env.SOLANA_RPC_URL ?? "https://api.devnet.solana.com";',
+    'const RPC = process.env.SOLANA_RPC_URL ?? "http://127.0.0.1:8899";',
     'const POLL_MS = (Number(process.env.POLL_INTERVAL ?? "15") || 15) * 1000;',
     'const OWNER = process.env.USER_WALLET_ADDRESS ?? "";',
     'const POOL_A_MINT = process.env.POOL_A_MINT ?? "";',
@@ -1103,7 +1103,7 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
   if (isCrossChainLiquidation) {
     return {
       chain: "solana",
-      network: "solana-testnet",
+      network: "mainnet-beta",
       execution_model: "polling",
       strategy: "cross_chain_liquidation",
       bot_type: "Omni-Chain Liquidation Sniper",
@@ -1117,7 +1117,7 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
   if (isCrossChainArbitrage) {
     return {
       chain: "solana",
-      network: "solana-testnet",
+      network: "mainnet-beta",
       execution_model: "polling",
       strategy: "cross_chain_arbitrage",
       bot_type: "Flash-Bridge Spatial Arbitrageur",
@@ -1131,7 +1131,7 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
   if (isCrossChainSweep) {
     return {
       chain: "solana",
-      network: "solana-testnet",
+      network: "mainnet-beta",
       execution_model: "polling",
       strategy: "cross_chain_sweep",
       bot_type: "Omni-Chain Yield Nomad",
@@ -1145,7 +1145,7 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
   if (isCustomUtility) {
     return {
       chain: "solana",
-      network: "solana-testnet",
+      network: "mainnet-beta",
       execution_model: "polling",
       strategy: "custom_utility",
       bot_type: "Custom Utility Solana Bot",
@@ -1158,7 +1158,7 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
   if (isSentiment) {
     return {
       chain: "solana",
-      network: "solana-testnet",
+      network: "mainnet-beta",
       execution_model: "agentic",
       strategy: "sentiment",
       bot_type: "Solana Sentiment Bot",
@@ -1171,7 +1171,7 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
   if (isYield) {
     return {
       chain: "solana",
-      network: "solana-testnet",
+      network: "mainnet-beta",
       execution_model: "polling",
       strategy: "yield",
       bot_type: "Cross-Rollup Yield Sweeper",
@@ -1183,7 +1183,7 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
 
   return {
     chain: "solana",
-    network: "solana-testnet",
+    network: "mainnet-beta",
     execution_model: "polling",
     strategy: "arbitrage",
     bot_type: "Cross-Rollup Spread Scanner",

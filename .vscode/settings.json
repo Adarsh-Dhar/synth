@@ -1,9 +1,6 @@
 {
   "terminal.integrated.fontFamily": "Menlo, Monaco, 'Courier New', monospace",
   "terminal.integrated.fontSize": 13,
-  "editor.fontFamily": "Acumin Pro, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
-  "editor.fontLigatures": true,
-  "editor.fontWeight": "400",
   "editor.semanticHighlighting.enabled": true,
   "editor.semanticTokenColorCustomizations": {
     "enabled": true

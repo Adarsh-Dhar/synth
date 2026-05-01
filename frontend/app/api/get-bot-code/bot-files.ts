@@ -63,8 +63,8 @@ const SOLANA_TSCONFIG = JSON.stringify(
   2,
 );
 
-const SOLANA_ENV_EXAMPLE = `# RPC endpoint (devnet/mainnet)
-SOLANA_RPC_URL=https://api.devnet.solana.com
+const SOLANA_ENV_EXAMPLE = `# RPC endpoint (mainnet fork)
+SOLANA_RPC_URL=http://127.0.0.1:8899
 # Your wallet address (base58)
 USER_WALLET_ADDRESS=YourBase58AddressHere
 # Optional: path to a local keypair JSON for server-side signing

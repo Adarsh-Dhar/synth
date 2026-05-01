@@ -13,7 +13,7 @@ export const ACTION_LOG_TYPE_MAP: Record<string, string> = {
 };
 
 export const DEFAULT_ENV_CONFIG: EnvConfig = {
-  SOLANA_RPC_URL:  "https://api.devnet.solana.com",
+  SOLANA_RPC_URL:  "http://127.0.0.1:8899",
   SOLANA_KEY:      "",
   CONTRACT_ADDRESS: "",
   MAX_LOAN_USD:    "10000",
@@ -46,6 +46,7 @@ export const TOKEN_ADDRESSES = {
 };
 
 export const SUPPORTED_NETWORKS = [
+  { id: 'solana-mainnet', name: 'Solana Mainnet Fork', icon: '◆' },
   { id: 'solana-testnet', name: 'Solana Testnet', icon: '◇' },
   { id: 'solana-devnet', name: 'Solana Devnet', icon: '◎' },
 ]

@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
 })
 
 export default function Providers({ children }: PropsWithChildren) {
-  const network = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as WalletAdapterNetwork) || 'devnet'
+  const network = (process.env.NEXT_PUBLIC_SOLANA_NETWORK as WalletAdapterNetwork) || 'mainnet-beta'
   const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(network)
 
   const wallets = useMemo(() => [new PhantomWalletAdapter()], [network])

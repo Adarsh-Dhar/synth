@@ -14,7 +14,7 @@ type BridgeNotice = {
 }
 
 const BRIDGE_NETWORKS = [
-  { id: 'devnet', name: 'Solana Devnet', icon: '◎' },
+  { id: 'mainnet-beta', name: 'Solana Mainnet Fork', icon: '◎' },
 ]
 
 type EnvValues = Record<string, string>
@@ -162,7 +162,7 @@ export default function BridgePage() {
   const connected = !!publicKey
   const walletAddress = publicKey ? publicKey.toBase58() : ''
 
-  const [fromNetwork, setFromNetwork] = useState('devnet')
+  const [fromNetwork, setFromNetwork] = useState('mainnet-beta')
   const [amount,      setAmount]      = useState('')
   const [isBridging,  setIsBridging]  = useState(false)
   const [bridgeNotice, setBridgeNotice] = useState<BridgeNotice | null>(null)
@@ -234,7 +234,7 @@ export default function BridgePage() {
 
   const sampleSpread = async (values: EnvValues): Promise<SpreadSnapshot | null> => {
     const mcpGateway = values['MCP_GATEWAY_URL'] || 'http://localhost:8000/mcp'
-    const network = values['SOLANA_NETWORK'] || 'solana-testnet'
+    const network = values['SOLANA_NETWORK'] || 'mainnet-beta'
     const poolAAddress = normalizeSolanaObjectAddress(values['SOLANA_POOL_A_ADDRESS'] || '')
     const poolBAddress = normalizeSolanaObjectAddress(values['SOLANA_POOL_B_ADDRESS'] || '')
     const viewAddress = normalizeSolanaModuleAddress(values['SOLANA_PRICE_VIEW_ADDRESS'] || '')
@@ -287,7 +287,7 @@ export default function BridgePage() {
       const poolBAddress = normalizeSolanaObjectAddress(values['SOLANA_POOL_B_ADDRESS'] || '')
       const poolAddress = fatPool === 'A' ? poolAAddress : poolBAddress
       const mcpGateway = values['MCP_GATEWAY_URL'] || 'http://localhost:8000/mcp'
-      const network = values['SOLANA_NETWORK'] || 'solana-testnet'
+      const network = values['SOLANA_NETWORK'] || 'mainnet-beta'
 
       if (!poolAAddress || !poolBAddress) {
         setFatResult('Error: Set SOLANA_POOL_A_ADDRESS and SOLANA_POOL_B_ADDRESS in agents/.env first.')

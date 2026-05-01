@@ -22,7 +22,7 @@ app.use(cors());
 const PORT = Number(process.env.PORT ?? 8001);
 const HOST = process.env.HOST ?? '127.0.0.1';
 const RPC_URL = String(
-  process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com'
+  process.env.SOLANA_RPC_URL ?? 'http://127.0.0.1:8899'
 ).trim();
 const GOLDRUSH_BASE_URL = String(process.env.GOLDRUSH_BASE_URL ?? 'https://api.covalenthq.com/v1').trim().replace(/\/+$/, '');
 const GOLDRUSH_NETWORK_ID = String(process.env.GOLDRUSH_NETWORK_ID ?? 'solana-mainnet').trim();

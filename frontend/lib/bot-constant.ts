@@ -57,8 +57,8 @@ export const DEFAULT_BOT_ENV_CONFIG: BotEnvConfig = {
   SIGNING_RELAY_BASE: "",
   SESSION_KEY_MODE: "false",
   SOLANA_KEY: "",
-  SOLANA_RPC_URL: "https://api.devnet.solana.com",
-  SOLANA_NETWORK: "devnet",
+  SOLANA_RPC_URL: "http://127.0.0.1:8899",
+  SOLANA_NETWORK: "mainnet-beta",
   SOLANA_USDC_MINT: "",
   GOLDRUSH_API_KEY: "",
   GOLDRUSH_STREAM_URL: "",
@@ -67,7 +67,7 @@ export const DEFAULT_BOT_ENV_CONFIG: BotEnvConfig = {
   MAGICBLOCK_TEE_VALIDATOR: "",
   MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL: "",
   UMBRA_PROGRAM_ADDRESS: "",
-  UMBRA_NETWORK: "devnet",
+  UMBRA_NETWORK: "mainnet-beta",
   DODO_PLAN_PRO_ID: "",
   DODO_WEBHOOK_SECRET: "",
   DODO_DOCS_MCP_URL: "http://127.0.0.1:5002",
@@ -144,16 +144,16 @@ export function getRequiredEnvFields(
       label: "Solana RPC URL",
       type: "text",
       required: false,
-      placeholder: "https://api.devnet.solana.com",
-      helpText: "RPC endpoint for Solana cluster (devnet/mainnet).",
+      placeholder: "http://127.0.0.1:8899",
+      helpText: "RPC endpoint for Solana cluster (mainnet-beta fork).",
     },
     {
       key: "SOLANA_NETWORK",
       label: "Solana Network",
       type: "text",
       required: false,
-      placeholder: "devnet",
-      helpText: "Solana network identifier (devnet/mainnet).",
+      placeholder: "mainnet-beta",
+      helpText: "Solana network identifier (mainnet-beta).",
     },
   ];
 
@@ -193,7 +193,7 @@ export function getRequiredEnvFields(
         label: "USDC Mint Address",
         type: "text",
         required: true,
-        placeholder: "Enter USDC mint address (mainnet/devnet)",
+        placeholder: "Enter USDC mint address (mainnet)",
         helpText: "SPL token mint address for USDC used by the bot.",
       },
       {
@@ -297,7 +297,7 @@ export function getRequiredEnvFields(
         label: "Umbra Network",
         type: "text",
         required: true,
-        placeholder: "devnet",
+        placeholder: "mainnet-beta",
       },
     );
   }

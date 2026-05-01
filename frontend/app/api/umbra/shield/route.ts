@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     {
       ok: true,
       operation: "shield",
-      network: process.env.UMBRA_NETWORK || "devnet",
+      network: process.env.UMBRA_NETWORK || "mainnet-beta",
       programAddress: process.env.UMBRA_PROGRAM_ADDRESS || "",
       request: body,
       mode: "scaffold",

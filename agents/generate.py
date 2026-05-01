@@ -18,7 +18,7 @@ import requests
 
 DEFAULT_CONFIG = {
     "botName": "Cross-Rollup Yield Sweeper",
-    "chain": "solana-devnet",
+    "chain": "solana-mainnet",
     "baseToken": "USDC",
     "targetToken": "USDC",
     "dex": "solana",
@@ -36,12 +36,13 @@ DEFAULT_CONFIG = {
 }
 
 CHAIN_IDS = {
+    "solana-mainnet": "mainnet-beta",
     "solana-devnet": "devnet",
 }
 
 TOKEN_DENOMS = {
-    "USDC": {"solana-devnet": "USDC"},
-    "SOL": {"solana-devnet": "SOL"},
+    "USDC": {"solana-mainnet": "USDC", "solana-devnet": "USDC"},
+    "SOL": {"solana-mainnet": "SOL", "solana-devnet": "SOL"},
 }
 
 
@@ -73,12 +74,12 @@ def load_config(args: argparse.Namespace) -> dict:
             raise SystemExit(1)
 
     if str(config.get("chain", "")).strip().lower() not in CHAIN_IDS:
-        config["chain"] = "solana-devnet"
+        config["chain"] = "solana-mainnet"
     return config
 
 
 def build_prompt(config: dict) -> str:
-    chain = str(config.get("chain", "solana-devnet")).strip().lower()
+    chain = str(config.get("chain", "solana-mainnet")).strip().lower()
     chain_id = CHAIN_IDS[chain]
     base_token = str(config.get("baseToken", "USDC")).strip().upper()
     quote_token = str(config.get("targetToken", "USDC")).strip().upper()

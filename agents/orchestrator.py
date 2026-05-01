@@ -234,7 +234,7 @@ export async function resolveAddress(nameOrAddress: string): Promise<string> {
   if (cached) return cached;
 
   const resp = await callMcpTool("solana", "resolve_sns", {
-    network: String(process.env.SOLANA_NETWORK ?? "devnet"),
+        network: String(process.env.SOLANA_NETWORK ?? "mainnet-beta"),
     name: key,
   });
 
@@ -257,7 +257,7 @@ Respond with a valid JSON object in this format:
 Schema:
 {
   "chain": "solana",
-  "network": "devnet",
+    "network": "mainnet-beta",
   "strategy": "arbitrage" | "yield_sweeper" | "liquidation" | "sniping" | "dca" | "grid" | "whale_mirror" | "sentiment" | "custom_utility" | "unknown",
   "mcps": ["solana"],
   "bot_name": "<human-readable name>",
@@ -266,7 +266,7 @@ Schema:
 
 Rules:
 - chain is always "solana"
-- network is always "devnet" (unless user says mainnet)
+- network is always "mainnet-beta" (unless user says devnet)
 - yield / sweep / consolidate → "yield_sweeper"
 - arb / spread / flash → "arbitrage"
 - liquidation / health-factor → "liquidation"
@@ -589,7 +589,7 @@ class MetaAgent:
             yield emit({"error": "Planner did not return a usable plan."})
             return
 
-        network = plan.collected_parameters.get("SOLANA_NETWORK", "devnet")
+        network = plan.collected_parameters.get("SOLANA_NETWORK", "mainnet-beta")
         mcps = ["solana", "jupiter"]
         if plan.collected_parameters.get("GOLDRUSH_API_KEY"):
             mcps.append("goldrush")
@@ -767,7 +767,7 @@ class MetaAgent:
         enriched_prompt: str,
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        network = plan.collected_parameters.get("SOLANA_NETWORK", "devnet")
+        network = plan.collected_parameters.get("SOLANA_NETWORK", "mainnet-beta")
         mcps = ["solana", "jupiter"]
         if plan.collected_parameters.get("GOLDRUSH_API_KEY"):
             mcps.append("goldrush")
@@ -949,7 +949,7 @@ class MetaAgent:
             intent = {}
 
         intent["chain"]    = "solana"
-        intent["network"]  = str(intent.get("network", "devnet"))
+        intent["network"]  = str(intent.get("network", "mainnet-beta"))
         intent["strategy"] = _normalize_strategy(str(intent.get("strategy", "")))
         intent["mcps"]     = ["solana"]
         intent.setdefault("bot_name", self._bot_name(intent["strategy"]))
@@ -1055,7 +1055,7 @@ class MetaAgent:
                     'import "dotenv/config";\n'
                     'import { getSolBalance } from "./mcp_bridge.js";\n\n'
                     'async function main(): Promise<void> {\n'
-                    '  const network = String(process.env.SOLANA_NETWORK ?? "devnet");\n'
+                    '  const network = String(process.env.SOLANA_NETWORK ?? "mainnet-beta");\n'
                     '  const wallet  = String(process.env.USER_WALLET_ADDRESS ?? "");\n'
                     '  const bal = await getSolBalance(network, wallet);\n'
                     '  console.log("SOL balance (lamports):", bal.toString());\n'

@@ -21,11 +21,10 @@ import { Agent, TradeAction, TradeResult } from "./types.js";
 
 const SOLANA_RPC_URL =
   process.env.SOLANA_RPC_URL ??
-  "https://api.mainnet-beta.solana.com";
+  "http://127.0.0.1:8899";
 
 const JITO_BLOCK_ENGINE_URL =
-  process.env.JITO_BLOCK_ENGINE_URL ??
-  "https://mainnet.block-engine.jito.wtf/api/v1/bundles";
+  process.env.JITO_BLOCK_ENGINE_URL ?? "";
 
 // Jupiter V6 quote + swap endpoints
 const JUPITER_QUOTE_URL = "https://quote-api.jup.ag/v6/quote";
@@ -274,7 +273,7 @@ export async function executeTrade(
 
     // ── 7. Submit via Jito (MEV-protected) ────────────────────────────────
     let txHash: string;
-    const useJito = process.env.USE_JITO !== "false";
+    const useJito = process.env.USE_JITO !== "false" && Boolean(JITO_BLOCK_ENGINE_URL);
 
     if (useJito) {
       console.log(`  Submitting via Jito bundle…`);

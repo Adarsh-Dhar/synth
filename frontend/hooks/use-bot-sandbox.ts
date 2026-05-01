@@ -40,7 +40,7 @@ export function useBotSandbox({ generatedFiles, envConfig, termRef }: UseBotSand
     }
 
     termRef.current?.writeln(
-      `[system] browser sandbox disabled. launching via backend worker for network=${String(effectiveEnv.SOLANA_NETWORK || "devnet")}`,
+      `[system] browser sandbox disabled. launching via backend worker for network=${String(effectiveEnv.SOLANA_NETWORK || "mainnet-beta")}`,
     );
   };
 

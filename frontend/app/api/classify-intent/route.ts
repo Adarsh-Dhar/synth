@@ -16,7 +16,7 @@ Your task: take a brief user idea for a Solana-native bot and expand it into an 
 Cover ALL of the following in your expansion:
 
 1. **Target & Execution Architecture**:
-  - Chain: Solana (solana-devnet only).
+  - Chain: Solana (mainnet-beta fork).
   - Execution Model: Polling loop, Event-driven, or Agentic (AI-driven). Define the exact triggers or intervals.
 
 2. **Domain-Specific Logic (Adapt to the user's request)**:
@@ -53,7 +53,7 @@ const FALLBACK_CLASSIFIER_PROMPT = `You are a DeFi bot intent classifier. Analyz
 Required schema:
 {
   "chain": "solana",
-  "network": "solana-devnet",
+  "network": "mainnet-beta",
   "execution_model": "polling" | "websocket" | "agentic",
   "strategy": "arbitrage" | "sniping" | "dca" | "grid" | "sentiment" | "whale_mirror" | "news_reactive" | "yield" | "yield_sweeper" | "cross_chain_liquidation" | "cross_chain_arbitrage" | "cross_chain_sweep" | "custom_utility" | "perp" | "mev_intent" | "scalper" | "rebalancing" | "ta_scripter" | "unknown",
   "required_mcps": ["solana"],
@@ -74,7 +74,7 @@ Classification rules (first match wins):
 - flash loan | arbitrage | hot potato → execution_model:"polling", strategy:"arbitrage", required_mcps:["solana"]
 - otherwise default execution_model:"polling", strategy:"unknown", required_mcps:["solana"]
 - if chain is solana, allow only these MCPs: solana (required)
-- default network if unspecified → "solana-devnet"`;
+- default network if unspecified → "mainnet-beta"`;
 
 function normalizeIntentFromPrompt(intent: Record<string, unknown>, prompt: string): Record<string, unknown> {
   const mergedPrompt = String(prompt ?? "").toLowerCase();
@@ -89,7 +89,7 @@ function normalizeIntentFromPrompt(intent: Record<string, unknown>, prompt: stri
   const normalized: Record<string, unknown> = {
     ...intent,
     chain: "solana",
-    network: "solana-devnet",
+    network: "mainnet-beta",
   };
 
 
@@ -391,7 +391,7 @@ function deriveDefaultIntent(prompt: string): Record<string, unknown> {
   const isSpreadScanner = /(spread scanner|read-only scanner|read only scanner|market intelligence)/.test(lower);
   const isSentiment = lower.includes("sentiment") || lower.includes("social");
   const isCustomUtility = /(custom utility|custom bot|custom workflow|intent:\s*custom|strategy:\s*custom)/.test(lower);
-  const solanaNetwork = "solana-devnet";
+  const solanaNetwork = "mainnet-beta";
   let strategy = "unknown";
   let botName = "Solana Bot";
   

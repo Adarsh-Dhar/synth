@@ -73,12 +73,13 @@ function strategyLabel(strategy?: string): string {
 }
 
 function chainLabel(intent?: BotIntent | null): { label: string; color: string } {
-  if (!intent) return { label: "◎ Solana", color: "text-yellow-400" };
+  if (!intent) return { label: "◎ Solana Fork", color: "text-yellow-400" };
   const nets: Record<string, { label: string; color: string }> = {
     devnet: { label: "◎ Solana Devnet", color: "text-blue-400" },
-    "mainnet-beta": { label: "◎ Solana", color: "text-yellow-400" },
+    mainnet: { label: "◎ Solana", color: "text-yellow-400" },
+    "mainnet-beta": { label: "◎ Solana Fork", color: "text-yellow-400" },
   };
-  return nets[intent.network ?? ""] ?? { label: "◎ Solana", color: "text-yellow-400" };
+  return nets[intent.network ?? ""] ?? { label: "◎ Solana Fork", color: "text-yellow-400" };
 }
 
 function execModelBadge(model?: string): string | null {

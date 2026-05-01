@@ -23,7 +23,7 @@ export function EnvConfigModal({ envConfig, onChange, onLaunch, isDryRun }: EnvC
         </div>
         <div className="p-5 space-y-3">
           {([
-            { key: "SOLANA_RPC_URL", label: "Solana RPC URL",            type: "text",     placeholder: "https://api.devnet.solana.com" },
+            { key: "SOLANA_RPC_URL", label: "Solana RPC URL",            type: "text",     placeholder: "http://127.0.0.1:8899" },
             { key: "SOLANA_KEY",     label: "Solana Private Key (optional)", type: "password", placeholder: "[base58 key array] (leave blank for DRY RUN)" },
             { key: "CONTRACT_ADDRESS", label: "Contract Address (Deployed)", type: "text", placeholder: "0xff75b696928640096181ba78e3b0e1188bf57393" },
             { key: "MAX_LOAN_USD",    label: "Max Flash Loan (USD)",     type: "number",   placeholder: "10000" },

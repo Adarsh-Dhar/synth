@@ -377,9 +377,11 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
     process.env.GOLDRUSH_MCP_URL ||
     "";
   const allowlistedDomains = resolveAllowlistedDomains(resolvedGoldrushMcpUrl);
+  const forkRpcUrl = String(process.env.SOLANA_RPC_URL ?? "").trim();
   const fastFrankfurtRpcUrl = String(process.env.INTERNAL_RPC_FAST_FRANKFURT_URL ?? "").trim();
-  if (!fastFrankfurtRpcUrl) {
-    throw new Error("Missing required environment variable: INTERNAL_RPC_FAST_FRANKFURT_URL");
+  const effectiveRpcUrl = forkRpcUrl || fastFrankfurtRpcUrl;
+  if (!effectiveRpcUrl) {
+    throw new Error("Missing required environment variable: SOLANA_RPC_URL");
   }
 
   writeLauncherFile(workDir, entryPoint);
@@ -388,8 +390,8 @@ export async function startAgent(opts: StartAgentOptions): Promise<RunningAgent>
   const childEnv: NodeJS.ProcessEnv = {
     ...decryptedEnv,
     NODE_ENV: "production",
-    SOLANA_RPC_URL: fastFrankfurtRpcUrl,
-    SOLANA_NETWORK: "mainnet-beta",
+    SOLANA_RPC_URL: effectiveRpcUrl,
+    SOLANA_NETWORK: String(process.env.SOLANA_NETWORK ?? "mainnet-beta").trim(),
     AGENT_EVENT_ENDPOINT: "http://127.0.0.1:7777/agent-event",
     GOLDRUSH_MCP_URL: resolvedGoldrushMcpUrl,
     AGENT_ALLOWED_OUTBOUND_DOMAINS: allowlistedDomains,

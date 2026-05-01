@@ -97,7 +97,7 @@ function extractIntent(config: Record<string, unknown> | null | undefined): BotI
 
   // Fallback: reconstruct a minimal intent from flat config fields
   const chain = "solana";
-  const network = typeof config.network === "string" ? config.network : "solana-testnet";
+  const network = typeof config.network === "string" ? config.network : "mainnet-beta";
 
   if (config.strategy || config.chain) {
     return {
@@ -173,7 +173,7 @@ export function useBotCodeGen(termRef: MutableRefObject<TerminalLike | null>) {
             setIntent(detectedIntent);
             term.writeln(
               `\x1b[36m[System]\x1b[0m Intent: \x1b[32m${detectedIntent.strategy ?? "unknown"}\x1b[0m` +
-              ` on \x1b[32m${detectedIntent.network ?? detectedIntent.chain ?? "solana-testnet"}\x1b[0m`
+              ` on \x1b[32m${detectedIntent.network ?? detectedIntent.chain ?? "mainnet-beta"}\x1b[0m`
             );
           }
 
@@ -232,7 +232,7 @@ export function useBotCodeGen(termRef: MutableRefObject<TerminalLike | null>) {
 
       // Demo bot is always Solana
       const demoIntent: BotIntent = {
-        chain: "solana", network: "solana-testnet",
+        chain: "solana", network: "mainnet-beta",
         strategy: "arbitrage", execution_model: "polling",
         required_mcps: ["solana"],
         bot_type: "Solana Bot",

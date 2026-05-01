@@ -20,7 +20,7 @@ def no_network(monkeypatch):
 def _make_plan():
     return DummyPlannerState(
         strategy_type="arbitrage",
-        collected_parameters={"SOLANA_NETWORK": "devnet", "USER_WALLET_ADDRESS": "FAKE"},
+        collected_parameters={"SOLANA_NETWORK": "mainnet-beta", "USER_WALLET_ADDRESS": "FAKE"},
         missing_parameters=[],
         verification_step=None,
         is_ready_for_code_generation=True,

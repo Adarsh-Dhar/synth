@@ -186,7 +186,8 @@ export default function DeployCodePage({
           brightCyan: "#FFFFFF",
           brightWhite: "#FFFFFF",
         },
-        fontFamily: '"acumin-pro-condensed", "acumin-pro", monospace',
+        fontFamily:
+          '"Acumin Pro", "Acumin Pro Condensed", "acumin-pro", "acumin-pro-condensed", Menlo, Monaco, "Courier New", monospace',
         fontSize: 12,
         lineHeight: 1.5,
         cursorBlink: true,
@@ -313,6 +314,20 @@ export default function DeployCodePage({
     }
   }, []);
 
+  const handleEditorChange = useCallback(
+    (newContent: string) => {
+      if (!selectedFile) return;
+      setFiles((prev) =>
+        prev.map((file) =>
+          file.filepath === selectedFile
+            ? { ...file, content: newContent }
+            : file
+        )
+      );
+    },
+    [selectedFile]
+  );
+
   const activeContent = files.find((f) => f.filepath === selectedFile)?.content;
 
   return (
@@ -427,7 +442,11 @@ export default function DeployCodePage({
                   )}
                 </div>
                 <div className="flex-1 relative overflow-hidden">
-                  <CodeEditor content={activeContent ?? "// Select a file"} />
+                  <CodeEditor
+                    content={activeContent ?? "// Select a file"}
+                    filePath={selectedFile}
+                    onChange={handleEditorChange}
+                  />
                 </div>
               </div>
             </Panel>

@@ -127,6 +127,7 @@ export interface AgentsTableProps {
 // ─── Enumerations ─────────────────────────────────────────────────────────────
 
 export const SUPPORTED_CHAINS = {
+  "solana-mainnet": { label: "Solana Mainnet Fork", chainId: "solana", rpcHint: "http://127.0.0.1:8899" },
   "solana-devnet": { label: "Solana Devnet", chainId: "solana", rpcHint: "https://api.devnet.solana.com" },
 } as const;
 
@@ -135,6 +136,7 @@ export const SUPPORTED_TOKENS = {
   USDC: {
     label: "USDC",
     address: {
+      "solana-mainnet": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
       "solana-devnet": "So11111111111111111111111111111111111111112",
     },
     decimals: 6,
@@ -192,7 +194,7 @@ export interface BotConfig {
 
 export const DEFAULT_BOT_CONFIG: BotConfig = {
   botName:            "SolanaBot",
-  chain:              "solana-devnet",
+  chain:              "solana-mainnet",
   baseToken:          "USDC",
   targetToken:        "USDC",
   dex:                "solana",
