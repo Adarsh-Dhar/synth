@@ -138,8 +138,9 @@ synth/
 | Text | Off-white | `#f5f5f7` |
 
 ### Typography
-- **Font Family**: Geist (sans-serif)
-- **Mono**: Geist Mono
+- **Font Family**: Acumin Pro (sans-serif)
+- **Display**: Flegrei only for headings
+- **Mono**: Acumin Pro Condensed
 - **Line Height**: 1.5 (body), 1.2 (headings)
 
 ## Routing Map

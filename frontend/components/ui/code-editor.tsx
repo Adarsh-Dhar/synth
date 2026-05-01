@@ -7,7 +7,7 @@ interface CodeEditorProps {
 export function CodeEditor({ content, onChange }: CodeEditorProps) {
   if (content === undefined) {
     return (
-      <div className="flex-1 overflow-auto bg-[#020617] p-4 text-[11px] text-slate-500 font-mono">
+      <div className="flex-1 overflow-auto bg-background p-4 text-[11px] text-muted-foreground font-mono">
         <span>{"// Click Generate Bot to see files"}</span>
       </div>
     );
@@ -20,7 +20,7 @@ export function CodeEditor({ content, onChange }: CodeEditorProps) {
       value={displayContent}
       onChange={(e) => onChange?.(e.target.value)}
       spellCheck={false}
-      className="flex-1 w-full h-full resize-none outline-none bg-[#020617] p-4 text-[11px] leading-relaxed text-slate-300 whitespace-pre font-mono focus:ring-0 border-none"
+      className="flex-1 w-full h-full resize-none outline-none bg-background p-4 text-[11px] leading-relaxed text-foreground/90 whitespace-pre font-mono focus:ring-0 border-none"
     />
   );
 }

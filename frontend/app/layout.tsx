@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
-      { url: '/icon-dark-32x32.png', media: '(prefers-color-scheme: dark)' },
+      { url: '/icon-dark-32x32.png',  media: '(prefers-color-scheme: dark)' },
       { url: '/icon.svg', type: 'image/svg+xml' },
     ],
     apple: '/apple-icon.png',
@@ -23,6 +23,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* Adobe Fonts — acumin-pro primary, acumin-pro-condensed mono, flegrei headings only */}
+        <link rel="stylesheet" href="https://use.typekit.net/oug6pfq.css" />
+      </head>
       <body className="font-sans antialiased dark bg-background text-foreground">
         <Providers>
           {children}

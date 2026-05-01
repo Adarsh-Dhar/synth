@@ -46,11 +46,8 @@ export default function Home() {
             <span className="text-sm font-medium text-primary">Powered by Solana</span>
           </div>
 
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-balance">
-            Sleep soundly. Let AI trade at{' '}
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              on Solana.
-            </span>
+          <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-balance">
+            Sleep soundly. Let AI trade <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">on Solana.</span>
           </h1>
 
           <p className="text-xl text-foreground/70 mb-8 max-w-2xl mx-auto text-pretty">

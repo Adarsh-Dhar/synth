@@ -166,11 +166,27 @@ export default function DeployCodePage({
       // Mount terminal
       const term = new Terminal({
         theme: {
-          background: "#0a0d14",
-          foreground: "#e2e8f0",
-          cursor: "#0ea5e9",
+          background: "#6A1D41",
+          foreground: "#FFFFFF",
+          cursor: "#FEC631",
+          black: "#4A1230",
+          red: "#F31E2C",
+          green: "#FEC631",
+          yellow: "#FEC631",
+          blue: "#F31E2C",
+          magenta: "#FEC631",
+          cyan: "#FFFFFF",
+          white: "#FFFFFF",
+          brightBlack: "#8B2759",
+          brightRed: "#ff6b7a",
+          brightGreen: "#ffd97a",
+          brightYellow: "#ffd97a",
+          brightBlue: "#ff6b7a",
+          brightMagenta: "#ffd97a",
+          brightCyan: "#FFFFFF",
+          brightWhite: "#FFFFFF",
         },
-        fontFamily: '"Geist Mono", "Fira Code", monospace',
+        fontFamily: '"acumin-pro-condensed", "acumin-pro", monospace',
         fontSize: 12,
         lineHeight: 1.5,
         cursorBlink: true,
@@ -315,7 +331,7 @@ export default function DeployCodePage({
           </Link>
           <div className="h-4 w-[1px] bg-border" />
           <div className="flex items-center gap-2">
-            <TerminalSquare size={16} className="text-cyan-500" />
+            <TerminalSquare size={16} className="text-primary" />
             <h1 className="text-sm font-semibold tracking-wide">
               WebContainer IDE
             </h1>
@@ -327,13 +343,13 @@ export default function DeployCodePage({
 
         <div className="flex items-center gap-2">
           {isBooting && (
-            <span className="text-xs text-amber-400 flex items-center gap-1">
+            <span className="text-xs text-secondary flex items-center gap-1">
               <Loader2 size={12} className="animate-spin" />
               Booting container…
             </span>
           )}
           {bootError && (
-            <span className="text-xs text-red-400">Boot failed</span>
+            <span className="text-xs text-primary">Boot failed</span>
           )}
           {isRunning ? (
             <Button variant="destructive" size="sm" onClick={stopBot}>
@@ -345,7 +361,7 @@ export default function DeployCodePage({
               size="sm"
               onClick={startBot}
               disabled={isBooting || !!bootError || files.length === 0}
-              className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
             >
               {isBooting ? (
                 <Loader2 size={13} className="animate-spin mr-1.5" />
@@ -361,7 +377,7 @@ export default function DeployCodePage({
       {/* ── Main Layout ── */}
       <div className="flex-1 flex overflow-hidden">
         {/* File Explorer */}
-        <div className="w-60 flex-shrink-0 bg-[#06080c] border-r border-border flex flex-col">
+        <div className="w-60 flex-shrink-0 bg-card border-r border-border flex flex-col">
           <div className="px-4 py-3 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Explorer
           </div>
@@ -377,16 +393,16 @@ export default function DeployCodePage({
                   onClick={() => setSelectedFile(file.filepath)}
                   className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs text-left transition-colors ${
                     selectedFile === file.filepath
-                      ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-500"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                      ? "bg-primary/10 text-primary border-r-2 border-primary"
+                      : "text-foreground/70 hover:text-foreground hover:bg-background/40"
                   }`}
                 >
                   <FileCode
                     size={13}
                     className={
                       selectedFile === file.filepath
-                        ? "text-cyan-400"
-                        : "text-slate-500"
+                        ? "text-primary"
+                        : "text-muted-foreground"
                     }
                   />
                   <span className="truncate">{file.filepath}</span>
@@ -401,10 +417,10 @@ export default function DeployCodePage({
           <PanelGroup direction="vertical">
             {/* Code Editor */}
             <Panel defaultSize={60} minSize={20}>
-              <div className="h-full flex flex-col bg-[#0a0d14]">
-                <div className="bg-[#06080c] border-b border-border/50 flex text-xs">
+              <div className="h-full flex flex-col bg-background">
+                <div className="bg-card border-b border-border/50 flex text-xs">
                   {selectedFile && (
-                    <div className="px-4 py-2 border-r border-border/50 bg-[#0a0d14] text-cyan-400 flex items-center gap-2">
+                    <div className="px-4 py-2 border-r border-border/50 bg-background text-primary flex items-center gap-2">
                       <FileCode size={12} />
                       {selectedFile}
                     </div>
@@ -416,18 +432,18 @@ export default function DeployCodePage({
               </div>
             </Panel>
 
-            <PanelResizeHandle className="h-1.5 bg-border/50 hover:bg-cyan-500/50 transition-colors cursor-row-resize" />
+            <PanelResizeHandle className="h-1.5 bg-border/50 hover:bg-primary/50 transition-colors cursor-row-resize" />
 
             {/* xterm.js Terminal */}
             <Panel defaultSize={40} minSize={15}>
               <div className="h-full flex flex-col">
-                <div className="bg-[#06080c] border-b border-border/50 px-4 py-2 flex items-center justify-between">
+                <div className="bg-card border-b border-border/50 px-4 py-2 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     <TerminalSquare size={13} />
                     WebContainer Terminal
                     {isRunning && (
-                      <span className="flex items-center gap-1 text-green-400 normal-case font-normal ml-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      <span className="flex items-center gap-1 text-secondary normal-case font-normal ml-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
                         running
                       </span>
                     )}
@@ -437,7 +453,7 @@ export default function DeployCodePage({
                 <div
                   ref={terminalDivRef}
                   className="flex-1 overflow-hidden p-1"
-                  style={{ background: "#0a0d14" }}
+                  style={{ background: "#6A1D41" }}
                 />
               </div>
             </Panel>
