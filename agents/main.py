@@ -191,6 +191,34 @@ async def generate_bot_stream(req: GenerateRequest):
     )
 
 
+@app.post("/demo/generate")
+async def demo_generate(request: Request):
+    """
+    Generates a bot using the demo prompt template.
+    Injects exact token mints and MCP endpoints from agents/demo/config.json.
+    """
+    import sys
+    sys.path.insert(0, str(_BASE_DIR))
+    try:
+        from demo.prompt_template import build_prompt
+        prompt = build_prompt()
+    except ImportError as e:
+        raise HTTPException(500, f"Demo module not found: {e}")
+
+    rid = uuid4().hex[:8]
+    try:
+        result = await asyncio.wait_for(
+            agent.build_bot(prompt, rid),
+            timeout=CREATE_BOT_TIMEOUT,
+        )
+        return result
+    except asyncio.TimeoutError:
+        raise HTTPException(504, f"Timed out after {CREATE_BOT_TIMEOUT:.0f}s")
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(500, str(e))
+
+
 # ── Multi-turn endpoint ───────────────────────────────────────────────────────
 
 @app.post("/create-bot-chat", response_model=ChatResponse)

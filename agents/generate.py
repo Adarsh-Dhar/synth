@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 
 import requests
 
@@ -48,6 +49,7 @@ TOKEN_DENOMS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a Solana bot")
+    parser.add_argument("--demo", action="store_true", help="Use the demo/config.json template (yield sweeper with exact mints)")
     parser.add_argument("--strategy", type=str, help="Optional strategy override (arbitrage, yield_sweeper, etc.)")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--config", type=str, help="JSON string of bot configuration")
@@ -118,6 +120,29 @@ RULES:
 def main() -> None:
     args = parse_args()
     config = load_config(args)
+    # Demo mode: use prebuilt prompt template and submit directly
+    if getattr(args, "demo", False):
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent))
+        from demo.prompt_template import build_prompt, CONFIG
+        prompt = build_prompt()
+        config = CONFIG
+        print(f"\nBot: {config['botName']} [DEMO MODE]")
+        print(f"Chain: {config.get('chain', 'solana-mainnet')}")
+
+        server_url = os.environ.get("META_AGENT_URL", "http://127.0.0.1:8000") + "/create-bot"
+        try:
+            response = requests.post(server_url, json={"prompt": prompt}, timeout=60)
+            print("Status:", response.status_code)
+            try:
+                data = response.json()
+                print(json.dumps(data, indent=2)[:4000])
+            except Exception:
+                print(response.text[:4000])
+        except Exception as exc:
+            print("Failed to call Meta-Agent:", exc)
+        return
+
     prompt = build_prompt(config)
 
     print(f"\\nBot: {config['botName']}")

@@ -395,6 +395,43 @@ ENV VARS your bot should read:
 14. TYPE SAFETY: Always wrap `process.env.*` accesses in `String(...)` to prevent TypeScript undefined errors. Avoid `BigInt(Object)` crashes by safely parsing strings.
 """
 
+DEMO_CONTEXT = """
+=== DEMO-MODE YIELD SWEEPER CONTEXT (injected when strategy=yield_sweeper) ===
+
+When building a yield sweeper that uses Jupiter for execution:
+
+EXACT MINT ADDRESSES (never guess these):
+    USDC:   EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v  (6 decimals)
+    sUSDe:  G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz   (18 decimals)
+    SOL:    So11111111111111111111111111111111111111112      (9 decimals)
+
+JUPITER SWAP PATTERN for entering yield position:
+    await callMcpTool("jupiter", "execute_swap", {
+        inputMint:  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        outputMint: "G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz",
+        amount:     usdcBalance.toString(),
+        userWallet: WALLET,
+        slippageBps: 50,
+    });
+
+DECIMAL CONVERSION:
+    const USDC_DECIMALS = 6n;
+    const SUSDE_DECIMALS = 18n;
+    const toUiUsdc = (raw: bigint) => Number(raw) / 1e6;
+    const toUiSusde = (raw: bigint) => Number(raw) / 1e18;
+
+APY FETCH PATTERN (with safe numeric extraction):
+    async function fetchKaminoApy(): Promise<number> {
+        const r = await axios.get(String(process.env.KAMINO_APY_URL ?? ""), {timeout: 8000});
+        // walk the response tree for supplyApy / supplyAPY / apy
+        return extractFirstNumber(r.data, ["supplyApy","supplyAPY","apr","apy"]) ?? 0;
+    }
+    async function fetchSusdeApy(): Promise<number> {
+        const r = await axios.get(String(process.env.SUSDE_APY_URL ?? ""), {timeout: 8000});
+        return Number(r.data?.apy ?? r.data?.yield ?? 0);
+    }
+"""
+
 # ─── MetaAgent ────────────────────────────────────────────────────────────────
 
 class MetaAgent:
@@ -839,6 +876,12 @@ class MetaAgent:
 
         if not combined:
             combined = "JUPITER + DODO DOCS CONTEXT: unavailable for this request.\n\n"
+        # If this is the demo yield_sweeper strategy, inject the DEMO_CONTEXT
+        try:
+            if plan.strategy_type in ("yield_sweeper", "shielded_yield"):
+                combined += DEMO_CONTEXT + "\n\n"
+        except Exception:
+            pass
         params_txt = "\n".join(f"  {k}={v}" for k, v in plan.collected_parameters.items())
         user_msg = (
             f"Bot name: {intent['bot_name']}\n"

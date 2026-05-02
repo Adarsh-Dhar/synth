@@ -1,0 +1,17 @@
+{
+  "botName": "Kamino-sUSDe Yield Sweeper",
+  "strategy": "yield_sweeper",
+  "chain": "solana-mainnet",
+  "network": "mainnet-beta",
+  "tokens": {
+    "USDC_MINT": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "SUSDE_MINT": "G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz",
+    "SOL_MINT": "So11111111111111111111111111111111111111112"
+  },
+  "thresholdPct": 1.5,
+  "pollIntervalMs": 60000,
+  "simulationMode": false,
+  "mcpGatewayUrl": "http://127.0.0.1:8001",
+  "jupiterMcpUrl": "http://127.0.0.1:8013",
+  "metaAgentUrl": "http://127.0.0.1:5001"
+}

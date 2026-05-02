@@ -1,4 +1,5 @@
 import express from "express";
+import demoRouter from "./demo-routes.js";
 import {
   startAgent,
   stopAgent,
@@ -12,6 +13,8 @@ import {
 
 const app = express();
 app.use(express.json());
+// Mount demo routes (no auth required for demo endpoints)
+app.use("/demo", demoRouter);
 
 const SECRET = process.env.WORKER_SECRET;
 
