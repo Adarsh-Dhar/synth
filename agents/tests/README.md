@@ -13,6 +13,15 @@ Phase 2 - TypeScript syntax/compilation verification
 Phase 3 - Semantic LLM-as-Judge
 - Placeholder for Promptfoo/LLM evaluation configs and rubric scripts.
 
+Yield Sweeper fixture checks
+- Fixture file: `agents/tests/eval/fixtures/yield_sweeper_bot.ts`
+- Quick type-check from repo root:
+	`npx -y tsc --noEmit --target es2020 --moduleResolution node agents/tests/eval/fixtures/yield_sweeper_bot.ts`
+- Run deterministic rubric checks for yield behavior:
+	`python agents/tests/eval/judge_rubric.py --file agents/tests/eval/fixtures/yield_sweeper_bot.ts --yield-sweeper-requested`
+- Optional simulation run (requires MCP env vars available):
+	`SIMULATION_MODE=true node --loader tsx agents/tests/eval/fixtures/yield_sweeper_bot.ts`
+
 Notes
 - The syntax check requires `node` and `npm` available on PATH and may take time to install dependencies for generated project.
 - CI integration should run Phase 1 tests first, then Phase 2 in an isolated environment.

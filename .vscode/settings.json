@@ -5,7 +5,7 @@
   "editor.semanticTokenColorCustomizations": {
     "enabled": true
   },
-  "workbench.colorTheme": "Default Dark+",
+  "workbench.colorTheme": "Dark+",
   "editor.tokenColorCustomizations": {
     "textMateRules": [
       {

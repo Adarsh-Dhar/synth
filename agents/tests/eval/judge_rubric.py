@@ -23,7 +23,16 @@ class RubricResult:
     detail: str
 
 
-def check_uses_axios_for_jupiter(code: str) -> RubricResult:
+def check_uses_axios_for_jupiter(code: str, yield_requested: bool) -> RubricResult:
+    if yield_requested:
+        has_axios_import = bool(re.search(r"\bimport\s+axios\s+from\s+['\"]axios['\"]", code))
+        has_yield_source = "kamino" in code.lower() or "marginfi" in code.lower()
+        return RubricResult(
+            name="uses_axios_for_jupiter",
+            passed=has_axios_import and has_yield_source,
+            detail="yield mode expects axios import with Kamino/Marginfi API references",
+        )
+
     has_axios_import = bool(re.search(r"\bimport\s+axios\s+from\s+['\"]axios['\"]", code))
     has_jupiter_url = "quote-api.jup.ag" in code
     return RubricResult(
@@ -73,13 +82,78 @@ def check_no_hardcoded_addresses(code: str) -> RubricResult:
     )
 
 
-def evaluate(code: str, dodo_requested: bool) -> List[RubricResult]:
+def check_yield_has_apy_fetch_tool(code: str, requested: bool) -> RubricResult:
+    if not requested:
+        return RubricResult("yield_has_apy_fetch_tool", True, "not requested")
+    has_fn = bool(re.search(r"\bfetch_lending_apys\s*\(", code))
+    has_sources = "kamino" in code.lower() and "marginfi" in code.lower()
+    return RubricResult(
+        name="yield_has_apy_fetch_tool",
+        passed=has_fn and has_sources,
+        detail="expects fetch_lending_apys and both Kamino/Marginfi references",
+    )
+
+
+def check_yield_has_60s_loop(code: str, requested: bool) -> RubricResult:
+    if not requested:
+        return RubricResult("yield_has_60s_loop", True, "not requested")
+    has_default_60s = "60000" in code
+    has_interval = "setInterval" in code
+    return RubricResult(
+        name="yield_has_60s_loop",
+        passed=has_default_60s and has_interval,
+        detail="expects 60000ms default polling and setInterval loop",
+    )
+
+
+def check_yield_has_threshold_logic(code: str, requested: bool) -> RubricResult:
+    if not requested:
+        return RubricResult("yield_has_threshold_logic", True, "not requested")
+    has_threshold_value = "1.5" in code
+    has_comparison = bool(re.search(r"delta\s*>=\s*REBALANCE_THRESHOLD_PCT", code))
+    return RubricResult(
+        name="yield_has_threshold_logic",
+        passed=has_threshold_value and has_comparison,
+        detail="expects 1.5 threshold default and delta comparison",
+    )
+
+
+def check_yield_reasoning_before_execution(code: str, requested: bool) -> RubricResult:
+    if not requested:
+        return RubricResult("yield_reasoning_before_execution", True, "not requested")
+    has_reasoning_log = "[yield][reasoning]" in code
+    has_migration_call = "executeMigration" in code
+    return RubricResult(
+        name="yield_reasoning_before_execution",
+        passed=has_reasoning_log and has_migration_call,
+        detail="expects explicit reasoning log before migration",
+    )
+
+
+def check_yield_uses_mcp_execution(code: str, requested: bool) -> RubricResult:
+    if not requested:
+        return RubricResult("yield_uses_mcp_execution", True, "not requested")
+    has_mcp_call = bool(re.search(r"\bcallMcpTool\s*\(", code))
+    has_tx_tool = "solana_transaction" in code
+    return RubricResult(
+        name="yield_uses_mcp_execution",
+        passed=has_mcp_call and has_tx_tool,
+        detail="expects MCP tool invocation through solana_transaction",
+    )
+
+
+def evaluate(code: str, dodo_requested: bool, yield_sweeper_requested: bool) -> List[RubricResult]:
     return [
-        check_uses_axios_for_jupiter(code),
+        check_uses_axios_for_jupiter(code, yield_requested=yield_sweeper_requested),
         check_no_cli_execution(code),
         check_dodo_webhook_when_requested(code, requested=dodo_requested),
         check_bigint_for_amounts(code),
         check_no_hardcoded_addresses(code),
+        check_yield_has_apy_fetch_tool(code, requested=yield_sweeper_requested),
+        check_yield_has_60s_loop(code, requested=yield_sweeper_requested),
+        check_yield_has_threshold_logic(code, requested=yield_sweeper_requested),
+        check_yield_reasoning_before_execution(code, requested=yield_sweeper_requested),
+        check_yield_uses_mcp_execution(code, requested=yield_sweeper_requested),
     ]
 
 
@@ -87,11 +161,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run judge rubric on generated TS file")
     parser.add_argument("--file", required=True, help="Path to generated src/index.ts")
     parser.add_argument("--dodo-requested", action="store_true", help="Require Dodo webhook checks")
+    parser.add_argument("--yield-sweeper-requested", action="store_true", help="Require yield sweeper loop checks")
     parser.add_argument("--json", action="store_true", help="Print JSON output")
     args = parser.parse_args()
 
     code = Path(args.file).read_text(encoding="utf-8")
-    results = evaluate(code, dodo_requested=args.dodo_requested)
+    results = evaluate(
+        code,
+        dodo_requested=args.dodo_requested,
+        yield_sweeper_requested=args.yield_sweeper_requested,
+    )
     passed = all(r.passed for r in results)
 
     if args.json:
