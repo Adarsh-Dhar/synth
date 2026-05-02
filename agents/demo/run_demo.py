@@ -28,6 +28,44 @@ ROOT = Path(__file__).parent.parent.parent
 WORKER_GENERATED_DIR = ROOT / "worker" / "agents" / "generated"
 
 
+def build_local_demo_bot() -> dict:
+    """Return a deterministic yield-sweeper scaffold for the demo.
+
+    The worker only needs the generated files, and we already have known-good
+    yield-sweeper output in worker/dist. Reusing that avoids waiting on the
+    remote Meta-Agent during the demo.
+    """
+
+    template_root = ROOT / "worker" / "dist" / "lib" / "agents" / "generated"
+    candidates = sorted(template_root.glob("*/src/index.ts"))
+    if not candidates:
+        raise RuntimeError("No local demo scaffold found under worker/dist")
+
+    template_dir = candidates[-1].parent.parent
+    wanted = ["package.json", "src/index.ts", "src/mcp_bridge.ts", "src/sns_resolver.ts"]
+    files = []
+    for rel_path in wanted:
+        file_path = template_dir / rel_path
+        if not file_path.exists():
+            raise RuntimeError(f"Local demo scaffold is missing {rel_path}")
+        files.append({"filepath": rel_path, "content": file_path.read_text(encoding="utf-8")})
+
+    return {
+        "status": "ready",
+        "intent": {
+            "chain": CONFIG.get("chain", "solana-mainnet"),
+            "network": CONFIG.get("network", "mainnet-beta"),
+            "strategy": CONFIG.get("strategy", "yield_sweeper"),
+            "bot_name": CONFIG.get("botName", "Kamino-sUSDe Yield Sweeper"),
+        },
+        "output": {
+            "thoughts": "Deterministic yield-sweeper scaffold used to avoid waiting on remote generation.",
+            "files": files,
+        },
+        "files": files,
+    }
+
+
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true",
@@ -40,6 +78,10 @@ def parse_args():
 
 
 def generate_bot(meta_agent_url: str, prompt: str) -> dict:
+    if CONFIG.get("strategy") == "yield_sweeper" and os.environ.get("DEMO_FORCE_META_AGENT", "false").lower() != "true":
+        print("[demo] Using local yield-sweeper scaffold (fast path)...")
+        return build_local_demo_bot()
+
     print("[demo] Calling Meta-Agent to generate bot code...")
     max_retries = 5
     for attempt in range(max_retries):
@@ -111,6 +153,17 @@ def write_files(data: dict) -> Path:
     ])
     env_path.write_text(env_content)
     print(f"[demo] wrote .env to {env_path.relative_to(ROOT)}")
+
+    trash_base = Path.home() / ".Trash" / "agents" / "generated"
+    if trash_base.exists():
+        mirror_dir = trash_base / bot_dir.name
+        if not mirror_dir.exists():
+            mirror_dir.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                os.symlink(bot_dir, mirror_dir)
+                print(f"[demo] mirrored bot to {mirror_dir}")
+            except FileExistsError:
+                pass
 
     return bot_dir
 

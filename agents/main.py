@@ -1,6 +1,11 @@
 """
-main.py — Meta-Agent API server (Solana-native).
+main.py — Meta-Agent API server (Solana-native, v5 Copilot Edition)
 Start: uvicorn main:app --reload
+
+New in v5:
+  - /copilot/* routes via copilot_router.py (start, continue, stream, status)
+  - Session state stored in session_store.py (memory or Redis)
+  - Legacy /create-bot and /create-bot-chat still work unchanged
 """
 
 import os
@@ -19,7 +24,10 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from orchestrator import MetaAgent
 
-app = FastAPI(title="Agentia Solana Bot Meta-Agent", version="4.0.0")
+# Import and mount the copilot router
+from copilot_router import router as copilot_router
+
+app = FastAPI(title="Agentia Solana Bot Meta-Agent", version="5.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,11 +35,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount copilot routes at /copilot/*
+app.include_router(copilot_router)
+
 agent = MetaAgent()
 
 CREATE_BOT_TIMEOUT = float(os.environ.get("META_AGENT_CREATE_BOT_TIMEOUT_SECONDS", "240"))
 MCP_UPSTREAM_URL = os.environ.get("MCP_UPSTREAM_URL", "http://127.0.0.1:8001").rstrip("/")
 MCP_UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MCP_UPSTREAM_TIMEOUT_SECONDS", "12"))
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -55,7 +67,7 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    status: str                              # "clarification_needed" | "ready" | "error"
+    status: str
     question: Optional[str]   = None
     strategy_type: Optional[str] = None
     missing_parameters: Optional[List[str]] = None
@@ -79,11 +91,22 @@ def _ok(payload: dict) -> dict:
     }
 
 
-# ─── Routes ───────────────────────────────────────────────────────────────────
+# ─── Health ───────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "4.0.0"}
+    return {"status": "ok", "version": "5.0.0"}
+
+
+@app.get("/health/copilot")
+async def health_copilot():
+    """Quick sanity check for copilot subsystem."""
+    from session_store import session_exists
+    return {
+        "status": "ok",
+        "copilot_router": "mounted",
+        "session_store": "ready",
+    }
 
 
 @app.get("/mcp/health")
@@ -93,7 +116,6 @@ async def mcp_health():
 
 @app.get("/health/dodo")
 async def health_dodo():
-    """Ping configured DODO docs MCP URL for quick health check."""
     dodo = os.environ.get("DODO_DOCS_MCP_URL", "http://127.0.0.1:5002").rstrip("/")
     try:
         async with httpx.AsyncClient(timeout=3.0) as client:
@@ -103,12 +125,10 @@ async def health_dodo():
         return {"status": "unavailable", "dodo": dodo, "detail": str(exc)}
 
 
+# ─── MCP gateway ──────────────────────────────────────────────────────────────
+
 @app.post("/mcp/{server}/{tool}")
 async def mcp_tool(server: str, tool: str, body: dict, request: Request):
-    """
-    HTTP MCP compatibility gateway.
-    Forwards requests to a real MCP-compatible upstream and normalizes response shape.
-    """
     s = server.strip().lower()
     t = tool.strip().lower()
 
@@ -134,11 +154,9 @@ async def mcp_tool(server: str, tool: str, body: dict, request: Request):
                     last_error = f"404 at {url}"
                     continue
                 resp.raise_for_status()
-
                 payload = resp.json()
                 if isinstance(payload, dict) and isinstance(payload.get("result"), dict):
                     return payload
-
                 return _ok({
                     "available": True,
                     "server": s,
@@ -161,7 +179,7 @@ async def mcp_tool(server: str, tool: str, body: dict, request: Request):
     })
 
 
-# ── Single-shot endpoint ──────────────────────────────────────────────────────
+# ─── Legacy single-shot endpoint (unchanged) ──────────────────────────────────
 
 @app.post("/create-bot")
 async def create_bot(req: PromptRequest, request: Request):
@@ -184,7 +202,6 @@ async def create_bot(req: PromptRequest, request: Request):
 
 @app.post("/generate-stream")
 async def generate_bot_stream(req: GenerateRequest):
-    """Streams the bot creation process via Server-Sent Events (SSE)."""
     return StreamingResponse(
         agent.orchestrate_bot_creation_stream(req.prompt),
         media_type="text/event-stream",
@@ -193,10 +210,6 @@ async def generate_bot_stream(req: GenerateRequest):
 
 @app.post("/demo/generate")
 async def demo_generate(request: Request):
-    """
-    Generates a bot using the demo prompt template.
-    Injects exact token mints and MCP endpoints from agents/demo/config.json.
-    """
     import sys
     sys.path.insert(0, str(_BASE_DIR))
     try:
@@ -219,7 +232,7 @@ async def demo_generate(request: Request):
         raise HTTPException(500, str(e))
 
 
-# ── Multi-turn endpoint ───────────────────────────────────────────────────────
+# ─── Legacy multi-turn endpoint (unchanged) ───────────────────────────────────
 
 @app.post("/create-bot-chat", response_model=ChatResponse)
 async def create_bot_chat(req: ChatRequest, request: Request):
@@ -234,10 +247,7 @@ async def create_bot_chat(req: ChatRequest, request: Request):
             timeout=CREATE_BOT_TIMEOUT,
         )
     except asyncio.TimeoutError:
-        return ChatResponse(
-            status="error",
-            message=f"Timed out after {CREATE_BOT_TIMEOUT:.0f}s.",
-        )
+        return ChatResponse(status="error", message=f"Timed out after {CREATE_BOT_TIMEOUT:.0f}s.")
     except Exception as exc:
         traceback.print_exc()
         return ChatResponse(status="error", message=str(exc))

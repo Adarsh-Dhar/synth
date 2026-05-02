@@ -23,6 +23,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -594,3 +595,85 @@ OUTPUT FILES (generate exactly these 3 files):
 
 Import mcp_bridge.ts and sns_resolver.ts — they are injected automatically.
 """.strip()
+
+
+# ─── FastAPI router ──────────────────────────────────────────────────────────
+
+router = APIRouter(prefix="/copilot", tags=["copilot"])
+
+
+def _get_meta_agent():
+    from orchestrator import MetaAgent
+
+    return MetaAgent()
+
+
+@router.get("/health")
+async def copilot_health() -> Dict[str, Any]:
+    return {"status": "ok", "router": "mounted"}
+
+
+@router.post("/start")
+async def copilot_start(body: Dict[str, Any]) -> Dict[str, Any]:
+    prompt = str(body.get("prompt", "")).strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="prompt is required")
+
+    session_id = str(body.get("session_id") or body.get("request_id") or f"copilot-{int(time.time())}")
+    trace_id = str(body.get("trace_id") or "") or None
+
+    agent = _get_meta_agent()
+    result = await agent.build_bot_copilot_start(prompt=prompt, session_id=session_id, trace_id=trace_id)
+
+    try:
+        from session_store import save_session
+
+        state = result.get("session_state")
+        if isinstance(state, dict):
+            save_session(session_id, state)
+    except Exception:
+        pass
+
+    return result
+
+
+@router.post("/continue")
+async def copilot_continue(body: Dict[str, Any]) -> Dict[str, Any]:
+    session_state = body.get("session_state")
+    user_reply = str(body.get("user_reply", "")).strip()
+    if not isinstance(session_state, dict):
+        raise HTTPException(status_code=400, detail="session_state must be an object")
+    if not user_reply:
+        raise HTTPException(status_code=400, detail="user_reply is required")
+
+    trace_id = str(body.get("trace_id") or "") or None
+    agent = _get_meta_agent()
+    result = await agent.build_bot_copilot_continue(session_state=session_state, user_reply=user_reply, trace_id=trace_id)
+
+    try:
+        from session_store import save_session
+
+        state = result.get("session_state")
+        session_id = str(session_state.get("session_id") or "").strip()
+        if session_id and isinstance(state, dict):
+            save_session(session_id, state)
+    except Exception:
+        pass
+
+    return result
+
+
+@router.get("/status/{session_id}")
+async def copilot_status(session_id: str) -> Dict[str, Any]:
+    try:
+        from session_store import load_session, session_exists
+
+        state = load_session(session_id)
+        return {
+            "status": "ok",
+            "session_id": session_id,
+            "exists": session_exists(session_id),
+            "session_state": state,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
