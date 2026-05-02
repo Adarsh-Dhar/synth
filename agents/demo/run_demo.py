@@ -33,7 +33,7 @@ def parse_args():
     p.add_argument("--dry-run", action="store_true",
                    help="Generate code only, don't run in worker")
     p.add_argument("--meta-agent-url", default=CONFIG["metaAgentUrl"])
-    p.add_argument("--worker-url", default="http://127.0.0.1:3001")
+    p.add_argument("--worker-url", default="http://127.0.0.1:5002")
     p.add_argument("--simulation", action="store_true", default=True)
     p.add_argument("--no-simulation", dest="simulation", action="store_false")
     return p.parse_args()
@@ -41,16 +41,38 @@ def parse_args():
 
 def generate_bot(meta_agent_url: str, prompt: str) -> dict:
     print("[demo] Calling Meta-Agent to generate bot code...")
-    resp = requests.post(
-        f"{meta_agent_url}/create-bot",
-        json={"prompt": prompt},
-        timeout=240,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    if data.get("status") not in ("ready", "complete"):
-        raise RuntimeError(f"Bot generation failed: {data}")
-    return data
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            resp = requests.post(
+                f"{meta_agent_url}/create-bot",
+                json={"prompt": prompt},
+                timeout=240,
+            )
+            if resp.status_code == 429:
+                wait_time = min(60, 2 ** attempt)
+                print(f"[warn] GitHub Models rate limited (429). Retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})...")
+                time.sleep(wait_time)
+                continue
+            if resp.status_code != 200:
+                print(f"[error] Meta-Agent returned {resp.status_code}")
+                try:
+                    error_data = resp.json()
+                    print(f"[error] Response: {error_data}")
+                except:
+                    print(f"[error] Response: {resp.text[:500]}")
+                resp.raise_for_status()
+            data = resp.json()
+            if data.get("status") not in ("ready", "complete"):
+                raise RuntimeError(f"Bot generation failed: {data}")
+            return data
+        except requests.exceptions.RequestException as e:
+            if attempt == max_retries - 1:
+                raise
+            wait_time = min(60, 2 ** attempt)
+            print(f"[warn] Request failed: {e}. Retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})...")
+            time.sleep(wait_time)
+    raise RuntimeError("Max retries exceeded")
 
 
 def write_files(data: dict) -> Path:

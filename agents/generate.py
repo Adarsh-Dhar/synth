@@ -114,6 +114,26 @@ RULES:
 9. Keep runtime Solana-native and avoid Move constructs.
 10. If data provider is goldrush, prefer decoded/metadata-aware reads before raw RPC output.
 11. If private execution is true, include MagicBlock/Umbra private transfer hooks in runtime flow.
+
+CRITICAL IMPLEMENTATION DETAILS:
+- Load .env CORRECTLY using explicit path resolution:
+  import {{ config }} from "dotenv";
+  import {{ fileURLToPath }} from "url";
+  import {{ dirname, join }} from "path";
+  const __filename = fileURLToPath(import.meta.url);
+  const botDir = dirname(dirname(__filename));
+  config({{ path: join(botDir, ".env") }});
+- REBALANCE_THRESHOLD_PCT must be parsed as a float, then converted to basis points (multiply by 100, then BigInt):
+  const REBALANCE_THRESHOLD_PCT = BigInt(Math.round(parseFloat(process.env.REBALANCE_THRESHOLD_PCT || '1.5') * 100));
+- When making HTTP requests (axios.get), include headers: {{ 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }}
+- For API rate limiting, add try/catch around all fetch operations with proper logging.
+- Log environment variables at startup for debugging.
+- Ensure MCP_GATEWAY_URL defaults to http://127.0.0.1:8001 if not set.
+
+OUTPUT FILES (generate exactly 3 files):
+1. package.json — with "type": "module" and tsx dev dependencies (including axios, dotenv)
+2. tsconfig.json — with rootDir: "src", include: ["src/**/*"], target: "ES2020", module: "ES2020"
+3. src/index.ts — the main bot logic with proper dotenv loading and error handling
 """.strip()
 
 
