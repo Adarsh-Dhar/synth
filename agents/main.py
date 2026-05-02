@@ -1,277 +1,251 @@
 """
-main.py — Meta-Agent API server (Solana-native, v5 Copilot Edition)
-Start: uvicorn main:app --reload
+agents/main.py — Production Meta-Agent
+=======================================
+Spawns both MCP servers as subprocesses and exposes their tools
+to an async Python orchestrator.
 
-New in v5:
-  - /copilot/* routes via copilot_router.py (start, continue, stream, status)
-  - Session state stored in session_store.py (memory or Redis)
-  - Legacy /create-bot and /create-bot-chat still work unchanged
+Architecture:
+  GoldRush MCP  → Solana on-chain data (read-only oracle)
+  Jupiter MCP   → Docs context, live quotes, bot code generation
+
+Usage:
+  python main.py
+
+Required env vars:
+  GOLDRUSH_API_KEY   — Covalent GoldRush key
+  JUPITER_API_KEY    — Jupiter API key (optional for public endpoints)
+
+Optional env vars:
+  AGENTS_DIR         — Override path to the agents/ directory
+  LOG_LEVEL          — DEBUG | INFO | WARNING (default: INFO)
 """
 
-import os
-import json
+from __future__ import annotations
+
 import asyncio
-import time
-import traceback
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
-from uuid import uuid4
+import json
+import logging
+import os
+import sys
+from pathlib import Path
+from typing import Any
 
-import httpx
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from orchestrator import MetaAgent
+# ── pip install mcp ──
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 
-# Import and mount the copilot router
-from copilot_router import router as copilot_router
+# ─────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────
 
-app = FastAPI(title="Agentia Solana Bot Meta-Agent", version="5.0.0")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+logging.basicConfig(
+    level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+    datefmt="%H:%M:%S",
+    stream=sys.stderr,
 )
+log = logging.getLogger("meta-agent")
 
-# Mount copilot routes at /copilot/*
-app.include_router(copilot_router)
+# ─────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────
 
-agent = MetaAgent()
+AGENTS_DIR = Path(os.environ.get("AGENTS_DIR", Path(__file__).parent))
 
-CREATE_BOT_TIMEOUT = float(os.environ.get("META_AGENT_CREATE_BOT_TIMEOUT_SECONDS", "240"))
-MCP_UPSTREAM_URL = os.environ.get("MCP_UPSTREAM_URL", "http://127.0.0.1:8001").rstrip("/")
-MCP_UPSTREAM_TIMEOUT_SECONDS = float(os.environ.get("MCP_UPSTREAM_TIMEOUT_SECONDS", "12"))
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+GOLDRUSH_SERVER = AGENTS_DIR / "goldrush-mcp-server" / "dist" / "index.js"
+JUPITER_SERVER = AGENTS_DIR / "jupiter-mcp-server" / "dist" / "index.js"
 
-
-# ─── Models ───────────────────────────────────────────────────────────────────
-
-class PromptRequest(BaseModel):
-    prompt: str
+# During development, fall back to tsx (no build required)
+GOLDRUSH_DEV_ENTRY = AGENTS_DIR / "goldrush-mcp-server" / "src" / "index.ts"
+JUPITER_DEV_ENTRY = AGENTS_DIR / "jupiter-mcp-server" / "src" / "index.ts"
 
 
-class GenerateRequest(BaseModel):
-    prompt: str
+def _server_params(dist_path: Path, dev_entry: Path, extra_env: dict[str, str] | None = None) -> StdioServerParameters:
+    """Return StdioServerParameters, preferring built dist/ over tsx dev mode."""
+    env = {**os.environ}
+    if extra_env:
+        env.update(extra_env)
 
+    if dist_path.exists():
+        log.debug("Using built server: %s", dist_path)
+        return StdioServerParameters(command="node", args=["--enable-source-maps", str(dist_path)], env=env)
 
-class ChatMessage(BaseModel):
-    role: str
-    content: str
-
-
-class ChatRequest(BaseModel):
-    messages: List[ChatMessage]
-    request_id: Optional[str] = None
-
-
-class ChatResponse(BaseModel):
-    status: str
-    question: Optional[str]   = None
-    strategy_type: Optional[str] = None
-    missing_parameters: Optional[List[str]] = None
-    collected_parameters: Optional[Dict[str, str]] = None
-    agent_id: Optional[str]   = None
-    bot_name: Optional[str]   = None
-    files: Optional[List[Dict[str, Any]]] = None
-    intent: Optional[Dict[str, Any]]      = None
-    thoughts: Optional[str]   = None
-    message: Optional[str]    = None
-
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-def _ok(payload: dict) -> dict:
-    return {
-        "result": {
-            "isError": False,
-            "content": [{"type": "text", "text": json.dumps(payload)}],
-        }
-    }
-
-
-# ─── Health ───────────────────────────────────────────────────────────────────
-
-@app.get("/health")
-async def health():
-    return {"status": "ok", "version": "5.0.0"}
-
-
-@app.get("/health/copilot")
-async def health_copilot():
-    """Quick sanity check for copilot subsystem."""
-    from session_store import session_exists
-    return {
-        "status": "ok",
-        "copilot_router": "mounted",
-        "session_store": "ready",
-    }
-
-
-@app.get("/mcp/health")
-async def mcp_health():
-    return {"status": "ok", "service": "solana-mcp-compat"}
-
-
-@app.get("/health/dodo")
-async def health_dodo():
-    dodo = os.environ.get("DODO_DOCS_MCP_URL", "http://127.0.0.1:5002").rstrip("/")
-    try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            resp = await client.get(dodo)
-            return {"status": "ok", "dodo": dodo, "upstream_status": resp.status_code}
-    except Exception as exc:
-        return {"status": "unavailable", "dodo": dodo, "detail": str(exc)}
-
-
-# ─── MCP gateway ──────────────────────────────────────────────────────────────
-
-@app.post("/mcp/{server}/{tool}")
-async def mcp_tool(server: str, tool: str, body: dict, request: Request):
-    s = server.strip().lower()
-    t = tool.strip().lower()
-
-    base_headers = {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-    }
-    session_key = str(request.headers.get("x-session-key", "")).strip()
-    if session_key:
-        base_headers["x-session-key"] = session_key
-
-    candidates = [
-        f"{MCP_UPSTREAM_URL}/mcp/{s}/{t}",
-        f"{MCP_UPSTREAM_URL}/{s}/{t}",
-    ]
-
-    last_error = ""
-    async with httpx.AsyncClient(timeout=MCP_UPSTREAM_TIMEOUT_SECONDS) as client:
-        for url in candidates:
-            try:
-                resp = await client.post(url, json=body, headers=base_headers)
-                if resp.status_code == 404:
-                    last_error = f"404 at {url}"
-                    continue
-                resp.raise_for_status()
-                payload = resp.json()
-                if isinstance(payload, dict) and isinstance(payload.get("result"), dict):
-                    return payload
-                return _ok({
-                    "available": True,
-                    "server": s,
-                    "tool": t,
-                    "source": "upstream",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "data": payload,
-                })
-            except Exception as exc:
-                last_error = str(exc)
-
-    return _ok({
-        "available": False,
-        "server": s,
-        "tool": t,
-        "message": "Tool unavailable from configured MCP upstream.",
-        "upstream": MCP_UPSTREAM_URL,
-        "detail": last_error,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
-
-
-# ─── Legacy single-shot endpoint (unchanged) ──────────────────────────────────
-
-@app.post("/create-bot")
-async def create_bot(req: PromptRequest, request: Request):
-    rid = (request.headers.get("x-request-id") or uuid4().hex[:8]).strip()[:12]
-    t0  = time.monotonic()
-    print(f"[create-bot] [{rid}] chars={len(req.prompt)}")
-    try:
-        result = await asyncio.wait_for(
-            agent.build_bot(req.prompt, rid),
-            timeout=CREATE_BOT_TIMEOUT,
+    if dev_entry.exists():
+        log.warning(
+            "Built server not found at %s — falling back to tsx (dev mode). Run `npm run build` for production.",
+            dist_path,
         )
-        print(f"[create-bot] [{rid}] done in {round(time.monotonic()-t0,2)}s")
-        return result
-    except asyncio.TimeoutError:
-        raise HTTPException(504, f"Timed out after {CREATE_BOT_TIMEOUT:.0f}s")
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(500 if "timeout" not in str(e).lower() else 504, str(e))
+        return StdioServerParameters(command="npx", args=["tsx", str(dev_entry)], env=env)
 
-
-@app.post("/generate-stream")
-async def generate_bot_stream(req: GenerateRequest):
-    return StreamingResponse(
-        agent.orchestrate_bot_creation_stream(req.prompt),
-        media_type="text/event-stream",
+    raise FileNotFoundError(
+        f"Cannot find server binary at {dist_path} or dev entry at {dev_entry}. "
+        "Run `npm run build` inside the server directory."
     )
 
 
-@app.post("/demo/generate")
-async def demo_generate(request: Request):
-    import sys
-    sys.path.insert(0, str(_BASE_DIR))
+# ─────────────────────────────────────────────
+# Session helpers
+# ─────────────────────────────────────────────
+
+
+async def list_tools(session: ClientSession) -> list[str]:
+    """Return the names of all tools exposed by an MCP session."""
+    resp = await session.list_tools()
+    return [t.name for t in resp.tools]
+
+
+async def call_tool(session: ClientSession, name: str, args: dict[str, Any]) -> Any:
+    """
+    Call a tool and return the parsed result.
+
+    Raises RuntimeError if the tool signals an error.
+    """
+    result = await session.call_tool(name, arguments=args)
+
+    if result.isError:
+        content = result.content[0].text if result.content else "(no content)"
+        raise RuntimeError(f"Tool '{name}' returned an error: {content}")
+
+    raw = result.content[0].text if result.content else "{}"
     try:
-        from demo.prompt_template import build_prompt
-        prompt = build_prompt()
-    except ImportError as e:
-        raise HTTPException(500, f"Demo module not found: {e}")
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return raw  # Return as plain text if not JSON
 
-    rid = uuid4().hex[:8]
+
+# ─────────────────────────────────────────────
+# Demo workflow
+# ─────────────────────────────────────────────
+
+
+async def demo_workflow(
+    goldrush: ClientSession,
+    jupiter: ClientSession,
+    target_wallet: str,
+    strategy: str = "copy_trade",
+) -> None:
+    """
+    Example orchestration:
+    1. Validate the target wallet via GoldRush
+    2. Search Jupiter docs for the requested strategy
+    3. Generate bot code
+    4. Get a live quote to validate the swap parameters
+
+    Replace this function with your real agent logic.
+    """
+    log.info("═══ Step 1: Fetch wallet balances (GoldRush) ═══")
+    balances = await call_tool(goldrush, "get_token_balances", {"wallet": target_wallet})
+    items = (balances or {}).get("items", [])
+    log.info("Wallet %s holds %d token(s).", target_wallet[:8] + "…", len(items))
+    for item in items[:5]:
+        symbol = item.get("contract_ticker_symbol", "?")
+        usd = item.get("quote", 0)
+        log.info("  %-10s  $%.2f", symbol, usd)
+
+    log.info("")
+    log.info("═══ Step 2: Fetch recent transactions (GoldRush) ═══")
+    txns = await call_tool(
+        goldrush, "get_transactions", {"wallet": target_wallet, "page_size": 5}
+    )
+    tx_items = (txns or {}).get("items", [])
+    log.info("Latest %d transaction(s):", len(tx_items))
+    for tx in tx_items:
+        log.info("  %s  %s", tx.get("tx_hash", "?")[:16] + "…", tx.get("block_signed_at", ""))
+
+    log.info("")
+    log.info("═══ Step 3: Search Jupiter docs for strategy ═══")
+    docs = await call_tool(jupiter, "search_docs", {"query": strategy.replace("_", " "), "include_examples": True})
+    if isinstance(docs, list):
+        for doc in docs[:2]:
+            log.info("  [%s] %s", doc.get("id"), doc.get("title"))
+    else:
+        log.info("  %s", docs)
+
+    log.info("")
+    log.info("═══ Step 4: Generate bot code ═══")
+    bot = await call_tool(
+        jupiter,
+        "generate_bot_code",
+        {
+            "strategy": strategy,
+            "params": {
+                "target_wallet": target_wallet,
+                "position_size_usdc": 100,
+            },
+        },
+    )
+    filename = bot.get("filename", "bot.ts")
+    code_snippet = (bot.get("code", "") or "")[:300]
+    log.info("Generated: %s", filename)
+    log.info("Code preview:\n%s…", code_snippet)
+
+    log.info("")
+    log.info("═══ Step 5: Get live quote (Jupiter) ═══")
+    SOL_MINT = "So11111111111111111111111111111111111111112"
+    USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
     try:
-        result = await asyncio.wait_for(
-            agent.build_bot(prompt, rid),
-            timeout=CREATE_BOT_TIMEOUT,
+        quote_result = await call_tool(
+            jupiter,
+            "get_quote",
+            {
+                "input_mint": SOL_MINT,
+                "output_mint": USDC_MINT,
+                "amount": 1_000_000_000,  # 1 SOL
+                "slippage_bps": 50,
+            },
         )
-        return result
-    except asyncio.TimeoutError:
-        raise HTTPException(504, f"Timed out after {CREATE_BOT_TIMEOUT:.0f}s")
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(500, str(e))
+        quote = quote_result.get("quote", {})
+        out_amount = int(quote.get("outAmount", 0)) / 1_000_000  # USDC has 6 decimals
+        log.info("1 SOL → %.2f USDC (slippage ≤ 0.5%%)", out_amount)
+    except RuntimeError as exc:
+        log.warning("Quote failed (expected outside Solana network): %s", exc)
+
+    log.info("")
+    log.info("✓ Workflow complete. Bot file '%s' is ready to save.", filename)
 
 
-# ─── Legacy multi-turn endpoint (unchanged) ───────────────────────────────────
+# ─────────────────────────────────────────────
+# Entry point
+# ─────────────────────────────────────────────
 
-@app.post("/create-bot-chat", response_model=ChatResponse)
-async def create_bot_chat(req: ChatRequest, request: Request):
-    rid  = req.request_id or (request.headers.get("x-request-id") or uuid4().hex[:8]).strip()[:12]
-    t0   = time.monotonic()
-    hist = [{"role": m.role, "content": m.content} for m in req.messages]
-    print(f"[create-bot-chat] [{rid}] turns={len(hist)}")
 
-    try:
-        raw: Dict[str, Any] = await asyncio.wait_for(
-            agent.build_bot_with_history(hist, rid),
-            timeout=CREATE_BOT_TIMEOUT,
-        )
-    except asyncio.TimeoutError:
-        return ChatResponse(status="error", message=f"Timed out after {CREATE_BOT_TIMEOUT:.0f}s.")
-    except Exception as exc:
-        traceback.print_exc()
-        return ChatResponse(status="error", message=str(exc))
+async def main() -> None:
+    # Validate required keys
+    if not os.environ.get("GOLDRUSH_API_KEY"):
+        log.error("GOLDRUSH_API_KEY is not set. Cannot start.")
+        sys.exit(1)
 
-    print(f"[create-bot-chat] [{rid}] status={raw.get('status')} in {round(time.monotonic()-t0,2)}s")
+    goldrush_params = _server_params(GOLDRUSH_SERVER, GOLDRUSH_DEV_ENTRY)
+    jupiter_params = _server_params(JUPITER_SERVER, JUPITER_DEV_ENTRY)
 
-    if raw.get("status") == "clarification_needed":
-        return ChatResponse(
-            status="clarification_needed",
-            question=raw.get("question", "Could you provide more details?"),
-            strategy_type=raw.get("strategy_type"),
-            missing_parameters=raw.get("missing_parameters", []),
-            collected_parameters=raw.get("collected_parameters", {}),
-        )
+    log.info("Connecting to GoldRush MCP server…")
+    log.info("Connecting to Jupiter MCP server…")
 
-    if raw.get("status") == "ready":
-        out  = raw.get("output", {})
-        intent = raw.get("intent", {})
-        return ChatResponse(
-            status="ready",
-            bot_name=str(intent.get("bot_name", "Agentia Solana Bot")),
-            files=out.get("files", []),
-            intent=intent,
-            thoughts=out.get("thoughts", ""),
-        )
+    async with (
+        stdio_client(goldrush_params) as (gr_read, gr_write),
+        stdio_client(jupiter_params) as (jup_read, jup_write),
+    ):
+        async with (
+            ClientSession(gr_read, gr_write) as goldrush,
+            ClientSession(jup_read, jup_write) as jupiter,
+        ):
+            await goldrush.initialize()
+            await jupiter.initialize()
 
-    return ChatResponse(status="error", message=raw.get("message", "Unknown error."))
+            gr_tools = await list_tools(goldrush)
+            jup_tools = await list_tools(jupiter)
+            log.info("GoldRush tools: %s", gr_tools)
+            log.info("Jupiter tools:  %s", jup_tools)
+
+            # ── Replace with your target wallet and strategy ──
+            TARGET_WALLET = os.environ.get(
+                "TARGET_WALLET",
+                "7VHUFyQ3G16i1mLexiBb5e7abmQmvBp7EBrE8mGq4pXb",  # example only
+            )
+            STRATEGY = os.environ.get("BOT_STRATEGY", "copy_trade")
+
+            await demo_workflow(goldrush, jupiter, TARGET_WALLET, STRATEGY)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

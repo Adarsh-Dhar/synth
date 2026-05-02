@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Bot, BarChart3, Zap, Wallet, Menu, X, LogOut,
-  Settings2, CreditCard, Lock,
+  Settings2, CreditCard, Lock, Tag,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -42,6 +42,7 @@ export function Sidebar() {
     { href: '/dashboard/deploy',               label: 'Deploy Agent',     icon: Zap },
     { href: '/dashboard/agents',               label: 'Active Agents',    icon: Bot },
     { href: '/dashboard/bridge',               label: 'Bridge/Wallet',    icon: Wallet },
+    { href: '/dashboard/pricing',              label: 'Pricing',          icon: Tag },
     { href: '/dashboard/billing',              label: 'Billing',          icon: CreditCard },
     { href: '/dashboard/privacy',              label: 'Privacy Center',   icon: Lock },
     {
