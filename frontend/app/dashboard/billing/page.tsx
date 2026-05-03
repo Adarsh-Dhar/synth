@@ -11,7 +11,7 @@
  *  - Recent webhook events (subscription history)
  */
 
-import React, { useCallback, useEffect } from "react";
+import React, { Suspense, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CreditCard, Zap, RefreshCw, ExternalLink,
@@ -65,9 +65,9 @@ function UsageMeterBar({ pct, unlimited }: { pct: number; unlimited: boolean }) 
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
+// ── Inner billing content (uses useSearchParams) ────────────────────────────────
 
-export default function BillingPage() {
+function BillingContent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const paymentStatus = searchParams.get("dodo");
@@ -305,5 +305,15 @@ export default function BillingPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// ── Page export (wrapped in Suspense for useSearchParams) ────────────────────────
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+      <BillingContent />
+    </Suspense>
   );
 }

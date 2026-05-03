@@ -7,8 +7,8 @@
  * Opens Dodo Overlay Checkout so users never leave the page.
  *
  * Usage:
- *   <DodoCheckoutButton planType="pro" />
- *   <DodoCheckoutButton planType="topup" topupProductId={TOPUP_ID} label="Buy 500 Credits ($5)" />
+ *   <DodoCheckoutButton planType="pro" productId="pdt_0Ne0ZzHuknqvRLcRxK1K9" />
+ *   <DodoCheckoutButton planType="topup" topupProductId="pdt_0Ne0aafxIPJ1U3L2TuQ1l" label="Buy 500 Credits ($4.99)" />
  */
 
 import { useState, useCallback } from "react";
@@ -21,6 +21,9 @@ export type PlanType = "pro" | "enterprise" | "topup";
 
 interface DodoCheckoutButtonProps {
   planType: PlanType;
+  /** Direct Dodo product ID — takes precedence over topupProductId for topup type */
+  productId?: string;
+  /** Legacy: Dodo product ID for top-up purchases */
   topupProductId?: string;
   label?: string;
   className?: string;
@@ -33,6 +36,7 @@ interface DodoCheckoutButtonProps {
 
 export function DodoCheckoutButton({
   planType,
+  productId,
   topupProductId,
   label,
   className,
@@ -62,8 +66,11 @@ export function DodoCheckoutButton({
       const authHeaders = await getWalletAuthHeaders(walletSigner);
 
       const body: Record<string, unknown> = { planType };
-      if (planType === "topup" && topupProductId) {
-        body.productId = topupProductId;
+
+      // Resolve product ID — direct prop takes precedence
+      const resolvedProductId = productId ?? (planType === "topup" ? topupProductId : undefined);
+      if (resolvedProductId) {
+        body.productId = resolvedProductId;
       }
 
       const res = await fetch("/api/payments/checkout", {
@@ -105,7 +112,7 @@ export function DodoCheckoutButton({
     } finally {
       setLoading(false);
     }
-  }, [planType, topupProductId, walletSigner, onSuccess, onClose]);
+  }, [planType, productId, topupProductId, walletSigner, onSuccess, onClose]);
 
   return (
     <div className="flex flex-col gap-1">

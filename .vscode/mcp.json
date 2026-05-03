@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"Privy Docs": {
+			"url": "https://docs.privy.io/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}

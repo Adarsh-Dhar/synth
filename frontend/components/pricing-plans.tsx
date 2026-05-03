@@ -25,6 +25,7 @@ interface Plan {
   };
   highlight?: boolean;
   ctaLabel: string;
+  productId?: string;
 }
 
 const PLANS: Plan[] = [
@@ -47,7 +48,7 @@ const PLANS: Plan[] = [
   {
     id: "pro",
     name: "Pro",
-    price: "$20",
+    price: "$14.99",
     period: "/ month",
     description: "Serious traders running multiple concurrent bots.",
     features: [
@@ -62,11 +63,12 @@ const PLANS: Plan[] = [
     limits: { agents: 10, runningAgents: 5, usageUnits: 10_000, credits: 2_000 },
     highlight: true,
     ctaLabel: "Upgrade to Pro",
+    productId: "pdt_0Ne0ZzHuknqvRLcRxK1K9",
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    price: "$99",
+    price: "$99.99",
     period: "/ month",
     description: "Teams and institutional traders at scale.",
     features: [
@@ -81,6 +83,7 @@ const PLANS: Plan[] = [
     ],
     limits: { agents: 100, runningAgents: 25, usageUnits: "Unlimited", credits: 10_000 },
     ctaLabel: "Upgrade to Enterprise",
+    productId: "pdt_0Ne0aCoFw2FGrzxaPrPiN",
   },
 ];
 
@@ -165,6 +168,7 @@ export function PricingPlans({ currentTier = "FREE", onUpgraded, compact = false
               ) : (
                 <DodoCheckoutButton
                   planType={plan.id as "pro" | "enterprise"}
+                  productId={plan.productId}
                   label={plan.ctaLabel}
                   className={`w-full ${plan.highlight ? "bg-primary hover:bg-primary/90 text-primary-foreground" : ""}`}
                   variant={plan.highlight ? "default" : "outline"}
@@ -186,14 +190,33 @@ interface TopupBundle {
   credits: number;
   price: string;
   priceLabel: string;
-  productEnvKey: string;
+  productId: string;
   popular?: boolean;
 }
 
 const TOPUP_BUNDLES: TopupBundle[] = [
-  { id: "500", credits: 500, price: "$5", priceLabel: "$0.01 / credit", productEnvKey: "DODO_TOPUP_500_ID" },
-  { id: "2000", credits: 2_000, price: "$15", priceLabel: "$0.0075 / credit", productEnvKey: "DODO_TOPUP_2000_ID", popular: true },
-  { id: "10000", credits: 10_000, price: "$50", priceLabel: "$0.005 / credit", productEnvKey: "DODO_TOPUP_10000_ID" },
+  {
+    id: "500",
+    credits: 500,
+    price: "$4.99",
+    priceLabel: "$0.00998 / credit",
+    productId: "pdt_0Ne0aafxIPJ1U3L2TuQ1l",
+  },
+  {
+    id: "2000",
+    credits: 2_000,
+    price: "$14.99",
+    priceLabel: "$0.0075 / credit",
+    productId: "pdt_0Ne0ajLByYILVD88OEGSz",
+    popular: true,
+  },
+  {
+    id: "10000",
+    credits: 10_000,
+    price: "$49.99",
+    priceLabel: "$0.005 / credit",
+    productId: "pdt_0Ne0ariRdRBGFskEOFvXd",
+  },
 ];
 
 interface CreditTopupsProps {
@@ -230,7 +253,7 @@ export function CreditTopups({ onPurchased }: CreditTopupsProps) {
 
           <DodoCheckoutButton
             planType="topup"
-            topupProductId={bundle.productEnvKey}
+            topupProductId={bundle.productId}
             label={`Buy ${bundle.credits.toLocaleString()} Credits`}
             size="sm"
             variant={bundle.popular ? "default" : "outline"}
