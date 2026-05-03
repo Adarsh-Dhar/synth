@@ -103,7 +103,6 @@ ensure_node_deps "$AGENTS_DIR/solana-mcp-server"
 ensure_node_deps "$AGENTS_DIR/goldrush-mcp-server"
 ensure_node_deps "$AGENTS_DIR/magicblock-mcp-server"
 ensure_node_deps "$AGENTS_DIR/jupiter-mcp-server"
-ensure_node_deps "$AGENTS_DIR/dodo-mcp-server"
 
 start_service \
 	"mcp-solana" \
@@ -126,11 +125,6 @@ start_service \
 	"PORT=8013 HOST=127.0.0.1 pnpm dev"
 
 start_service \
-	"mcp-dodo" \
-	"$AGENTS_DIR/dodo-mcp-server" \
-	"PORT=8014 HOST=127.0.0.1 pnpm dev"
-
-start_service \
 	"frontend" \
 	"$FRONTEND_DIR" \
 	"PORT=5000 META_AGENT_URL=http://127.0.0.1:5001 NEXT_PUBLIC_META_AGENT_URL=http://127.0.0.1:5001 WORKER_URL=http://127.0.0.1:5002 MCP_GATEWAY_URL=http://127.0.0.1:8001 NEXT_PUBLIC_MCP_GATEWAY_URL=http://127.0.0.1:8001 pnpm dev --port 5000"
@@ -138,7 +132,7 @@ start_service \
 start_service \
 	"agents" \
 	"$AGENTS_DIR" \
-	"SOLANA_MCP_URL=http://127.0.0.1:8001 DODO_MCP_URL=http://127.0.0.1:8014 JUPITER_DOCS_MCP_URL=http://127.0.0.1:8013 DODO_DOCS_MCP_URL=http://127.0.0.1:8014 JUPITER_MCP_SSE_URL=http://127.0.0.1:8013/sse DODO_MCP_SSE_URL=http://127.0.0.1:8014/sse SOLANA_MCP_SSE_URL= GOLDRUSH_MCP_SSE_URL= UMBRA_MCP_SSE_URL= \"$AGENTS_PYTHON\" -m uvicorn main:app --reload --host 0.0.0.0 --port 5001"
+	"SOLANA_MCP_URL=http://127.0.0.1:8001 JUPITER_DOCS_MCP_URL=http://127.0.0.1:8013 JUPITER_MCP_SSE_URL=http://127.0.0.1:8013/sse SOLANA_MCP_SSE_URL= GOLDRUSH_MCP_SSE_URL= UMBRA_MCP_SSE_URL= \"$AGENTS_PYTHON\" -m uvicorn main_asgi:app --reload --host 0.0.0.0 --port 5001"
 
 start_service \
 	"worker" \
@@ -153,7 +147,6 @@ echo "mcp-solana:     http://127.0.0.1:8001"
 echo "mcp-goldrush:   http://127.0.0.1:8011"
 echo "mcp-magicblock: http://127.0.0.1:8012"
 echo "mcp-jupiter:    http://127.0.0.1:8013/sse"
-echo "mcp-dodo:       http://127.0.0.1:8014/sse"
 
 while true; do
 	i=0

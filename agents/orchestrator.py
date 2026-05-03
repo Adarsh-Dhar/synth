@@ -63,9 +63,6 @@ COPILOT_ENABLED      = os.environ.get("COPILOT_ENABLED", "true").lower() != "fal
 JUPITER_DOCS_MCP_URL = os.environ.get("JUPITER_DOCS_MCP_URL", "http://127.0.0.1:5001").rstrip("/")
 JUPITER_DOCS_TIMEOUT_SECONDS = float(os.environ.get("JUPITER_DOCS_TIMEOUT_SECONDS", "8"))
 JUPITER_DOCS_MAX_CHARS = int(os.environ.get("JUPITER_DOCS_MAX_CHARS", "4000"))
-DODO_DOCS_MCP_URL = os.environ.get("DODO_DOCS_MCP_URL", "http://127.0.0.1:5002").rstrip("/")
-DODO_DOCS_TIMEOUT_SECONDS = float(os.environ.get("DODO_DOCS_TIMEOUT_SECONDS", "6"))
-DODO_DOCS_MAX_CHARS = int(os.environ.get("DODO_DOCS_MAX_CHARS", "4000"))
 CONTEXT_INJECTION_MAX_CHARS = int(os.environ.get("CONTEXT_INJECTION_MAX_CHARS", "12000"))
 
 
@@ -630,7 +627,7 @@ class MetaAgent:
         network = confirmed_parameters.get("SOLANA_NETWORK", "mainnet-beta")
 
         # Fetch RAG context
-        jupiter_docs, dodo_docs = await self._fetch_rag_context(enriched_prompt, strategy)
+        jupiter_docs = await self._fetch_rag_context(enriched_prompt, strategy)
 
         chain_ctx = self._chain_context(network, strategy)
 
@@ -645,8 +642,6 @@ class MetaAgent:
 
         if jupiter_docs:
             user_msg += f"=== JUPITER CONTEXT ===\n{jupiter_docs[:JUPITER_DOCS_MAX_CHARS]}\n\n"
-        if dodo_docs:
-            user_msg += f"=== DODO CONTEXT ===\n{dodo_docs[:DODO_DOCS_MAX_CHARS]}\n\n"
 
         if strategy in ("yield_sweeper", "shielded_yield"):
             user_msg += DEMO_CONTEXT + "\n\n"
@@ -719,12 +714,11 @@ class MetaAgent:
 
     # ── RAG context fetcher ────────────────────────────────────────────────────
 
-    async def _fetch_rag_context(self, prompt: str, strategy: str) -> tuple[str, str]:
-        """Fetch Jupiter and Dodo docs from MCP servers."""
+    async def _fetch_rag_context(self, prompt: str, strategy: str) -> str:
+        """Fetch Jupiter docs from the MCP server when the prompt warrants it."""
         normalized = prompt.lower()
         needs_jupiter = strategy in {"arbitrage", "sniping", "dca", "grid", "whale_mirror", "yield_sweeper"} or \
                         any(t in normalized for t in ("jupiter", "swap", "quote", "trade"))
-        needs_dodo = any(t in normalized for t in ("dodo", "payment", "meter", "billing", "split", "checkout"))
 
         mcp = MultiMCPClient()
         try:
@@ -732,7 +726,7 @@ class MetaAgent:
         except Exception:
             pass
 
-        jup_res, dodo_res = "", ""
+        jup_res = ""
 
         if needs_jupiter:
             try:
@@ -740,18 +734,12 @@ class MetaAgent:
             except Exception as exc:
                 _log("WARN", f"Jupiter MCP docs failed: {exc}")
 
-        if needs_dodo:
-            try:
-                dodo_res = await mcp.call_tool("dodo", "dodo_docs", {"query": prompt})
-            except Exception as exc:
-                _log("WARN", f"Dodo MCP docs failed: {exc}")
-
         try:
             await mcp.shutdown()
         except Exception:
             pass
 
-        return str(jup_res or ""), str(dodo_res or "")
+        return str(jup_res or "")
 
     # ── Planner orchestration (legacy) ─────────────────────────────────────────
 
@@ -824,13 +812,11 @@ class MetaAgent:
 
         yield emit({"status": "fetching_context", "message": "Fetching SDK docs from MCP servers..."})
 
-        jupiter_docs, dodo_docs = await self._fetch_rag_context(user_msg, plan.strategy_type)
+        jupiter_docs = await self._fetch_rag_context(user_msg, plan.strategy_type)
 
         enriched_prompt = f"{user_msg}\n\n"
         if jupiter_docs:
             enriched_prompt += f"=== JUPITER CONTEXT ===\n{jupiter_docs}\n\n"
-        if dodo_docs:
-            enriched_prompt += f"=== DODO CONTEXT ===\n{dodo_docs}\n\n"
 
         yield emit({"status": "generating_code", "message": "AI is writing TypeScript code..."})
 
@@ -938,16 +924,14 @@ class MetaAgent:
             "collected_parameters": plan.collected_parameters,
         }
 
-        jupiter_docs, dodo_docs = await self._fetch_rag_context(enriched_prompt, plan.strategy_type)
+        jupiter_docs = await self._fetch_rag_context(enriched_prompt, plan.strategy_type)
 
         combined = ""
         if jupiter_docs:
             combined += f"JUPITER DOCS CONTEXT (live MCP):\n{jupiter_docs[:JUPITER_DOCS_MAX_CHARS]}\n\n"
-        if dodo_docs:
-            combined += f"DODO DOCS CONTEXT (live MCP):\n{dodo_docs[:DODO_DOCS_MAX_CHARS]}\n\n"
 
         if not combined:
-            combined = "JUPITER + DODO DOCS CONTEXT: unavailable for this request.\n\n"
+            combined = "JUPITER DOCS CONTEXT: unavailable for this request.\n\n"
 
         if plan.strategy_type in ("yield_sweeper", "shielded_yield"):
             combined += DEMO_CONTEXT + "\n\n"

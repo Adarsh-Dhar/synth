@@ -32,8 +32,6 @@ DEFAULT_CONFIG = {
     "dataProvider": "goldrush",
     "privateExecution": False,
     "maxRiskScore": 20,
-    # Dodo payment/pro plans
-    "dodoPlanProId": "",
 }
 
 CHAIN_IDS = {

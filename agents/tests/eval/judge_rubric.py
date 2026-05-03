@@ -62,14 +62,14 @@ def check_no_cli_execution(code: str) -> RubricResult:
     )
 
 
-def check_dodo_webhook_when_requested(code: str, requested: bool) -> RubricResult:
+def check_payment_webhook_when_requested(code: str, requested: bool) -> RubricResult:
     if not requested:
-        return RubricResult("dodo_webhook_when_requested", True, "not requested")
-    has_webhook = bool(re.search(r"dodo.*webhook|webhook.*dodo|/dodo/webhook", code, re.I))
+        return RubricResult("payment_webhook_when_requested", True, "not requested")
+    has_webhook = bool(re.search(r"payment.*webhook|webhook.*payment|/payment/webhook", code, re.I))
     return RubricResult(
-        name="dodo_webhook_when_requested",
+        name="payment_webhook_when_requested",
         passed=has_webhook,
-        detail="expects Dodo webhook handler references",
+        detail="expects payment webhook handler references",
     )
 
 
@@ -152,11 +152,11 @@ def check_yield_uses_mcp_execution(code: str, requested: bool) -> RubricResult:
     )
 
 
-def evaluate(code: str, dodo_requested: bool, yield_sweeper_requested: bool) -> List[RubricResult]:
+def evaluate(code: str, payment_requested: bool, yield_sweeper_requested: bool) -> List[RubricResult]:
     return [
         check_uses_axios_for_jupiter(code, yield_requested=yield_sweeper_requested),
         check_no_cli_execution(code),
-        check_dodo_webhook_when_requested(code, requested=dodo_requested),
+        check_payment_webhook_when_requested(code, requested=payment_requested),
         check_bigint_for_amounts(code),
         check_no_hardcoded_addresses(code),
         check_yield_has_apy_fetch_tool(code, requested=yield_sweeper_requested),
@@ -355,7 +355,7 @@ def run_live_yield_checks(threshold_pct: float = _REBALANCE_THRESHOLD) -> List[R
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run judge rubric on generated TS file")
     parser.add_argument("--file", required=True, help="Path to generated src/index.ts")
-    parser.add_argument("--dodo-requested", action="store_true", help="Require Dodo webhook checks")
+    parser.add_argument("--payment-requested", action="store_true", help="Require payment webhook checks")
     parser.add_argument("--yield-sweeper-requested", action="store_true", help="Require yield sweeper loop checks")
     parser.add_argument(
         "--live-yield-check",
@@ -372,7 +372,7 @@ def main() -> int:
     code = Path(args.file).read_text(encoding="utf-8")
     results = evaluate(
         code,
-        dodo_requested=args.dodo_requested,
+        payment_requested=args.payment_requested,
         yield_sweeper_requested=args.yield_sweeper_requested,
     )
 

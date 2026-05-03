@@ -42,13 +42,12 @@ class MultiMCPClient:
             "solana": "SOLANA_MCP_SSE_URL",
             "jupiter": "JUPITER_MCP_SSE_URL",
             "goldrush": "GOLDRUSH_MCP_SSE_URL",
-            "dodo": "DODO_MCP_SSE_URL",
             "umbra": "UMBRA_MCP_SSE_URL",
         }.get(name, f"{name.upper()}_MCP_SSE_URL")
 
     def connection_diagnostics(self) -> list[str]:
         diagnostics = []
-        for name in ("solana", "jupiter", "goldrush", "dodo", "umbra"):
+        for name in ("solana", "jupiter", "goldrush", "umbra"):
             env_name = self.expected_default_session_env(name)
             env_value = os.environ.get(env_name, "").strip()
             if name in self.sessions:
@@ -199,7 +198,6 @@ class MultiMCPClient:
             ("solana", os.environ.get("SOLANA_MCP_SSE_URL", "").strip()),
             ("jupiter", os.environ.get("JUPITER_MCP_SSE_URL", "").strip()),
             ("goldrush", os.environ.get("GOLDRUSH_MCP_SSE_URL", "").strip()),
-            ("dodo", os.environ.get("DODO_MCP_SSE_URL", "").strip()),
             ("umbra", os.environ.get("UMBRA_MCP_SSE_URL", "").strip()),
         ]
         for name, url in sse_targets:

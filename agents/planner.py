@@ -21,7 +21,6 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 SOLANA_MCP_BASE           = os.environ.get("SOLANA_MCP_URL", "http://127.0.0.1:8001")
-DODO_MCP_BASE             = os.environ.get("DODO_MCP_URL", "http://127.0.0.1:5002")
 MCP_TIMEOUT               = float(os.environ.get("SOLANA_MCP_TIMEOUT_SECONDS", "10"))
 PLANNER_HISTORY_MAX_TURNS = int(os.environ.get("PLANNER_HISTORY_MAX_TURNS", "6"))
 PLANNER_HISTORY_MAX_CHARS = int(os.environ.get("PLANNER_HISTORY_MAX_CHARS", "3000"))
@@ -53,7 +52,7 @@ class PlannerState(BaseModel):
         description=(
             "Detected strategy: 'yield_sweeper' | 'arbitrage' | 'liquidation' | "
             "'sniping' | 'dca' | 'grid' | 'whale_mirror' | 'sentiment' | "
-            "'private_transfer' | 'shielded_yield' | 'metered_execution' | 'custom_utility' | 'unknown'"
+            "'private_transfer' | 'shielded_yield' | 'custom_utility' | 'unknown'"
         )
     )
     collected_parameters: Dict[str, str] = Field(
@@ -120,7 +119,7 @@ STRATEGY DETECTION:
   grid                                   → "grid"
   whale / copy-trade                     → "whale_mirror"
   sentiment / social / news              → "sentiment"
-  anything else                          → "custom_utility"
+    anything else                          → "custom_utility"
 
 REQUIRED PARAMETERS by strategy:
   yield_sweeper:   USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS, SOLANA_NETWORK
@@ -136,7 +135,6 @@ REQUIRED PARAMETERS by strategy:
                                         MAGICBLOCK_PRIVATE_PAYMENTS_BASE_URL
     shielded_yield:  USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS, UMBRA_PROGRAM_ADDRESS,
                                      UMBRA_NETWORK
-    metered_execution: USER_WALLET_ADDRESS, DODO_PLAN_PRO_ID
   custom_utility:  only what the user explicitly provided
 
 MCP VERIFICATION RULES:
@@ -145,8 +143,7 @@ MCP VERIFICATION RULES:
 3. .sol domain provided: resolve with mcp_tool="resolve_sns", payload={network, name: "<domain>.sol"}
 4. GoldRush data checks: mcp_tool="goldrush_token_balances" with wallet and network.
 5. MagicBlock private transfer checks: mcp_tool="magicblock_transfer" with from/to/mint/amount.
-6. Dodo metering/checkout checks: mcp_tool="dodo_metering" or "dodo_checkout" with plan and wallet info.
-7. When uncertain about a value, set needs_mcp_query=true for orchestrator verification.
+6. When uncertain about a value, set needs_mcp_query=true for orchestrator verification.
 
 FLOW:
 1. If required params are missing: set missing_parameters and clarifying_question_for_user.
@@ -193,13 +190,9 @@ class SolanaMCPClient:
             "magicblock_withdraw": "/magicblock/withdraw",
             "umbra_shield": "/umbra/shield",
             "umbra_transfer": "/umbra/transfer",
-            "dodo_checkout": "/dodo/checkout",
-            "dodo_webhook": "/dodo/webhook",
-            "dodo_metering": "/dodo/meter",
         }
         path = endpoint_map.get(tool, "/solana/get_balance")
-        base_url = DODO_MCP_BASE if tool.startswith("dodo_") else self.base_url
-        url  = f"{base_url.rstrip('/')}{path}"
+        url  = f"{self.base_url.rstrip('/')}" + path
 
         # Strip internal planner-only fields before forwarding
         fwd = {k: v for k, v in payload.items() if k not in {"mcp_tool", "verification_purpose"}}

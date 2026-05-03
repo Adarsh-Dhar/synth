@@ -7,8 +7,8 @@ prompts:
     - Use BigInt for monetary values
     - No hardcoded addresses, read from env
     - MUST use the MCP bridge (callMcpTool) for all Jupiter swaps.
-    {{#if dodoRequested}}
-    - Include Dodo webhook handler for payment/profit split events utilizing callMcpTool
+    {{#if paymentRequested}}
+    - Include a payment webhook handler for profit split events utilizing callMcpTool
     {{/if}}
 providers:
   - id: openai:gpt-4o-mini
@@ -17,7 +17,7 @@ providers:
 tests:
   - vars:
       strategy: arbitrage
-      dodoRequested: false
+      paymentRequested: false
     assert:
       - type: contains
         value: 'callMcpTool("jupiter", "execute_swap"'
@@ -31,9 +31,9 @@ tests:
         value: BigInt
   - vars:
       strategy: arbitrage
-      dodoRequested: true
+      paymentRequested: true
     assert:
       - type: contains
-        value: 'callMcpTool("dodo", "dodo_checkout"'
+        value: '/payment/webhook'
       - type: contains
         value: 'callMcpTool("jupiter", "execute_swap"'

@@ -45,8 +45,6 @@ def test_user_msg_contains_both_contexts_when_both_available(monkeypatch):
             calls.append((server, tool, args.get("query", "")))
             if server == "jupiter":
                 return "JUPITER docs here"
-            if server == "dodo":
-                return "DODO docs here"
             return ""
 
         async def shutdown(self):
@@ -63,10 +61,8 @@ def test_user_msg_contains_both_contexts_when_both_available(monkeypatch):
     asyncio.run(agent._generate_code_with_plan(plan, prompt, trace_id="test1"))
 
     assert any(c[0] == "jupiter" and c[1] == "jupiter_docs" for c in calls)
-    assert any(c[0] == "dodo" and c[1] == "dodo_docs" for c in calls)
     assert captured["user"] is not None
     assert "JUPITER DOCS CONTEXT" in captured["user"]
-    assert "DODO DOCS CONTEXT" in captured["user"]
 
 
 def test_jupiter_context_absent_when_unreachable(monkeypatch):
@@ -81,8 +77,6 @@ def test_jupiter_context_absent_when_unreachable(monkeypatch):
         async def call_tool(self, server, tool, args):
             if server == "jupiter":
                 raise RuntimeError("unreachable")
-            if server == "dodo":
-                return "DODO docs here"
             return ""
 
         async def shutdown(self):
@@ -101,7 +95,6 @@ def test_jupiter_context_absent_when_unreachable(monkeypatch):
 
     assert captured["user"] is not None
     assert "JUPITER DOCS CONTEXT (live MCP)" not in captured["user"]
-    assert "DODO DOCS CONTEXT" in captured["user"]
 
 
 def test_fallback_context_when_both_unavailable(monkeypatch):
@@ -131,7 +124,7 @@ def test_fallback_context_when_both_unavailable(monkeypatch):
     asyncio.run(agent._generate_code_with_plan(plan, prompt, trace_id="test3"))
 
     assert captured["user"] is not None
-    assert "JUPITER + DODO DOCS CONTEXT: unavailable" in captured["user"]
+    assert "JUPITER DOCS CONTEXT: unavailable" in captured["user"]
 
 
 def test_generate_code_returns_ready(monkeypatch):

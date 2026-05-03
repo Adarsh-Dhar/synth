@@ -3,7 +3,7 @@
 This folder contains three phases of tests:
 
 Phase 1 - Mocked RAG unit tests
-- `test_orchestrator_rag.py` — pytest tests that validate orchestrator context-fetching for Jupiter and Dodo.
+- `test_orchestrator_rag.py` — pytest tests that validate orchestrator context-fetching for Jupiter.
 - Run with: `PYTHONPATH=agents pytest agents/tests/test_orchestrator_rag.py`
 
 Phase 2 - TypeScript syntax/compilation verification

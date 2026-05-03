@@ -1334,7 +1334,21 @@ Ensure your main entry file imports 'dotenv/config' at the top.
         const encoder = new TextEncoder();
         let buffer = "";
         let finalPayload: Record<string, unknown> | null = null;
+        let lastNonCompletePayload: Record<string, unknown> | null = null;
         let agentId: string | null = null;
+        let completeSeen = false;
+
+        const enqueueEvent = (payload: Record<string, unknown>): void => {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+        };
+
+        const emitTerminalError = (message: string, extra: Record<string, unknown> = {}): void => {
+          enqueueEvent({
+            status: "error",
+            message,
+            ...extra,
+          });
+        };
 
         const flushEvent = async (eventText: string): Promise<void> => {
           const trimmed = eventText.trim();
@@ -1360,11 +1374,19 @@ Ensure your main entry file imports 'dotenv/config' at the top.
             return;
           }
 
+          // Keep a reference to the latest non-complete payload that looks like
+          // it may contain useful agent information (intent/files). This lets
+          // us attempt a partial save if the upstream stream closes without
+          // emitting a final `status: "complete"` event.
           if (payload.status !== "complete") {
+            if (payload && (payload.files || payload.intent || payload.agent_name || payload.bot_name)) {
+              lastNonCompletePayload = payload;
+            }
             controller.enqueue(encoder.encode(`${trimmed}\n\n`));
             return;
           }
 
+          completeSeen = true;
           finalPayload = payload;
           console.log(`[generate-bot] [${requestId}] Intercepted complete event, saving to DB`);
 
@@ -1383,11 +1405,19 @@ Ensure your main entry file imports 'dotenv/config' at the top.
           } catch (dbErr) {
             const msg = dbErr instanceof Error ? dbErr.message : String(dbErr);
             console.error(`[generate-bot] [${requestId}] Failed to save bot to DB:`, msg);
+            emitTerminalError(`Failed to save bot to database: ${msg}`, {
+              save_error: msg,
+              request_id: requestId,
+            });
+            return;
           }
 
           if (finalPayload && agentId) {
-            const finalEvent = `data: ${JSON.stringify({ ...finalPayload, agentId })}\n\n`;
-            controller.enqueue(encoder.encode(finalEvent));
+            enqueueEvent({ ...finalPayload, agentId });
+          } else {
+            emitTerminalError("The bot finished generating, but no agent record was created.", {
+              request_id: requestId,
+            });
           }
         };
 
@@ -1414,6 +1444,42 @@ Ensure your main entry file imports 'dotenv/config' at the top.
 
           if (buffer.trim()) {
             await flushEvent(buffer);
+          }
+
+          if (!completeSeen) {
+            console.warn(`[generate-bot] [${requestId}] Stream ended without final 'complete' event.`);
+            // If we captured a useful last non-complete payload, attempt a
+            // best-effort partial save so the user doesn't lose all progress.
+            if (lastNonCompletePayload) {
+              console.log(`[generate-bot] [${requestId}] Attempting partial save from lastNonCompletePayload`);
+              try {
+                agentId = await saveBotToDatabase(
+                  requestId,
+                  lastNonCompletePayload,
+                  granterWalletAddress,
+                  originalPrompt,
+                  expandedPrompt,
+                  envConfig,
+                  envDefaults,
+                  userId,
+                );
+                console.log(`[generate-bot] [${requestId}] Partial save succeeded, agentId=${agentId}`);
+                if (lastNonCompletePayload && agentId) {
+                  enqueueEvent({ ...lastNonCompletePayload, agentId, partial: true });
+                }
+              } catch (dbErr) {
+                const msg = dbErr instanceof Error ? dbErr.message : String(dbErr);
+                console.error(`[generate-bot] [${requestId}] Partial save failed:`, msg);
+                emitTerminalError(`Stream ended before a final payload was received and partial save failed: ${msg}`, {
+                  save_error: msg,
+                  request_id: requestId,
+                });
+              }
+            } else {
+              emitTerminalError("Stream ended before a final payload was received.", {
+                request_id: requestId,
+              });
+            }
           }
 
           controller.close();

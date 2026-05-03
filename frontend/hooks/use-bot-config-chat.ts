@@ -805,7 +805,7 @@ export function useBotConfigChat() {
               expandedPromptRef.current || chatHistoryRef.current[0]?.content,
             envConfig,
             intent,
-            walletAddress: walletHexAddress,
+            walletAddress,
           }),
         });
 
@@ -823,6 +823,7 @@ export function useBotConfigChat() {
         let buffer = "";
         let finalPayload: Record<string, unknown> | null = null;
         let clarificationPayload: Record<string, unknown> | null = null;
+        let terminalErrorPayload: Record<string, unknown> | null = null;
         const seenStatuses = new Set<string>();
 
         const emitStatus = (payload: Record<string, unknown>) => {
@@ -864,6 +865,13 @@ export function useBotConfigChat() {
               throw new Error(String(payload.error));
             }
 
+            if (payload.status === "error") {
+              terminalErrorPayload = payload;
+              throw new Error(
+                String(payload.message ?? payload.error ?? "Failed to save bot.")
+              );
+            }
+
             emitStatus(payload);
             if (payload.status === "clarification_needed") {
               clarificationPayload = payload;
@@ -884,6 +892,16 @@ export function useBotConfigChat() {
 
         buffer += decoder.decode();
         buffer = processBuffer(buffer);
+
+        if (!finalPayload && terminalErrorPayload) {
+          throw new Error(
+            String(
+              terminalErrorPayload.message ??
+                terminalErrorPayload.error ??
+                "Failed to save bot."
+            )
+          );
+        }
 
         if (!finalPayload && clarificationPayload) {
           const cp = clarificationPayload as Record<string, unknown>;
@@ -929,6 +947,16 @@ export function useBotConfigChat() {
 
         if (!finalPayload) {
           throw new Error("Stream ended without a final payload.");
+        }
+
+        const saveError = String(finalPayload.save_error ?? "");
+        if (saveError) {
+          throw new Error(saveError);
+        }
+
+        const finalError = String(finalPayload.error ?? "");
+        if (finalError) {
+          throw new Error(finalError);
         }
 
         const completedPayload = finalPayload as Record<string, unknown>;
