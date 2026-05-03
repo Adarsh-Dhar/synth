@@ -110,7 +110,7 @@ export interface CreateAgentRequestBody {
 }
 
 export type RouteContext = {
-  params: Promise<{ agentId: string }>;
+  params: Promise<{ agentId: string; [key: string]: string | undefined }>;
 };
 
 export interface AgentsTableProps {

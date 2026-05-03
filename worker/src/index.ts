@@ -19,6 +19,7 @@ import "dotenv/config";
 import prisma from "./lib/prisma.js";
 import { startServer } from "./server.js";
 import { listRunningAgents } from "./engine.js";
+import { startMagicBlockTasks } from "./magicblock-tasks.js";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ async function main() {
 
   // Start HTTP server
   startServer(PORT);
+  startMagicBlockTasks();
 
   console.log("✅ Worker ready");
 }

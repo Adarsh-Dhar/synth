@@ -1465,7 +1465,7 @@ Ensure your main entry file imports 'dotenv/config' at the top.
                 );
                 console.log(`[generate-bot] [${requestId}] Partial save succeeded, agentId=${agentId}`);
                 if (lastNonCompletePayload && agentId) {
-                  enqueueEvent({ ...lastNonCompletePayload, agentId, partial: true });
+                  enqueueEvent({ ...(lastNonCompletePayload as Record<string, unknown>), agentId, partial: true });
                 }
               } catch (dbErr) {
                 const msg = dbErr instanceof Error ? dbErr.message : String(dbErr);

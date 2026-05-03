@@ -6,6 +6,10 @@ import { A2APaymentService } from "@/lib/a2a-payment";
 export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     const { agentId, channelId } = await params;
+    if (!channelId) {
+      return NextResponse.json({ error: "Channel ID is required" }, { status: 400 });
+    }
+
     const owned = await requireOwnedAgent(req, agentId, { select: { id: true } });
     if (owned.error || !owned.agent || !owned.user) {
       return owned.error ?? NextResponse.json({ error: "Agent not found." }, { status: 404 });

@@ -896,8 +896,8 @@ export function useBotConfigChat() {
         if (!finalPayload && terminalErrorPayload) {
           throw new Error(
             String(
-              terminalErrorPayload.message ??
-                terminalErrorPayload.error ??
+              (terminalErrorPayload as Record<string, unknown>).message ??
+                (terminalErrorPayload as Record<string, unknown>).error ??
                 "Failed to save bot."
             )
           );
@@ -949,12 +949,12 @@ export function useBotConfigChat() {
           throw new Error("Stream ended without a final payload.");
         }
 
-        const saveError = String(finalPayload.save_error ?? "");
+        const saveError = String((finalPayload as Record<string, unknown>).save_error ?? "");
         if (saveError) {
           throw new Error(saveError);
         }
 
-        const finalError = String(finalPayload.error ?? "");
+        const finalError = String((finalPayload as Record<string, unknown>).error ?? "");
         if (finalError) {
           throw new Error(finalError);
         }
