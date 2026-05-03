@@ -37,9 +37,6 @@ export function Sidebar() {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-    { href: "/dashboard/deploy", label: "Deploy Agent", icon: Zap },
-    { href: "/dashboard/agents", label: "Active Agents", icon: Bot },
-    { href: "/dashboard/bridge", label: "Bridge/Wallet", icon: Wallet },
     { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
     { href: "/dashboard/privacy", label: "Privacy Center", icon: Lock },
     {
