@@ -275,6 +275,17 @@ export type AgentWhereInput = {
   subscriptions?: Prisma.SubscriptionListRelationFilter
   terminalLogs?: Prisma.TerminalLogListRelationFilter
   files?: Prisma.AgentFileListRelationFilter
+  privateBrainConfig?: Prisma.XOR<Prisma.PrivateBrainConfigNullableScalarRelationFilter, Prisma.PrivateBrainConfigWhereInput> | null
+  privateBrainAudits?: Prisma.PrivateBrainAuditListRelationFilter
+  shieldedExecutionConfig?: Prisma.XOR<Prisma.ShieldedExecutionConfigNullableScalarRelationFilter, Prisma.ShieldedExecutionConfigWhereInput> | null
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditListRelationFilter
+  botWallet?: Prisma.XOR<Prisma.BotWalletNullableScalarRelationFilter, Prisma.BotWalletWhereInput> | null
+  botServices?: Prisma.BotServiceListRelationFilter
+  payerChannels?: Prisma.A2APaymentChannelListRelationFilter
+  payeeChannels?: Prisma.A2APaymentChannelListRelationFilter
+  payerPaymentRecords?: Prisma.A2APaymentListRelationFilter
+  payeePaymentRecords?: Prisma.A2APaymentListRelationFilter
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistListRelationFilter
 }
 
 export type AgentOrderByWithRelationInput = {
@@ -300,6 +311,17 @@ export type AgentOrderByWithRelationInput = {
   subscriptions?: Prisma.SubscriptionOrderByRelationAggregateInput
   terminalLogs?: Prisma.TerminalLogOrderByRelationAggregateInput
   files?: Prisma.AgentFileOrderByRelationAggregateInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigOrderByWithRelationInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditOrderByRelationAggregateInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigOrderByWithRelationInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditOrderByRelationAggregateInput
+  botWallet?: Prisma.BotWalletOrderByWithRelationInput
+  botServices?: Prisma.BotServiceOrderByRelationAggregateInput
+  payerChannels?: Prisma.A2APaymentChannelOrderByRelationAggregateInput
+  payeeChannels?: Prisma.A2APaymentChannelOrderByRelationAggregateInput
+  payerPaymentRecords?: Prisma.A2APaymentOrderByRelationAggregateInput
+  payeePaymentRecords?: Prisma.A2APaymentOrderByRelationAggregateInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistOrderByRelationAggregateInput
 }
 
 export type AgentWhereUniqueInput = Prisma.AtLeast<{
@@ -328,6 +350,17 @@ export type AgentWhereUniqueInput = Prisma.AtLeast<{
   subscriptions?: Prisma.SubscriptionListRelationFilter
   terminalLogs?: Prisma.TerminalLogListRelationFilter
   files?: Prisma.AgentFileListRelationFilter
+  privateBrainConfig?: Prisma.XOR<Prisma.PrivateBrainConfigNullableScalarRelationFilter, Prisma.PrivateBrainConfigWhereInput> | null
+  privateBrainAudits?: Prisma.PrivateBrainAuditListRelationFilter
+  shieldedExecutionConfig?: Prisma.XOR<Prisma.ShieldedExecutionConfigNullableScalarRelationFilter, Prisma.ShieldedExecutionConfigWhereInput> | null
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditListRelationFilter
+  botWallet?: Prisma.XOR<Prisma.BotWalletNullableScalarRelationFilter, Prisma.BotWalletWhereInput> | null
+  botServices?: Prisma.BotServiceListRelationFilter
+  payerChannels?: Prisma.A2APaymentChannelListRelationFilter
+  payeeChannels?: Prisma.A2APaymentChannelListRelationFilter
+  payerPaymentRecords?: Prisma.A2APaymentListRelationFilter
+  payeePaymentRecords?: Prisma.A2APaymentListRelationFilter
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistListRelationFilter
 }, "id">
 
 export type AgentOrderByWithAggregationInput = {
@@ -398,6 +431,17 @@ export type AgentCreateInput = {
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentUncheckedCreateInput = {
@@ -422,6 +466,17 @@ export type AgentUncheckedCreateInput = {
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentUpdateInput = {
@@ -446,6 +501,17 @@ export type AgentUpdateInput = {
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentUncheckedUpdateInput = {
@@ -470,6 +536,17 @@ export type AgentUncheckedUpdateInput = {
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentCreateManyInput = {
@@ -652,6 +729,160 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type AgentCreateNestedOneWithoutPrivateBrainConfigInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainConfigInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainConfigInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPrivateBrainConfigInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutPrivateBrainConfigNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainConfigInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainConfigInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPrivateBrainConfigInput
+  upsert?: Prisma.AgentUpsertWithoutPrivateBrainConfigInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutPrivateBrainConfigInput, Prisma.AgentUpdateWithoutPrivateBrainConfigInput>, Prisma.AgentUncheckedUpdateWithoutPrivateBrainConfigInput>
+}
+
+export type AgentCreateNestedOneWithoutPrivateBrainAuditsInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainAuditsInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainAuditsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPrivateBrainAuditsInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutPrivateBrainAuditsNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainAuditsInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainAuditsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPrivateBrainAuditsInput
+  upsert?: Prisma.AgentUpsertWithoutPrivateBrainAuditsInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutPrivateBrainAuditsInput, Prisma.AgentUpdateWithoutPrivateBrainAuditsInput>, Prisma.AgentUncheckedUpdateWithoutPrivateBrainAuditsInput>
+}
+
+export type AgentCreateNestedOneWithoutShieldedExecutionConfigInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionConfigInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionConfigInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutShieldedExecutionConfigInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutShieldedExecutionConfigNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionConfigInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionConfigInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutShieldedExecutionConfigInput
+  upsert?: Prisma.AgentUpsertWithoutShieldedExecutionConfigInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutShieldedExecutionConfigInput, Prisma.AgentUpdateWithoutShieldedExecutionConfigInput>, Prisma.AgentUncheckedUpdateWithoutShieldedExecutionConfigInput>
+}
+
+export type AgentCreateNestedOneWithoutShieldedExecutionAuditsInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionAuditsInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionAuditsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutShieldedExecutionAuditsInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutShieldedExecutionAuditsNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionAuditsInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionAuditsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutShieldedExecutionAuditsInput
+  upsert?: Prisma.AgentUpsertWithoutShieldedExecutionAuditsInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutShieldedExecutionAuditsInput, Prisma.AgentUpdateWithoutShieldedExecutionAuditsInput>, Prisma.AgentUncheckedUpdateWithoutShieldedExecutionAuditsInput>
+}
+
+export type AgentCreateNestedOneWithoutBotWalletInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutBotWalletInput, Prisma.AgentUncheckedCreateWithoutBotWalletInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutBotWalletInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutBotWalletNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutBotWalletInput, Prisma.AgentUncheckedCreateWithoutBotWalletInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutBotWalletInput
+  upsert?: Prisma.AgentUpsertWithoutBotWalletInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutBotWalletInput, Prisma.AgentUpdateWithoutBotWalletInput>, Prisma.AgentUncheckedUpdateWithoutBotWalletInput>
+}
+
+export type AgentCreateNestedOneWithoutBotServicesInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutBotServicesInput, Prisma.AgentUncheckedCreateWithoutBotServicesInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutBotServicesInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutBotServicesNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutBotServicesInput, Prisma.AgentUncheckedCreateWithoutBotServicesInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutBotServicesInput
+  upsert?: Prisma.AgentUpsertWithoutBotServicesInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutBotServicesInput, Prisma.AgentUpdateWithoutBotServicesInput>, Prisma.AgentUncheckedUpdateWithoutBotServicesInput>
+}
+
+export type AgentCreateNestedOneWithoutAllowedServiceWhitelistEntriesInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutAllowedServiceWhitelistEntriesInput, Prisma.AgentUncheckedCreateWithoutAllowedServiceWhitelistEntriesInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutAllowedServiceWhitelistEntriesInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutAllowedServiceWhitelistEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutAllowedServiceWhitelistEntriesInput, Prisma.AgentUncheckedCreateWithoutAllowedServiceWhitelistEntriesInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutAllowedServiceWhitelistEntriesInput
+  upsert?: Prisma.AgentUpsertWithoutAllowedServiceWhitelistEntriesInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutAllowedServiceWhitelistEntriesInput, Prisma.AgentUpdateWithoutAllowedServiceWhitelistEntriesInput>, Prisma.AgentUncheckedUpdateWithoutAllowedServiceWhitelistEntriesInput>
+}
+
+export type AgentCreateNestedOneWithoutPayerChannelsInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayerChannelsInput, Prisma.AgentUncheckedCreateWithoutPayerChannelsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayerChannelsInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentCreateNestedOneWithoutPayeeChannelsInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayeeChannelsInput, Prisma.AgentUncheckedCreateWithoutPayeeChannelsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayeeChannelsInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutPayerChannelsNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayerChannelsInput, Prisma.AgentUncheckedCreateWithoutPayerChannelsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayerChannelsInput
+  upsert?: Prisma.AgentUpsertWithoutPayerChannelsInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutPayerChannelsInput, Prisma.AgentUpdateWithoutPayerChannelsInput>, Prisma.AgentUncheckedUpdateWithoutPayerChannelsInput>
+}
+
+export type AgentUpdateOneRequiredWithoutPayeeChannelsNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayeeChannelsInput, Prisma.AgentUncheckedCreateWithoutPayeeChannelsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayeeChannelsInput
+  upsert?: Prisma.AgentUpsertWithoutPayeeChannelsInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutPayeeChannelsInput, Prisma.AgentUpdateWithoutPayeeChannelsInput>, Prisma.AgentUncheckedUpdateWithoutPayeeChannelsInput>
+}
+
+export type AgentCreateNestedOneWithoutPayerPaymentRecordsInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayerPaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayerPaymentRecordsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayerPaymentRecordsInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentCreateNestedOneWithoutPayeePaymentRecordsInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayeePaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayeePaymentRecordsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayeePaymentRecordsInput
+  connect?: Prisma.AgentWhereUniqueInput
+}
+
+export type AgentUpdateOneRequiredWithoutPayerPaymentRecordsNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayerPaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayerPaymentRecordsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayerPaymentRecordsInput
+  upsert?: Prisma.AgentUpsertWithoutPayerPaymentRecordsInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutPayerPaymentRecordsInput, Prisma.AgentUpdateWithoutPayerPaymentRecordsInput>, Prisma.AgentUncheckedUpdateWithoutPayerPaymentRecordsInput>
+}
+
+export type AgentUpdateOneRequiredWithoutPayeePaymentRecordsNestedInput = {
+  create?: Prisma.XOR<Prisma.AgentCreateWithoutPayeePaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayeePaymentRecordsInput>
+  connectOrCreate?: Prisma.AgentCreateOrConnectWithoutPayeePaymentRecordsInput
+  upsert?: Prisma.AgentUpsertWithoutPayeePaymentRecordsInput
+  connect?: Prisma.AgentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AgentUpdateToOneWithWhereWithoutPayeePaymentRecordsInput, Prisma.AgentUpdateWithoutPayeePaymentRecordsInput>, Prisma.AgentUncheckedUpdateWithoutPayeePaymentRecordsInput>
+}
+
 export type AgentCreateNestedOneWithoutFilesInput = {
   create?: Prisma.XOR<Prisma.AgentCreateWithoutFilesInput, Prisma.AgentUncheckedCreateWithoutFilesInput>
   connectOrCreate?: Prisma.AgentCreateOrConnectWithoutFilesInput
@@ -729,6 +960,17 @@ export type AgentCreateWithoutUserInput = {
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentUncheckedCreateWithoutUserInput = {
@@ -752,6 +994,17 @@ export type AgentUncheckedCreateWithoutUserInput = {
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentCreateOrConnectWithoutUserInput = {
@@ -803,6 +1056,1678 @@ export type AgentScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Agent"> | Date | string
 }
 
+export type AgentCreateWithoutPrivateBrainConfigInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutPrivateBrainConfigInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutPrivateBrainConfigInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainConfigInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainConfigInput>
+}
+
+export type AgentUpsertWithoutPrivateBrainConfigInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutPrivateBrainConfigInput, Prisma.AgentUncheckedUpdateWithoutPrivateBrainConfigInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainConfigInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainConfigInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutPrivateBrainConfigInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutPrivateBrainConfigInput, Prisma.AgentUncheckedUpdateWithoutPrivateBrainConfigInput>
+}
+
+export type AgentUpdateWithoutPrivateBrainConfigInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutPrivateBrainConfigInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentCreateWithoutPrivateBrainAuditsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutPrivateBrainAuditsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutPrivateBrainAuditsInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainAuditsInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainAuditsInput>
+}
+
+export type AgentUpsertWithoutPrivateBrainAuditsInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutPrivateBrainAuditsInput, Prisma.AgentUncheckedUpdateWithoutPrivateBrainAuditsInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPrivateBrainAuditsInput, Prisma.AgentUncheckedCreateWithoutPrivateBrainAuditsInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutPrivateBrainAuditsInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutPrivateBrainAuditsInput, Prisma.AgentUncheckedUpdateWithoutPrivateBrainAuditsInput>
+}
+
+export type AgentUpdateWithoutPrivateBrainAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutPrivateBrainAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentCreateWithoutShieldedExecutionConfigInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutShieldedExecutionConfigInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutShieldedExecutionConfigInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionConfigInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionConfigInput>
+}
+
+export type AgentUpsertWithoutShieldedExecutionConfigInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutShieldedExecutionConfigInput, Prisma.AgentUncheckedUpdateWithoutShieldedExecutionConfigInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionConfigInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionConfigInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutShieldedExecutionConfigInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutShieldedExecutionConfigInput, Prisma.AgentUncheckedUpdateWithoutShieldedExecutionConfigInput>
+}
+
+export type AgentUpdateWithoutShieldedExecutionConfigInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutShieldedExecutionConfigInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentCreateWithoutShieldedExecutionAuditsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutShieldedExecutionAuditsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutShieldedExecutionAuditsInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionAuditsInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionAuditsInput>
+}
+
+export type AgentUpsertWithoutShieldedExecutionAuditsInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutShieldedExecutionAuditsInput, Prisma.AgentUncheckedUpdateWithoutShieldedExecutionAuditsInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutShieldedExecutionAuditsInput, Prisma.AgentUncheckedCreateWithoutShieldedExecutionAuditsInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutShieldedExecutionAuditsInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutShieldedExecutionAuditsInput, Prisma.AgentUncheckedUpdateWithoutShieldedExecutionAuditsInput>
+}
+
+export type AgentUpdateWithoutShieldedExecutionAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutShieldedExecutionAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentCreateWithoutBotWalletInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutBotWalletInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutBotWalletInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutBotWalletInput, Prisma.AgentUncheckedCreateWithoutBotWalletInput>
+}
+
+export type AgentUpsertWithoutBotWalletInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutBotWalletInput, Prisma.AgentUncheckedUpdateWithoutBotWalletInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutBotWalletInput, Prisma.AgentUncheckedCreateWithoutBotWalletInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutBotWalletInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutBotWalletInput, Prisma.AgentUncheckedUpdateWithoutBotWalletInput>
+}
+
+export type AgentUpdateWithoutBotWalletInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutBotWalletInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentCreateWithoutBotServicesInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutBotServicesInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutBotServicesInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutBotServicesInput, Prisma.AgentUncheckedCreateWithoutBotServicesInput>
+}
+
+export type AgentUpsertWithoutBotServicesInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutBotServicesInput, Prisma.AgentUncheckedUpdateWithoutBotServicesInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutBotServicesInput, Prisma.AgentUncheckedCreateWithoutBotServicesInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutBotServicesInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutBotServicesInput, Prisma.AgentUncheckedUpdateWithoutBotServicesInput>
+}
+
+export type AgentUpdateWithoutBotServicesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutBotServicesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentCreateWithoutAllowedServiceWhitelistEntriesInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+}
+
+export type AgentUncheckedCreateWithoutAllowedServiceWhitelistEntriesInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+}
+
+export type AgentCreateOrConnectWithoutAllowedServiceWhitelistEntriesInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutAllowedServiceWhitelistEntriesInput, Prisma.AgentUncheckedCreateWithoutAllowedServiceWhitelistEntriesInput>
+}
+
+export type AgentUpsertWithoutAllowedServiceWhitelistEntriesInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutAllowedServiceWhitelistEntriesInput, Prisma.AgentUncheckedUpdateWithoutAllowedServiceWhitelistEntriesInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutAllowedServiceWhitelistEntriesInput, Prisma.AgentUncheckedCreateWithoutAllowedServiceWhitelistEntriesInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutAllowedServiceWhitelistEntriesInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutAllowedServiceWhitelistEntriesInput, Prisma.AgentUncheckedUpdateWithoutAllowedServiceWhitelistEntriesInput>
+}
+
+export type AgentUpdateWithoutAllowedServiceWhitelistEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutAllowedServiceWhitelistEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+}
+
+export type AgentCreateWithoutPayerChannelsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutPayerChannelsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutPayerChannelsInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayerChannelsInput, Prisma.AgentUncheckedCreateWithoutPayerChannelsInput>
+}
+
+export type AgentCreateWithoutPayeeChannelsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutPayeeChannelsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutPayeeChannelsInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayeeChannelsInput, Prisma.AgentUncheckedCreateWithoutPayeeChannelsInput>
+}
+
+export type AgentUpsertWithoutPayerChannelsInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutPayerChannelsInput, Prisma.AgentUncheckedUpdateWithoutPayerChannelsInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayerChannelsInput, Prisma.AgentUncheckedCreateWithoutPayerChannelsInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutPayerChannelsInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutPayerChannelsInput, Prisma.AgentUncheckedUpdateWithoutPayerChannelsInput>
+}
+
+export type AgentUpdateWithoutPayerChannelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutPayerChannelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUpsertWithoutPayeeChannelsInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutPayeeChannelsInput, Prisma.AgentUncheckedUpdateWithoutPayeeChannelsInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayeeChannelsInput, Prisma.AgentUncheckedCreateWithoutPayeeChannelsInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutPayeeChannelsInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutPayeeChannelsInput, Prisma.AgentUncheckedUpdateWithoutPayeeChannelsInput>
+}
+
+export type AgentUpdateWithoutPayeeChannelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutPayeeChannelsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentCreateWithoutPayerPaymentRecordsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutPayerPaymentRecordsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutPayerPaymentRecordsInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayerPaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayerPaymentRecordsInput>
+}
+
+export type AgentCreateWithoutPayeePaymentRecordsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutAgentsInput
+  tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentUncheckedCreateWithoutPayeePaymentRecordsInput = {
+  id?: string
+  name: string
+  status?: $Enums.AgentStatus
+  userId: string
+  walletAddress?: string
+  umbraViewingKey?: string | null
+  umbraSpendingKey?: string | null
+  magicBlockSessionId?: string | null
+  magicBlockValidatorEndpoint?: string | null
+  privateExecutionEnabled?: boolean
+  umbraShieldedMint?: string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
+  terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
+}
+
+export type AgentCreateOrConnectWithoutPayeePaymentRecordsInput = {
+  where: Prisma.AgentWhereUniqueInput
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayeePaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayeePaymentRecordsInput>
+}
+
+export type AgentUpsertWithoutPayerPaymentRecordsInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutPayerPaymentRecordsInput, Prisma.AgentUncheckedUpdateWithoutPayerPaymentRecordsInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayerPaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayerPaymentRecordsInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutPayerPaymentRecordsInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutPayerPaymentRecordsInput, Prisma.AgentUncheckedUpdateWithoutPayerPaymentRecordsInput>
+}
+
+export type AgentUpdateWithoutPayerPaymentRecordsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutPayerPaymentRecordsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUpsertWithoutPayeePaymentRecordsInput = {
+  update: Prisma.XOR<Prisma.AgentUpdateWithoutPayeePaymentRecordsInput, Prisma.AgentUncheckedUpdateWithoutPayeePaymentRecordsInput>
+  create: Prisma.XOR<Prisma.AgentCreateWithoutPayeePaymentRecordsInput, Prisma.AgentUncheckedCreateWithoutPayeePaymentRecordsInput>
+  where?: Prisma.AgentWhereInput
+}
+
+export type AgentUpdateToOneWithWhereWithoutPayeePaymentRecordsInput = {
+  where?: Prisma.AgentWhereInput
+  data: Prisma.XOR<Prisma.AgentUpdateWithoutPayeePaymentRecordsInput, Prisma.AgentUncheckedUpdateWithoutPayeePaymentRecordsInput>
+}
+
+export type AgentUpdateWithoutPayeePaymentRecordsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutAgentsNestedInput
+  tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
+}
+
+export type AgentUncheckedUpdateWithoutPayeePaymentRecordsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAgentStatusFieldUpdateOperationsInput | $Enums.AgentStatus
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  umbraViewingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  umbraSpendingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockSessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  magicBlockValidatorEndpoint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  privateExecutionEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  umbraShieldedMint?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goldrushPortfolioSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  goldrushStreamFilter?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  configuration?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  envConfig?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
+  terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
+}
+
 export type AgentCreateWithoutFilesInput = {
   id?: string
   name: string
@@ -824,6 +2749,17 @@ export type AgentCreateWithoutFilesInput = {
   tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentUncheckedCreateWithoutFilesInput = {
@@ -847,6 +2783,17 @@ export type AgentUncheckedCreateWithoutFilesInput = {
   tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentCreateOrConnectWithoutFilesInput = {
@@ -886,6 +2833,17 @@ export type AgentUpdateWithoutFilesInput = {
   tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentUncheckedUpdateWithoutFilesInput = {
@@ -909,6 +2867,17 @@ export type AgentUncheckedUpdateWithoutFilesInput = {
   tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentCreateWithoutTradeLogsInput = {
@@ -932,6 +2901,17 @@ export type AgentCreateWithoutTradeLogsInput = {
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentUncheckedCreateWithoutTradeLogsInput = {
@@ -955,6 +2935,17 @@ export type AgentUncheckedCreateWithoutTradeLogsInput = {
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentCreateOrConnectWithoutTradeLogsInput = {
@@ -994,6 +2985,17 @@ export type AgentUpdateWithoutTradeLogsInput = {
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentUncheckedUpdateWithoutTradeLogsInput = {
@@ -1017,6 +3019,17 @@ export type AgentUncheckedUpdateWithoutTradeLogsInput = {
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentCreateWithoutSubscriptionsInput = {
@@ -1040,6 +3053,17 @@ export type AgentCreateWithoutSubscriptionsInput = {
   tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentUncheckedCreateWithoutSubscriptionsInput = {
@@ -1063,6 +3087,17 @@ export type AgentUncheckedCreateWithoutSubscriptionsInput = {
   tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
   terminalLogs?: Prisma.TerminalLogUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentCreateOrConnectWithoutSubscriptionsInput = {
@@ -1102,6 +3137,17 @@ export type AgentUpdateWithoutSubscriptionsInput = {
   tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentUncheckedUpdateWithoutSubscriptionsInput = {
@@ -1125,6 +3171,17 @@ export type AgentUncheckedUpdateWithoutSubscriptionsInput = {
   tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentCreateWithoutTerminalLogsInput = {
@@ -1148,6 +3205,17 @@ export type AgentCreateWithoutTerminalLogsInput = {
   tradeLogs?: Prisma.TradeLogCreateNestedManyWithoutAgentInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentUncheckedCreateWithoutTerminalLogsInput = {
@@ -1171,6 +3239,17 @@ export type AgentUncheckedCreateWithoutTerminalLogsInput = {
   tradeLogs?: Prisma.TradeLogUncheckedCreateNestedManyWithoutAgentInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutAgentInput
   files?: Prisma.AgentFileUncheckedCreateNestedManyWithoutAgentInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedCreateNestedOneWithoutAgentInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutAgentInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedOneWithoutAgentInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutAgentInput
+  botWallet?: Prisma.BotWalletUncheckedCreateNestedOneWithoutAgentInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutAgentInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedCreateNestedManyWithoutPayeeAgentInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayerAgentInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedCreateNestedManyWithoutPayeeAgentInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedCreateNestedManyWithoutAllowedAgentInput
 }
 
 export type AgentCreateOrConnectWithoutTerminalLogsInput = {
@@ -1210,6 +3289,17 @@ export type AgentUpdateWithoutTerminalLogsInput = {
   tradeLogs?: Prisma.TradeLogUpdateManyWithoutAgentNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentUncheckedUpdateWithoutTerminalLogsInput = {
@@ -1233,6 +3323,17 @@ export type AgentUncheckedUpdateWithoutTerminalLogsInput = {
   tradeLogs?: Prisma.TradeLogUncheckedUpdateManyWithoutAgentNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentCreateManyUserInput = {
@@ -1275,6 +3376,17 @@ export type AgentUpdateWithoutUserInput = {
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentUncheckedUpdateWithoutUserInput = {
@@ -1298,6 +3410,17 @@ export type AgentUncheckedUpdateWithoutUserInput = {
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutAgentNestedInput
   terminalLogs?: Prisma.TerminalLogUncheckedUpdateManyWithoutAgentNestedInput
   files?: Prisma.AgentFileUncheckedUpdateManyWithoutAgentNestedInput
+  privateBrainConfig?: Prisma.PrivateBrainConfigUncheckedUpdateOneWithoutAgentNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutAgentNestedInput
+  shieldedExecutionConfig?: Prisma.ShieldedExecutionConfigUncheckedUpdateOneWithoutAgentNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutAgentNestedInput
+  botWallet?: Prisma.BotWalletUncheckedUpdateOneWithoutAgentNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutAgentNestedInput
+  payerChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeeChannels?: Prisma.A2APaymentChannelUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  payerPaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayerAgentNestedInput
+  payeePaymentRecords?: Prisma.A2APaymentUncheckedUpdateManyWithoutPayeeAgentNestedInput
+  allowedServiceWhitelistEntries?: Prisma.BotServiceWhitelistUncheckedUpdateManyWithoutAllowedAgentNestedInput
 }
 
 export type AgentUncheckedUpdateManyWithoutUserInput = {
@@ -1329,6 +3452,14 @@ export type AgentCountOutputType = {
   subscriptions: number
   terminalLogs: number
   files: number
+  privateBrainAudits: number
+  shieldedExecutionAudits: number
+  botServices: number
+  payerChannels: number
+  payeeChannels: number
+  payerPaymentRecords: number
+  payeePaymentRecords: number
+  allowedServiceWhitelistEntries: number
 }
 
 export type AgentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1336,6 +3467,14 @@ export type AgentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   subscriptions?: boolean | AgentCountOutputTypeCountSubscriptionsArgs
   terminalLogs?: boolean | AgentCountOutputTypeCountTerminalLogsArgs
   files?: boolean | AgentCountOutputTypeCountFilesArgs
+  privateBrainAudits?: boolean | AgentCountOutputTypeCountPrivateBrainAuditsArgs
+  shieldedExecutionAudits?: boolean | AgentCountOutputTypeCountShieldedExecutionAuditsArgs
+  botServices?: boolean | AgentCountOutputTypeCountBotServicesArgs
+  payerChannels?: boolean | AgentCountOutputTypeCountPayerChannelsArgs
+  payeeChannels?: boolean | AgentCountOutputTypeCountPayeeChannelsArgs
+  payerPaymentRecords?: boolean | AgentCountOutputTypeCountPayerPaymentRecordsArgs
+  payeePaymentRecords?: boolean | AgentCountOutputTypeCountPayeePaymentRecordsArgs
+  allowedServiceWhitelistEntries?: boolean | AgentCountOutputTypeCountAllowedServiceWhitelistEntriesArgs
 }
 
 /**
@@ -1376,6 +3515,62 @@ export type AgentCountOutputTypeCountFilesArgs<ExtArgs extends runtime.Types.Ext
   where?: Prisma.AgentFileWhereInput
 }
 
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountPrivateBrainAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PrivateBrainAuditWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountShieldedExecutionAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShieldedExecutionAuditWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountBotServicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BotServiceWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountPayerChannelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.A2APaymentChannelWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountPayeeChannelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.A2APaymentChannelWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountPayerPaymentRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.A2APaymentWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountPayeePaymentRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.A2APaymentWhereInput
+}
+
+/**
+ * AgentCountOutputType without action
+ */
+export type AgentCountOutputTypeCountAllowedServiceWhitelistEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BotServiceWhitelistWhereInput
+}
+
 
 export type AgentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1400,6 +3595,17 @@ export type AgentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   subscriptions?: boolean | Prisma.Agent$subscriptionsArgs<ExtArgs>
   terminalLogs?: boolean | Prisma.Agent$terminalLogsArgs<ExtArgs>
   files?: boolean | Prisma.Agent$filesArgs<ExtArgs>
+  privateBrainConfig?: boolean | Prisma.Agent$privateBrainConfigArgs<ExtArgs>
+  privateBrainAudits?: boolean | Prisma.Agent$privateBrainAuditsArgs<ExtArgs>
+  shieldedExecutionConfig?: boolean | Prisma.Agent$shieldedExecutionConfigArgs<ExtArgs>
+  shieldedExecutionAudits?: boolean | Prisma.Agent$shieldedExecutionAuditsArgs<ExtArgs>
+  botWallet?: boolean | Prisma.Agent$botWalletArgs<ExtArgs>
+  botServices?: boolean | Prisma.Agent$botServicesArgs<ExtArgs>
+  payerChannels?: boolean | Prisma.Agent$payerChannelsArgs<ExtArgs>
+  payeeChannels?: boolean | Prisma.Agent$payeeChannelsArgs<ExtArgs>
+  payerPaymentRecords?: boolean | Prisma.Agent$payerPaymentRecordsArgs<ExtArgs>
+  payeePaymentRecords?: boolean | Prisma.Agent$payeePaymentRecordsArgs<ExtArgs>
+  allowedServiceWhitelistEntries?: boolean | Prisma.Agent$allowedServiceWhitelistEntriesArgs<ExtArgs>
   _count?: boolean | Prisma.AgentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["agent"]>
 
@@ -1472,6 +3678,17 @@ export type AgentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   subscriptions?: boolean | Prisma.Agent$subscriptionsArgs<ExtArgs>
   terminalLogs?: boolean | Prisma.Agent$terminalLogsArgs<ExtArgs>
   files?: boolean | Prisma.Agent$filesArgs<ExtArgs>
+  privateBrainConfig?: boolean | Prisma.Agent$privateBrainConfigArgs<ExtArgs>
+  privateBrainAudits?: boolean | Prisma.Agent$privateBrainAuditsArgs<ExtArgs>
+  shieldedExecutionConfig?: boolean | Prisma.Agent$shieldedExecutionConfigArgs<ExtArgs>
+  shieldedExecutionAudits?: boolean | Prisma.Agent$shieldedExecutionAuditsArgs<ExtArgs>
+  botWallet?: boolean | Prisma.Agent$botWalletArgs<ExtArgs>
+  botServices?: boolean | Prisma.Agent$botServicesArgs<ExtArgs>
+  payerChannels?: boolean | Prisma.Agent$payerChannelsArgs<ExtArgs>
+  payeeChannels?: boolean | Prisma.Agent$payeeChannelsArgs<ExtArgs>
+  payerPaymentRecords?: boolean | Prisma.Agent$payerPaymentRecordsArgs<ExtArgs>
+  payeePaymentRecords?: boolean | Prisma.Agent$payeePaymentRecordsArgs<ExtArgs>
+  allowedServiceWhitelistEntries?: boolean | Prisma.Agent$allowedServiceWhitelistEntriesArgs<ExtArgs>
   _count?: boolean | Prisma.AgentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AgentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1489,6 +3706,17 @@ export type $AgentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     subscriptions: Prisma.$SubscriptionPayload<ExtArgs>[]
     terminalLogs: Prisma.$TerminalLogPayload<ExtArgs>[]
     files: Prisma.$AgentFilePayload<ExtArgs>[]
+    privateBrainConfig: Prisma.$PrivateBrainConfigPayload<ExtArgs> | null
+    privateBrainAudits: Prisma.$PrivateBrainAuditPayload<ExtArgs>[]
+    shieldedExecutionConfig: Prisma.$ShieldedExecutionConfigPayload<ExtArgs> | null
+    shieldedExecutionAudits: Prisma.$ShieldedExecutionAuditPayload<ExtArgs>[]
+    botWallet: Prisma.$BotWalletPayload<ExtArgs> | null
+    botServices: Prisma.$BotServicePayload<ExtArgs>[]
+    payerChannels: Prisma.$A2APaymentChannelPayload<ExtArgs>[]
+    payeeChannels: Prisma.$A2APaymentChannelPayload<ExtArgs>[]
+    payerPaymentRecords: Prisma.$A2APaymentPayload<ExtArgs>[]
+    payeePaymentRecords: Prisma.$A2APaymentPayload<ExtArgs>[]
+    allowedServiceWhitelistEntries: Prisma.$BotServiceWhitelistPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1907,6 +4135,17 @@ export interface Prisma__AgentClient<T, Null = never, ExtArgs extends runtime.Ty
   subscriptions<T extends Prisma.Agent$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   terminalLogs<T extends Prisma.Agent$terminalLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$terminalLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TerminalLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   files<T extends Prisma.Agent$filesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$filesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AgentFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  privateBrainConfig<T extends Prisma.Agent$privateBrainConfigArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$privateBrainConfigArgs<ExtArgs>>): Prisma.Prisma__PrivateBrainConfigClient<runtime.Types.Result.GetResult<Prisma.$PrivateBrainConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  privateBrainAudits<T extends Prisma.Agent$privateBrainAuditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$privateBrainAuditsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PrivateBrainAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shieldedExecutionConfig<T extends Prisma.Agent$shieldedExecutionConfigArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$shieldedExecutionConfigArgs<ExtArgs>>): Prisma.Prisma__ShieldedExecutionConfigClient<runtime.Types.Result.GetResult<Prisma.$ShieldedExecutionConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  shieldedExecutionAudits<T extends Prisma.Agent$shieldedExecutionAuditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$shieldedExecutionAuditsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShieldedExecutionAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  botWallet<T extends Prisma.Agent$botWalletArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$botWalletArgs<ExtArgs>>): Prisma.Prisma__BotWalletClient<runtime.Types.Result.GetResult<Prisma.$BotWalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  botServices<T extends Prisma.Agent$botServicesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$botServicesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BotServicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  payerChannels<T extends Prisma.Agent$payerChannelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$payerChannelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$A2APaymentChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  payeeChannels<T extends Prisma.Agent$payeeChannelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$payeeChannelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$A2APaymentChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  payerPaymentRecords<T extends Prisma.Agent$payerPaymentRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$payerPaymentRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$A2APaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  payeePaymentRecords<T extends Prisma.Agent$payeePaymentRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$payeePaymentRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$A2APaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  allowedServiceWhitelistEntries<T extends Prisma.Agent$allowedServiceWhitelistEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Agent$allowedServiceWhitelistEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BotServiceWhitelistPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2447,6 +4686,255 @@ export type Agent$filesArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   distinct?: Prisma.AgentFileScalarFieldEnum | Prisma.AgentFileScalarFieldEnum[]
+}
+
+/**
+ * Agent.privateBrainConfig
+ */
+export type Agent$privateBrainConfigArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PrivateBrainConfig
+   */
+  select?: Prisma.PrivateBrainConfigSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PrivateBrainConfig
+   */
+  omit?: Prisma.PrivateBrainConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PrivateBrainConfigInclude<ExtArgs> | null
+  where?: Prisma.PrivateBrainConfigWhereInput
+}
+
+/**
+ * Agent.privateBrainAudits
+ */
+export type Agent$privateBrainAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PrivateBrainAudit
+   */
+  select?: Prisma.PrivateBrainAuditSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PrivateBrainAudit
+   */
+  omit?: Prisma.PrivateBrainAuditOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PrivateBrainAuditInclude<ExtArgs> | null
+  where?: Prisma.PrivateBrainAuditWhereInput
+  orderBy?: Prisma.PrivateBrainAuditOrderByWithRelationInput | Prisma.PrivateBrainAuditOrderByWithRelationInput[]
+  cursor?: Prisma.PrivateBrainAuditWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PrivateBrainAuditScalarFieldEnum | Prisma.PrivateBrainAuditScalarFieldEnum[]
+}
+
+/**
+ * Agent.shieldedExecutionConfig
+ */
+export type Agent$shieldedExecutionConfigArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShieldedExecutionConfig
+   */
+  select?: Prisma.ShieldedExecutionConfigSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShieldedExecutionConfig
+   */
+  omit?: Prisma.ShieldedExecutionConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShieldedExecutionConfigInclude<ExtArgs> | null
+  where?: Prisma.ShieldedExecutionConfigWhereInput
+}
+
+/**
+ * Agent.shieldedExecutionAudits
+ */
+export type Agent$shieldedExecutionAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShieldedExecutionAudit
+   */
+  select?: Prisma.ShieldedExecutionAuditSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShieldedExecutionAudit
+   */
+  omit?: Prisma.ShieldedExecutionAuditOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShieldedExecutionAuditInclude<ExtArgs> | null
+  where?: Prisma.ShieldedExecutionAuditWhereInput
+  orderBy?: Prisma.ShieldedExecutionAuditOrderByWithRelationInput | Prisma.ShieldedExecutionAuditOrderByWithRelationInput[]
+  cursor?: Prisma.ShieldedExecutionAuditWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShieldedExecutionAuditScalarFieldEnum | Prisma.ShieldedExecutionAuditScalarFieldEnum[]
+}
+
+/**
+ * Agent.botWallet
+ */
+export type Agent$botWalletArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BotWallet
+   */
+  select?: Prisma.BotWalletSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BotWallet
+   */
+  omit?: Prisma.BotWalletOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BotWalletInclude<ExtArgs> | null
+  where?: Prisma.BotWalletWhereInput
+}
+
+/**
+ * Agent.botServices
+ */
+export type Agent$botServicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BotService
+   */
+  select?: Prisma.BotServiceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BotService
+   */
+  omit?: Prisma.BotServiceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BotServiceInclude<ExtArgs> | null
+  where?: Prisma.BotServiceWhereInput
+  orderBy?: Prisma.BotServiceOrderByWithRelationInput | Prisma.BotServiceOrderByWithRelationInput[]
+  cursor?: Prisma.BotServiceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BotServiceScalarFieldEnum | Prisma.BotServiceScalarFieldEnum[]
+}
+
+/**
+ * Agent.payerChannels
+ */
+export type Agent$payerChannelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the A2APaymentChannel
+   */
+  select?: Prisma.A2APaymentChannelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the A2APaymentChannel
+   */
+  omit?: Prisma.A2APaymentChannelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.A2APaymentChannelInclude<ExtArgs> | null
+  where?: Prisma.A2APaymentChannelWhereInput
+  orderBy?: Prisma.A2APaymentChannelOrderByWithRelationInput | Prisma.A2APaymentChannelOrderByWithRelationInput[]
+  cursor?: Prisma.A2APaymentChannelWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.A2APaymentChannelScalarFieldEnum | Prisma.A2APaymentChannelScalarFieldEnum[]
+}
+
+/**
+ * Agent.payeeChannels
+ */
+export type Agent$payeeChannelsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the A2APaymentChannel
+   */
+  select?: Prisma.A2APaymentChannelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the A2APaymentChannel
+   */
+  omit?: Prisma.A2APaymentChannelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.A2APaymentChannelInclude<ExtArgs> | null
+  where?: Prisma.A2APaymentChannelWhereInput
+  orderBy?: Prisma.A2APaymentChannelOrderByWithRelationInput | Prisma.A2APaymentChannelOrderByWithRelationInput[]
+  cursor?: Prisma.A2APaymentChannelWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.A2APaymentChannelScalarFieldEnum | Prisma.A2APaymentChannelScalarFieldEnum[]
+}
+
+/**
+ * Agent.payerPaymentRecords
+ */
+export type Agent$payerPaymentRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the A2APayment
+   */
+  select?: Prisma.A2APaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the A2APayment
+   */
+  omit?: Prisma.A2APaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.A2APaymentInclude<ExtArgs> | null
+  where?: Prisma.A2APaymentWhereInput
+  orderBy?: Prisma.A2APaymentOrderByWithRelationInput | Prisma.A2APaymentOrderByWithRelationInput[]
+  cursor?: Prisma.A2APaymentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.A2APaymentScalarFieldEnum | Prisma.A2APaymentScalarFieldEnum[]
+}
+
+/**
+ * Agent.payeePaymentRecords
+ */
+export type Agent$payeePaymentRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the A2APayment
+   */
+  select?: Prisma.A2APaymentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the A2APayment
+   */
+  omit?: Prisma.A2APaymentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.A2APaymentInclude<ExtArgs> | null
+  where?: Prisma.A2APaymentWhereInput
+  orderBy?: Prisma.A2APaymentOrderByWithRelationInput | Prisma.A2APaymentOrderByWithRelationInput[]
+  cursor?: Prisma.A2APaymentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.A2APaymentScalarFieldEnum | Prisma.A2APaymentScalarFieldEnum[]
+}
+
+/**
+ * Agent.allowedServiceWhitelistEntries
+ */
+export type Agent$allowedServiceWhitelistEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BotServiceWhitelist
+   */
+  select?: Prisma.BotServiceWhitelistSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BotServiceWhitelist
+   */
+  omit?: Prisma.BotServiceWhitelistOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BotServiceWhitelistInclude<ExtArgs> | null
+  where?: Prisma.BotServiceWhitelistWhereInput
+  orderBy?: Prisma.BotServiceWhitelistOrderByWithRelationInput | Prisma.BotServiceWhitelistOrderByWithRelationInput[]
+  cursor?: Prisma.BotServiceWhitelistWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BotServiceWhitelistScalarFieldEnum | Prisma.BotServiceWhitelistScalarFieldEnum[]
 }
 
 /**

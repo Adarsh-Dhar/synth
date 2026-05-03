@@ -36,15 +36,24 @@ enum LogType {
 }
 
 model User {
-  id        String   @id // Clerk User ID
-  email     String   @unique
-  name      String?
-  walletAddress String @default("")
-  subscriptionTier String  @default("FREE")
-  monthlyUsageUnits Int    @default(0)
-  agents    Agent[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String   @id // Clerk User ID
+  email                 String   @unique
+  name                  String?
+  walletAddress         String   @default("")
+  subscriptionTier      String   @default("FREE")
+  plan                  String   @default("free")
+  planStartedAt         DateTime?
+  planExpiresAt         DateTime?
+  monthlyUsageUnits     Int      @default(0)
+  agents                Agent[]
+  privateBrainConfigs   PrivateBrainConfig[]
+  privateBrainAudits    PrivateBrainAudit[]
+  shieldedExecutionConfigs ShieldedExecutionConfig[]
+  shieldedExecutionAudits   ShieldedExecutionAudit[]
+  botWallets            BotWallet[]
+  botServices           BotService[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Agent {
@@ -68,8 +77,225 @@ model Agent {
   subscriptions    Subscription[]
   terminalLogs     TerminalLog[] @relation("terminalLogs")
   files            AgentFile[]  // <-- NEW: Relation to bot code files
+  privateBrainConfig PrivateBrainConfig?
+  privateBrainAudits PrivateBrainAudit[]
+  shieldedExecutionConfig ShieldedExecutionConfig?
+  shieldedExecutionAudits ShieldedExecutionAudit[]
+  botWallet BotWallet?
+  botServices BotService[]
+  payerChannels A2APaymentChannel[] @relation("payerChannels")
+  payeeChannels A2APaymentChannel[] @relation("payeeChannels")
+  payerPaymentRecords A2APayment[] @relation("payerPaymentRecords")
+  payeePaymentRecords A2APayment[] @relation("payeePaymentRecords")
+  allowedServiceWhitelistEntries BotServiceWhitelist[]
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+}
+
+model PrivateBrainConfig {
+  id                      String   @id @default(cuid())
+  agentId                 String   @unique
+  agent                   Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  ownerId                 String
+  owner                   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  privateBrainEnabled     Boolean  @default(false)
+  perValidator            String
+  perValidatorPubkey      String
+  memorySlots             Int      @default(8)
+  geofenceRegions         String[] @default([])
+  ofacCheckEnabled        Boolean  @default(true)
+  status                  String   @default("inactive")
+  stateAccountPubkey      String?
+  permissionAccountPubkey String?
+  delegationTxSignature   String?
+  undelegationTxSignature String?
+  errorMessage            String?
+  audits                  PrivateBrainAudit[]
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model PrivateBrainAudit {
+  id             String   @id @default(cuid())
+  configId       String
+  config         PrivateBrainConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  actorId        String
+  actor          User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action         String
+  previousStatus String?
+  newStatus      String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([agentId])
+  @@index([configId])
+  @@index([actorId])
+}
+
+model ShieldedExecutionConfig {
+  id                      String   @id @default(cuid())
+  agentId                 String   @unique
+  agent                   Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  ownerId                 String
+  owner                   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  enabled                 Boolean  @default(false)
+  perValidator            String
+  perValidatorPubkey      String
+  shieldStrategyLogic     Boolean  @default(true)
+  shieldIntent            Boolean  @default(true)
+  shieldIntermediateStates Boolean @default(true)
+  settlementMode          String   @default("net_only")
+  settlementIntervalMs    Int      @default(0)
+  status                  String   @default("inactive")
+  logicAccountPubkey      String?
+  stateAccountPubkey      String?
+  permissionAccountPubkey String?
+  delegationTxSignature    String?
+  errorMessage            String?
+  totalShieldedOps        BigInt   @default(0)
+  totalSettledTxs         Int      @default(0)
+  lastSettlementAt        DateTime?
+  audits                  ShieldedExecutionAudit[]
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model ShieldedExecutionAudit {
+  id             String   @id @default(cuid())
+  configId       String
+  config         ShieldedExecutionConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  actorId        String
+  actor          User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action         String
+  previousStatus String?
+  newStatus      String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([agentId])
+  @@index([configId])
+  @@index([actorId])
+}
+
+model BotWallet {
+  id                    String   @id @default(cuid())
+  agentId               String   @unique
+  agent                 Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  ownerId               String
+  owner                 User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  pubkey                String   @unique
+  encryptedKey          String?
+  solBalanceLamports    BigInt   @default(0)
+  usdcBalanceMicro      BigInt   @default(0)
+  privatePaymentsEnabled Boolean  @default(false)
+  paymentApiKeyHash     String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model BotService {
+  id                   String   @id @default(cuid())
+  agentId              String
+  agent                Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  ownerId              String
+  owner                User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  serviceType          String
+  name                 String
+  description          String?
+  endpointUrl          String?
+  currency             String   @default("USDC")
+  pricePerCallMicro    Int      @default(0)
+  pricePerSecondMicro  Int      @default(0)
+  isPublic             Boolean  @default(false)
+  requiresWhitelist    Boolean  @default(false)
+  status               String   @default("offline")
+  lastHeartbeat        DateTime?
+  whitelists           BotServiceWhitelist[]
+  paymentChannels      A2APaymentChannel[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([agentId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([serviceType])
+}
+
+model BotServiceWhitelist {
+  id             String   @id @default(cuid())
+  serviceId      String
+  service        BotService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  allowedAgentId String
+  allowedAgent   Agent    @relation(fields: [allowedAgentId], references: [id], onDelete: Cascade)
+  grantedBy      String
+  createdAt      DateTime @default(now())
+
+  @@unique([serviceId, allowedAgentId])
+  @@index([allowedAgentId])
+}
+
+model A2APaymentChannel {
+  id                    String   @id @default(cuid())
+  payerAgentId          String
+  payerAgent            Agent    @relation("payerChannels", fields: [payerAgentId], references: [id], onDelete: Cascade)
+  payeeAgentId          String
+  payeeAgent            Agent    @relation("payeeChannels", fields: [payeeAgentId], references: [id], onDelete: Cascade)
+  serviceId             String?
+  service               BotService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  currency              String   @default("USDC")
+  maxPerTxMicro         Int      @default(1000000)
+  dailyCapMicro         Int      @default(100000000)
+  status                String   @default("pending")
+  channelAccountPubkey  String?
+  openTxSignature       String?
+  openedAt              DateTime?
+  closeTxSignature      String?
+  closedAt              DateTime?
+  totalPaidMicro        Int      @default(0)
+  totalTxCount          Int      @default(0)
+  lastPaymentAt         DateTime?
+  payments              A2APayment[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([serviceId])
+  @@index([status])
+}
+
+model A2APayment {
+  id            String   @id @default(cuid())
+  channelId     String
+  channel       A2APaymentChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  payerAgentId  String
+  payerAgent    Agent    @relation("payerPaymentRecords", fields: [payerAgentId], references: [id], onDelete: Cascade)
+  payeeAgentId  String
+  payeeAgent    Agent    @relation("payeePaymentRecords", fields: [payeeAgentId], references: [id], onDelete: Cascade)
+  amountMicro   Int
+  currency      String
+  purpose       String
+  idempotencyKey String @unique
+  status        String   @default("pending")
+  txSignature   String?
+  slot          Int?
+  confirmedAt   DateTime?
+  failedReason  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([channelId])
+  @@index([status])
 }
 
 // NEW MODEL: Stores the generated code files for the agent

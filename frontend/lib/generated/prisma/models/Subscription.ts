@@ -485,10 +485,6 @@ export type SubscriptionUncheckedUpdateManyWithoutAgentNestedInput = {
   deleteMany?: Prisma.SubscriptionScalarWhereInput | Prisma.SubscriptionScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type SubscriptionCreateWithoutAgentInput = {
   id?: string
   provider: string

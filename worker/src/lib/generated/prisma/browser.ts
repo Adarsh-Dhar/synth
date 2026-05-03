@@ -28,6 +28,51 @@ export type User = Prisma.UserModel
  */
 export type Agent = Prisma.AgentModel
 /**
+ * Model PrivateBrainConfig
+ * 
+ */
+export type PrivateBrainConfig = Prisma.PrivateBrainConfigModel
+/**
+ * Model PrivateBrainAudit
+ * 
+ */
+export type PrivateBrainAudit = Prisma.PrivateBrainAuditModel
+/**
+ * Model ShieldedExecutionConfig
+ * 
+ */
+export type ShieldedExecutionConfig = Prisma.ShieldedExecutionConfigModel
+/**
+ * Model ShieldedExecutionAudit
+ * 
+ */
+export type ShieldedExecutionAudit = Prisma.ShieldedExecutionAuditModel
+/**
+ * Model BotWallet
+ * 
+ */
+export type BotWallet = Prisma.BotWalletModel
+/**
+ * Model BotService
+ * 
+ */
+export type BotService = Prisma.BotServiceModel
+/**
+ * Model BotServiceWhitelist
+ * 
+ */
+export type BotServiceWhitelist = Prisma.BotServiceWhitelistModel
+/**
+ * Model A2APaymentChannel
+ * 
+ */
+export type A2APaymentChannel = Prisma.A2APaymentChannelModel
+/**
+ * Model A2APayment
+ * 
+ */
+export type A2APayment = Prisma.A2APaymentModel
+/**
  * Model AgentFile
  * 
  */

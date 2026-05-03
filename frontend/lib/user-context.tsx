@@ -32,6 +32,9 @@ interface User {
   walletAddress: string;
   email?: string | null;
   subscriptionTier?: string;
+  plan?: string;
+  planStartedAt?: string | null;
+  planExpiresAt?: string | null;
   monthlyUsageUnits?: number;
 }
 
@@ -129,7 +132,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(null);
     try {
       await privyLogout();
-    } catch {}
+    } catch {
+      return;
+    }
   }, [privyLogout]);
 
   return (

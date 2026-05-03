@@ -13,8 +13,6 @@ import { usePathname } from "next/navigation";
 import {
   Bot,
   BarChart3,
-  Zap,
-  Wallet,
   Menu,
   X,
   CreditCard,
@@ -22,7 +20,6 @@ import {
   Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePrivy } from "@privy-io/react-auth";
 import { useUser } from "@/lib/user-context";
 import { useCurrentIdentity } from "@/lib/auth/privy-client";
 import { AuthButton } from "@/components/auth-button";
@@ -34,6 +31,7 @@ export function Sidebar() {
 
   const { user } = useUser();
   const { displayName, authMethod } = useCurrentIdentity();
+  const currentPlan = String(user?.plan || user?.subscriptionTier || "FREE").toUpperCase();
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -85,7 +83,7 @@ export function Sidebar() {
           </Link>
           <div className="mt-3">
             <SubscriptionStatusBadge
-              tier={user?.subscriptionTier ?? "FREE"}
+              tier={currentPlan}
             />
           </div>
         </div>

@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
             ? `${emailSafe}@privy.local`
             : `${emailSafe}@wallet.local`,
           walletAddress: normalizedWallet,
+          plan: "free",
+          planStartedAt: new Date(),
         },
       });
       return NextResponse.json(user, { status: 200 });
@@ -79,7 +81,7 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.upsert({
       where: { id },
       update: { email, ...(name ? { name } : {}) },
-      create: { id, email, ...(name ? { name } : {}) },
+      create: { id, email, ...(name ? { name } : {}), plan: "free", planStartedAt: new Date() },
     });
     return NextResponse.json(user, { status: 200 });
   } catch (error: unknown) {

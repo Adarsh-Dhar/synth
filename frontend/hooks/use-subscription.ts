@@ -18,8 +18,9 @@ export function useSubscription(): SubscriptionState {
   });
 
   useEffect(() => {
+    const currentPlan = user?.plan || user?.subscriptionTier || "FREE";
     setState({
-      tier: user?.subscriptionTier || "FREE",
+      tier: currentPlan,
       monthlyUsageUnits: user?.monthlyUsageUnits || 0,
       loading,
     });

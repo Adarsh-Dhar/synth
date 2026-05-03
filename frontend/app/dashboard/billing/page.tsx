@@ -49,7 +49,7 @@ function UsageMeterBar({ pct, unlimited }: { pct: number; unlimited: boolean }) 
   if (unlimited) {
     return (
       <div className="h-2 rounded-full bg-emerald-500/30">
-        <div className="h-full w-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 animate-pulse" />
+        <div className="h-full w-full rounded-full bg-linear-to-r from-emerald-500 to-emerald-400 animate-pulse" />
       </div>
     );
   }
@@ -106,6 +106,7 @@ function BillingContent() {
 
   const tierLabel = tier ?? "FREE";
   const isPaid = tierLabel !== "FREE";
+  const currentPlan = String(user?.plan || user?.subscriptionTier || tierLabel || "FREE").toUpperCase();
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,11 +164,11 @@ function BillingContent() {
               <div>
                 <p className="text-xs text-muted-foreground">Current Plan</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <h2 className={`text-2xl font-bold ${TIER_COLORS[tierLabel] ?? "text-foreground"}`}>
-                    {tierLabel}
+                  <h2 className={`text-2xl font-bold ${TIER_COLORS[currentPlan] ?? "text-foreground"}`}>
+                    {currentPlan}
                   </h2>
-                  <Badge className={TIER_STYLES[tierLabel] ?? TIER_STYLES.FREE}>
-                    {tierLabel}
+                  <Badge className={TIER_STYLES[currentPlan] ?? TIER_STYLES.FREE}>
+                    {currentPlan}
                   </Badge>
                 </div>
                 {subscription?.validUntil && (

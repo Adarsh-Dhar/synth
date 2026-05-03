@@ -40,6 +40,9 @@ export type UserMinAggregateOutputType = {
   name: string | null
   walletAddress: string | null
   subscriptionTier: string | null
+  plan: string | null
+  planStartedAt: Date | null
+  planExpiresAt: Date | null
   monthlyUsageUnits: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -51,6 +54,9 @@ export type UserMaxAggregateOutputType = {
   name: string | null
   walletAddress: string | null
   subscriptionTier: string | null
+  plan: string | null
+  planStartedAt: Date | null
+  planExpiresAt: Date | null
   monthlyUsageUnits: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -62,6 +68,9 @@ export type UserCountAggregateOutputType = {
   name: number
   walletAddress: number
   subscriptionTier: number
+  plan: number
+  planStartedAt: number
+  planExpiresAt: number
   monthlyUsageUnits: number
   createdAt: number
   updatedAt: number
@@ -83,6 +92,9 @@ export type UserMinAggregateInputType = {
   name?: true
   walletAddress?: true
   subscriptionTier?: true
+  plan?: true
+  planStartedAt?: true
+  planExpiresAt?: true
   monthlyUsageUnits?: true
   createdAt?: true
   updatedAt?: true
@@ -94,6 +106,9 @@ export type UserMaxAggregateInputType = {
   name?: true
   walletAddress?: true
   subscriptionTier?: true
+  plan?: true
+  planStartedAt?: true
+  planExpiresAt?: true
   monthlyUsageUnits?: true
   createdAt?: true
   updatedAt?: true
@@ -105,6 +120,9 @@ export type UserCountAggregateInputType = {
   name?: true
   walletAddress?: true
   subscriptionTier?: true
+  plan?: true
+  planStartedAt?: true
+  planExpiresAt?: true
   monthlyUsageUnits?: true
   createdAt?: true
   updatedAt?: true
@@ -203,6 +221,9 @@ export type UserGroupByOutputType = {
   name: string | null
   walletAddress: string
   subscriptionTier: string
+  plan: string
+  planStartedAt: Date | null
+  planExpiresAt: Date | null
   monthlyUsageUnits: number
   createdAt: Date
   updatedAt: Date
@@ -237,10 +258,19 @@ export type UserWhereInput = {
   name?: Prisma.StringNullableFilter<"User"> | string | null
   walletAddress?: Prisma.StringFilter<"User"> | string
   subscriptionTier?: Prisma.StringFilter<"User"> | string
+  plan?: Prisma.StringFilter<"User"> | string
+  planStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  planExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   monthlyUsageUnits?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   agents?: Prisma.AgentListRelationFilter
+  privateBrainConfigs?: Prisma.PrivateBrainConfigListRelationFilter
+  privateBrainAudits?: Prisma.PrivateBrainAuditListRelationFilter
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigListRelationFilter
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditListRelationFilter
+  botWallets?: Prisma.BotWalletListRelationFilter
+  botServices?: Prisma.BotServiceListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -249,10 +279,19 @@ export type UserOrderByWithRelationInput = {
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
   subscriptionTier?: Prisma.SortOrder
+  plan?: Prisma.SortOrder
+  planStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  planExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   agents?: Prisma.AgentOrderByRelationAggregateInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigOrderByRelationAggregateInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditOrderByRelationAggregateInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigOrderByRelationAggregateInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditOrderByRelationAggregateInput
+  botWallets?: Prisma.BotWalletOrderByRelationAggregateInput
+  botServices?: Prisma.BotServiceOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -264,10 +303,19 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringNullableFilter<"User"> | string | null
   walletAddress?: Prisma.StringFilter<"User"> | string
   subscriptionTier?: Prisma.StringFilter<"User"> | string
+  plan?: Prisma.StringFilter<"User"> | string
+  planStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  planExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   monthlyUsageUnits?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   agents?: Prisma.AgentListRelationFilter
+  privateBrainConfigs?: Prisma.PrivateBrainConfigListRelationFilter
+  privateBrainAudits?: Prisma.PrivateBrainAuditListRelationFilter
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigListRelationFilter
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditListRelationFilter
+  botWallets?: Prisma.BotWalletListRelationFilter
+  botServices?: Prisma.BotServiceListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -276,6 +324,9 @@ export type UserOrderByWithAggregationInput = {
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
   subscriptionTier?: Prisma.SortOrder
+  plan?: Prisma.SortOrder
+  planStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  planExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -295,6 +346,9 @@ export type UserScalarWhereWithAggregatesInput = {
   name?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   walletAddress?: Prisma.StringWithAggregatesFilter<"User"> | string
   subscriptionTier?: Prisma.StringWithAggregatesFilter<"User"> | string
+  plan?: Prisma.StringWithAggregatesFilter<"User"> | string
+  planStartedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  planExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   monthlyUsageUnits?: Prisma.IntWithAggregatesFilter<"User"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -306,10 +360,19 @@ export type UserCreateInput = {
   name?: string | null
   walletAddress?: string
   subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -318,10 +381,19 @@ export type UserUncheckedCreateInput = {
   name?: string | null
   walletAddress?: string
   subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletUncheckedCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUpdateInput = {
@@ -330,10 +402,19 @@ export type UserUpdateInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
   subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -342,10 +423,19 @@ export type UserUncheckedUpdateInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
   subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUncheckedUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -354,6 +444,9 @@ export type UserCreateManyInput = {
   name?: string | null
   walletAddress?: string
   subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -365,6 +458,9 @@ export type UserUpdateManyMutationInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
   subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -376,6 +472,9 @@ export type UserUncheckedUpdateManyInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
   subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -387,6 +486,9 @@ export type UserCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
   subscriptionTier?: Prisma.SortOrder
+  plan?: Prisma.SortOrder
+  planStartedAt?: Prisma.SortOrder
+  planExpiresAt?: Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -402,6 +504,9 @@ export type UserMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
   subscriptionTier?: Prisma.SortOrder
+  plan?: Prisma.SortOrder
+  planStartedAt?: Prisma.SortOrder
+  planExpiresAt?: Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -413,6 +518,9 @@ export type UserMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   walletAddress?: Prisma.SortOrder
   subscriptionTier?: Prisma.SortOrder
+  plan?: Prisma.SortOrder
+  planStartedAt?: Prisma.SortOrder
+  planExpiresAt?: Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -433,6 +541,10 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type IntFieldUpdateOperationsInput = {
@@ -461,15 +573,108 @@ export type UserUpdateOneRequiredWithoutAgentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAgentsInput, Prisma.UserUpdateWithoutAgentsInput>, Prisma.UserUncheckedUpdateWithoutAgentsInput>
 }
 
+export type UserCreateNestedOneWithoutPrivateBrainConfigsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainConfigsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainConfigsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrivateBrainConfigsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPrivateBrainConfigsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainConfigsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainConfigsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrivateBrainConfigsInput
+  upsert?: Prisma.UserUpsertWithoutPrivateBrainConfigsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPrivateBrainConfigsInput, Prisma.UserUpdateWithoutPrivateBrainConfigsInput>, Prisma.UserUncheckedUpdateWithoutPrivateBrainConfigsInput>
+}
+
+export type UserCreateNestedOneWithoutPrivateBrainAuditsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainAuditsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainAuditsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrivateBrainAuditsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPrivateBrainAuditsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainAuditsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainAuditsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrivateBrainAuditsInput
+  upsert?: Prisma.UserUpsertWithoutPrivateBrainAuditsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPrivateBrainAuditsInput, Prisma.UserUpdateWithoutPrivateBrainAuditsInput>, Prisma.UserUncheckedUpdateWithoutPrivateBrainAuditsInput>
+}
+
+export type UserCreateNestedOneWithoutShieldedExecutionConfigsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionConfigsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionConfigsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShieldedExecutionConfigsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutShieldedExecutionConfigsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionConfigsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionConfigsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShieldedExecutionConfigsInput
+  upsert?: Prisma.UserUpsertWithoutShieldedExecutionConfigsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutShieldedExecutionConfigsInput, Prisma.UserUpdateWithoutShieldedExecutionConfigsInput>, Prisma.UserUncheckedUpdateWithoutShieldedExecutionConfigsInput>
+}
+
+export type UserCreateNestedOneWithoutShieldedExecutionAuditsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionAuditsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionAuditsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShieldedExecutionAuditsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutShieldedExecutionAuditsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionAuditsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionAuditsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShieldedExecutionAuditsInput
+  upsert?: Prisma.UserUpsertWithoutShieldedExecutionAuditsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutShieldedExecutionAuditsInput, Prisma.UserUpdateWithoutShieldedExecutionAuditsInput>, Prisma.UserUncheckedUpdateWithoutShieldedExecutionAuditsInput>
+}
+
+export type UserCreateNestedOneWithoutBotWalletsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBotWalletsInput, Prisma.UserUncheckedCreateWithoutBotWalletsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBotWalletsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutBotWalletsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBotWalletsInput, Prisma.UserUncheckedCreateWithoutBotWalletsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBotWalletsInput
+  upsert?: Prisma.UserUpsertWithoutBotWalletsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBotWalletsInput, Prisma.UserUpdateWithoutBotWalletsInput>, Prisma.UserUncheckedUpdateWithoutBotWalletsInput>
+}
+
+export type UserCreateNestedOneWithoutBotServicesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBotServicesInput, Prisma.UserUncheckedCreateWithoutBotServicesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBotServicesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutBotServicesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBotServicesInput, Prisma.UserUncheckedCreateWithoutBotServicesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBotServicesInput
+  upsert?: Prisma.UserUpsertWithoutBotServicesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBotServicesInput, Prisma.UserUpdateWithoutBotServicesInput>, Prisma.UserUncheckedUpdateWithoutBotServicesInput>
+}
+
 export type UserCreateWithoutAgentsInput = {
   id: string
   email: string
   name?: string | null
   walletAddress?: string
   subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutAgentsInput = {
@@ -478,9 +683,18 @@ export type UserUncheckedCreateWithoutAgentsInput = {
   name?: string | null
   walletAddress?: string
   subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletUncheckedCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutAgentsInput = {
@@ -505,9 +719,18 @@ export type UserUpdateWithoutAgentsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
   subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAgentsInput = {
@@ -516,9 +739,594 @@ export type UserUncheckedUpdateWithoutAgentsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
   subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUncheckedUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutPrivateBrainConfigsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutPrivateBrainConfigsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletUncheckedCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutPrivateBrainConfigsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainConfigsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainConfigsInput>
+}
+
+export type UserUpsertWithoutPrivateBrainConfigsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPrivateBrainConfigsInput, Prisma.UserUncheckedUpdateWithoutPrivateBrainConfigsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainConfigsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainConfigsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPrivateBrainConfigsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPrivateBrainConfigsInput, Prisma.UserUncheckedUpdateWithoutPrivateBrainConfigsInput>
+}
+
+export type UserUpdateWithoutPrivateBrainConfigsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPrivateBrainConfigsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUncheckedUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutPrivateBrainAuditsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutPrivateBrainAuditsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletUncheckedCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutPrivateBrainAuditsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainAuditsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainAuditsInput>
+}
+
+export type UserUpsertWithoutPrivateBrainAuditsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPrivateBrainAuditsInput, Prisma.UserUncheckedUpdateWithoutPrivateBrainAuditsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrivateBrainAuditsInput, Prisma.UserUncheckedCreateWithoutPrivateBrainAuditsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPrivateBrainAuditsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPrivateBrainAuditsInput, Prisma.UserUncheckedUpdateWithoutPrivateBrainAuditsInput>
+}
+
+export type UserUpdateWithoutPrivateBrainAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPrivateBrainAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUncheckedUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutShieldedExecutionConfigsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutActorInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutShieldedExecutionConfigsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutActorInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletUncheckedCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutShieldedExecutionConfigsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionConfigsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionConfigsInput>
+}
+
+export type UserUpsertWithoutShieldedExecutionConfigsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutShieldedExecutionConfigsInput, Prisma.UserUncheckedUpdateWithoutShieldedExecutionConfigsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionConfigsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionConfigsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutShieldedExecutionConfigsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutShieldedExecutionConfigsInput, Prisma.UserUncheckedUpdateWithoutShieldedExecutionConfigsInput>
+}
+
+export type UserUpdateWithoutShieldedExecutionConfigsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutActorNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutShieldedExecutionConfigsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutActorNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUncheckedUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutShieldedExecutionAuditsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigCreateNestedManyWithoutOwnerInput
+  botWallets?: Prisma.BotWalletCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutShieldedExecutionAuditsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedManyWithoutOwnerInput
+  botWallets?: Prisma.BotWalletUncheckedCreateNestedManyWithoutOwnerInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutShieldedExecutionAuditsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionAuditsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionAuditsInput>
+}
+
+export type UserUpsertWithoutShieldedExecutionAuditsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutShieldedExecutionAuditsInput, Prisma.UserUncheckedUpdateWithoutShieldedExecutionAuditsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutShieldedExecutionAuditsInput, Prisma.UserUncheckedCreateWithoutShieldedExecutionAuditsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutShieldedExecutionAuditsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutShieldedExecutionAuditsInput, Prisma.UserUncheckedUpdateWithoutShieldedExecutionAuditsInput>
+}
+
+export type UserUpdateWithoutShieldedExecutionAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUpdateManyWithoutOwnerNestedInput
+  botWallets?: Prisma.BotWalletUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutShieldedExecutionAuditsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  botWallets?: Prisma.BotWalletUncheckedUpdateManyWithoutOwnerNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutBotWalletsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutActorInput
+  botServices?: Prisma.BotServiceCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutBotWalletsInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutActorInput
+  botServices?: Prisma.BotServiceUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutBotWalletsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBotWalletsInput, Prisma.UserUncheckedCreateWithoutBotWalletsInput>
+}
+
+export type UserUpsertWithoutBotWalletsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBotWalletsInput, Prisma.UserUncheckedUpdateWithoutBotWalletsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBotWalletsInput, Prisma.UserUncheckedCreateWithoutBotWalletsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBotWalletsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBotWalletsInput, Prisma.UserUncheckedUpdateWithoutBotWalletsInput>
+}
+
+export type UserUpdateWithoutBotWalletsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutActorNestedInput
+  botServices?: Prisma.BotServiceUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBotWalletsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutActorNestedInput
+  botServices?: Prisma.BotServiceUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserCreateWithoutBotServicesInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutBotServicesInput = {
+  id: string
+  email: string
+  name?: string | null
+  walletAddress?: string
+  subscriptionTier?: string
+  plan?: string
+  planStartedAt?: Date | string | null
+  planExpiresAt?: Date | string | null
+  monthlyUsageUnits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedCreateNestedManyWithoutActorInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedCreateNestedManyWithoutOwnerInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedCreateNestedManyWithoutActorInput
+  botWallets?: Prisma.BotWalletUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutBotServicesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBotServicesInput, Prisma.UserUncheckedCreateWithoutBotServicesInput>
+}
+
+export type UserUpsertWithoutBotServicesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBotServicesInput, Prisma.UserUncheckedUpdateWithoutBotServicesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBotServicesInput, Prisma.UserUncheckedCreateWithoutBotServicesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBotServicesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBotServicesInput, Prisma.UserUncheckedUpdateWithoutBotServicesInput>
+}
+
+export type UserUpdateWithoutBotServicesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBotServicesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  walletAddress?: Prisma.StringFieldUpdateOperationsInput | string
+  subscriptionTier?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.StringFieldUpdateOperationsInput | string
+  planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  privateBrainAudits?: Prisma.PrivateBrainAuditUncheckedUpdateManyWithoutActorNestedInput
+  shieldedExecutionConfigs?: Prisma.ShieldedExecutionConfigUncheckedUpdateManyWithoutOwnerNestedInput
+  shieldedExecutionAudits?: Prisma.ShieldedExecutionAuditUncheckedUpdateManyWithoutActorNestedInput
+  botWallets?: Prisma.BotWalletUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 
@@ -528,10 +1336,22 @@ export type UserUncheckedUpdateWithoutAgentsInput = {
 
 export type UserCountOutputType = {
   agents: number
+  privateBrainConfigs: number
+  privateBrainAudits: number
+  shieldedExecutionConfigs: number
+  shieldedExecutionAudits: number
+  botWallets: number
+  botServices: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agents?: boolean | UserCountOutputTypeCountAgentsArgs
+  privateBrainConfigs?: boolean | UserCountOutputTypeCountPrivateBrainConfigsArgs
+  privateBrainAudits?: boolean | UserCountOutputTypeCountPrivateBrainAuditsArgs
+  shieldedExecutionConfigs?: boolean | UserCountOutputTypeCountShieldedExecutionConfigsArgs
+  shieldedExecutionAudits?: boolean | UserCountOutputTypeCountShieldedExecutionAuditsArgs
+  botWallets?: boolean | UserCountOutputTypeCountBotWalletsArgs
+  botServices?: boolean | UserCountOutputTypeCountBotServicesArgs
 }
 
 /**
@@ -551,6 +1371,48 @@ export type UserCountOutputTypeCountAgentsArgs<ExtArgs extends runtime.Types.Ext
   where?: Prisma.AgentWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPrivateBrainConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PrivateBrainConfigWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPrivateBrainAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PrivateBrainAuditWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountShieldedExecutionConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShieldedExecutionConfigWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountShieldedExecutionAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShieldedExecutionAuditWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBotWalletsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BotWalletWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBotServicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BotServiceWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -558,10 +1420,19 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   name?: boolean
   walletAddress?: boolean
   subscriptionTier?: boolean
+  plan?: boolean
+  planStartedAt?: boolean
+  planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   agents?: boolean | Prisma.User$agentsArgs<ExtArgs>
+  privateBrainConfigs?: boolean | Prisma.User$privateBrainConfigsArgs<ExtArgs>
+  privateBrainAudits?: boolean | Prisma.User$privateBrainAuditsArgs<ExtArgs>
+  shieldedExecutionConfigs?: boolean | Prisma.User$shieldedExecutionConfigsArgs<ExtArgs>
+  shieldedExecutionAudits?: boolean | Prisma.User$shieldedExecutionAuditsArgs<ExtArgs>
+  botWallets?: boolean | Prisma.User$botWalletsArgs<ExtArgs>
+  botServices?: boolean | Prisma.User$botServicesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -571,6 +1442,9 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   walletAddress?: boolean
   subscriptionTier?: boolean
+  plan?: boolean
+  planStartedAt?: boolean
+  planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -582,6 +1456,9 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   walletAddress?: boolean
   subscriptionTier?: boolean
+  plan?: boolean
+  planStartedAt?: boolean
+  planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -593,14 +1470,23 @@ export type UserSelectScalar = {
   name?: boolean
   walletAddress?: boolean
   subscriptionTier?: boolean
+  plan?: boolean
+  planStartedAt?: boolean
+  planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "walletAddress" | "subscriptionTier" | "monthlyUsageUnits" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "walletAddress" | "subscriptionTier" | "plan" | "planStartedAt" | "planExpiresAt" | "monthlyUsageUnits" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agents?: boolean | Prisma.User$agentsArgs<ExtArgs>
+  privateBrainConfigs?: boolean | Prisma.User$privateBrainConfigsArgs<ExtArgs>
+  privateBrainAudits?: boolean | Prisma.User$privateBrainAuditsArgs<ExtArgs>
+  shieldedExecutionConfigs?: boolean | Prisma.User$shieldedExecutionConfigsArgs<ExtArgs>
+  shieldedExecutionAudits?: boolean | Prisma.User$shieldedExecutionAuditsArgs<ExtArgs>
+  botWallets?: boolean | Prisma.User$botWalletsArgs<ExtArgs>
+  botServices?: boolean | Prisma.User$botServicesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -610,6 +1496,12 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     agents: Prisma.$AgentPayload<ExtArgs>[]
+    privateBrainConfigs: Prisma.$PrivateBrainConfigPayload<ExtArgs>[]
+    privateBrainAudits: Prisma.$PrivateBrainAuditPayload<ExtArgs>[]
+    shieldedExecutionConfigs: Prisma.$ShieldedExecutionConfigPayload<ExtArgs>[]
+    shieldedExecutionAudits: Prisma.$ShieldedExecutionAuditPayload<ExtArgs>[]
+    botWallets: Prisma.$BotWalletPayload<ExtArgs>[]
+    botServices: Prisma.$BotServicePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -617,6 +1509,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     name: string | null
     walletAddress: string
     subscriptionTier: string
+    plan: string
+    planStartedAt: Date | null
+    planExpiresAt: Date | null
     monthlyUsageUnits: number
     createdAt: Date
     updatedAt: Date
@@ -1015,6 +1910,12 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   agents<T extends Prisma.User$agentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$agentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AgentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  privateBrainConfigs<T extends Prisma.User$privateBrainConfigsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$privateBrainConfigsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PrivateBrainConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  privateBrainAudits<T extends Prisma.User$privateBrainAuditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$privateBrainAuditsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PrivateBrainAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shieldedExecutionConfigs<T extends Prisma.User$shieldedExecutionConfigsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$shieldedExecutionConfigsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShieldedExecutionConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shieldedExecutionAudits<T extends Prisma.User$shieldedExecutionAuditsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$shieldedExecutionAuditsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShieldedExecutionAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  botWallets<T extends Prisma.User$botWalletsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$botWalletsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BotWalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  botServices<T extends Prisma.User$botServicesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$botServicesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BotServicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1049,6 +1950,9 @@ export interface UserFieldRefs {
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly walletAddress: Prisma.FieldRef<"User", 'String'>
   readonly subscriptionTier: Prisma.FieldRef<"User", 'String'>
+  readonly plan: Prisma.FieldRef<"User", 'String'>
+  readonly planStartedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly planExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly monthlyUsageUnits: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -1466,6 +2370,150 @@ export type User$agentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   distinct?: Prisma.AgentScalarFieldEnum | Prisma.AgentScalarFieldEnum[]
+}
+
+/**
+ * User.privateBrainConfigs
+ */
+export type User$privateBrainConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PrivateBrainConfig
+   */
+  select?: Prisma.PrivateBrainConfigSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PrivateBrainConfig
+   */
+  omit?: Prisma.PrivateBrainConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PrivateBrainConfigInclude<ExtArgs> | null
+  where?: Prisma.PrivateBrainConfigWhereInput
+  orderBy?: Prisma.PrivateBrainConfigOrderByWithRelationInput | Prisma.PrivateBrainConfigOrderByWithRelationInput[]
+  cursor?: Prisma.PrivateBrainConfigWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PrivateBrainConfigScalarFieldEnum | Prisma.PrivateBrainConfigScalarFieldEnum[]
+}
+
+/**
+ * User.privateBrainAudits
+ */
+export type User$privateBrainAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PrivateBrainAudit
+   */
+  select?: Prisma.PrivateBrainAuditSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PrivateBrainAudit
+   */
+  omit?: Prisma.PrivateBrainAuditOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PrivateBrainAuditInclude<ExtArgs> | null
+  where?: Prisma.PrivateBrainAuditWhereInput
+  orderBy?: Prisma.PrivateBrainAuditOrderByWithRelationInput | Prisma.PrivateBrainAuditOrderByWithRelationInput[]
+  cursor?: Prisma.PrivateBrainAuditWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PrivateBrainAuditScalarFieldEnum | Prisma.PrivateBrainAuditScalarFieldEnum[]
+}
+
+/**
+ * User.shieldedExecutionConfigs
+ */
+export type User$shieldedExecutionConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShieldedExecutionConfig
+   */
+  select?: Prisma.ShieldedExecutionConfigSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShieldedExecutionConfig
+   */
+  omit?: Prisma.ShieldedExecutionConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShieldedExecutionConfigInclude<ExtArgs> | null
+  where?: Prisma.ShieldedExecutionConfigWhereInput
+  orderBy?: Prisma.ShieldedExecutionConfigOrderByWithRelationInput | Prisma.ShieldedExecutionConfigOrderByWithRelationInput[]
+  cursor?: Prisma.ShieldedExecutionConfigWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShieldedExecutionConfigScalarFieldEnum | Prisma.ShieldedExecutionConfigScalarFieldEnum[]
+}
+
+/**
+ * User.shieldedExecutionAudits
+ */
+export type User$shieldedExecutionAuditsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShieldedExecutionAudit
+   */
+  select?: Prisma.ShieldedExecutionAuditSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShieldedExecutionAudit
+   */
+  omit?: Prisma.ShieldedExecutionAuditOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShieldedExecutionAuditInclude<ExtArgs> | null
+  where?: Prisma.ShieldedExecutionAuditWhereInput
+  orderBy?: Prisma.ShieldedExecutionAuditOrderByWithRelationInput | Prisma.ShieldedExecutionAuditOrderByWithRelationInput[]
+  cursor?: Prisma.ShieldedExecutionAuditWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShieldedExecutionAuditScalarFieldEnum | Prisma.ShieldedExecutionAuditScalarFieldEnum[]
+}
+
+/**
+ * User.botWallets
+ */
+export type User$botWalletsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BotWallet
+   */
+  select?: Prisma.BotWalletSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BotWallet
+   */
+  omit?: Prisma.BotWalletOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BotWalletInclude<ExtArgs> | null
+  where?: Prisma.BotWalletWhereInput
+  orderBy?: Prisma.BotWalletOrderByWithRelationInput | Prisma.BotWalletOrderByWithRelationInput[]
+  cursor?: Prisma.BotWalletWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BotWalletScalarFieldEnum | Prisma.BotWalletScalarFieldEnum[]
+}
+
+/**
+ * User.botServices
+ */
+export type User$botServicesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BotService
+   */
+  select?: Prisma.BotServiceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BotService
+   */
+  omit?: Prisma.BotServiceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BotServiceInclude<ExtArgs> | null
+  where?: Prisma.BotServiceWhereInput
+  orderBy?: Prisma.BotServiceOrderByWithRelationInput | Prisma.BotServiceOrderByWithRelationInput[]
+  cursor?: Prisma.BotServiceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BotServiceScalarFieldEnum | Prisma.BotServiceScalarFieldEnum[]
 }
 
 /**

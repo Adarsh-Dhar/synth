@@ -53,6 +53,15 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Agent: 'Agent',
+  PrivateBrainConfig: 'PrivateBrainConfig',
+  PrivateBrainAudit: 'PrivateBrainAudit',
+  ShieldedExecutionConfig: 'ShieldedExecutionConfig',
+  ShieldedExecutionAudit: 'ShieldedExecutionAudit',
+  BotWallet: 'BotWallet',
+  BotService: 'BotService',
+  BotServiceWhitelist: 'BotServiceWhitelist',
+  A2APaymentChannel: 'A2APaymentChannel',
+  A2APayment: 'A2APayment',
   AgentFile: 'AgentFile',
   TradeLog: 'TradeLog',
   Subscription: 'Subscription',
@@ -81,6 +90,9 @@ export const UserScalarFieldEnum = {
   name: 'name',
   walletAddress: 'walletAddress',
   subscriptionTier: 'subscriptionTier',
+  plan: 'plan',
+  planStartedAt: 'planStartedAt',
+  planExpiresAt: 'planExpiresAt',
   monthlyUsageUnits: 'monthlyUsageUnits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -110,6 +122,182 @@ export const AgentScalarFieldEnum = {
 } as const
 
 export type AgentScalarFieldEnum = (typeof AgentScalarFieldEnum)[keyof typeof AgentScalarFieldEnum]
+
+
+export const PrivateBrainConfigScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  ownerId: 'ownerId',
+  privateBrainEnabled: 'privateBrainEnabled',
+  perValidator: 'perValidator',
+  perValidatorPubkey: 'perValidatorPubkey',
+  memorySlots: 'memorySlots',
+  geofenceRegions: 'geofenceRegions',
+  ofacCheckEnabled: 'ofacCheckEnabled',
+  status: 'status',
+  stateAccountPubkey: 'stateAccountPubkey',
+  permissionAccountPubkey: 'permissionAccountPubkey',
+  delegationTxSignature: 'delegationTxSignature',
+  undelegationTxSignature: 'undelegationTxSignature',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PrivateBrainConfigScalarFieldEnum = (typeof PrivateBrainConfigScalarFieldEnum)[keyof typeof PrivateBrainConfigScalarFieldEnum]
+
+
+export const PrivateBrainAuditScalarFieldEnum = {
+  id: 'id',
+  configId: 'configId',
+  agentId: 'agentId',
+  actorId: 'actorId',
+  action: 'action',
+  previousStatus: 'previousStatus',
+  newStatus: 'newStatus',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+} as const
+
+export type PrivateBrainAuditScalarFieldEnum = (typeof PrivateBrainAuditScalarFieldEnum)[keyof typeof PrivateBrainAuditScalarFieldEnum]
+
+
+export const ShieldedExecutionConfigScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  ownerId: 'ownerId',
+  enabled: 'enabled',
+  perValidator: 'perValidator',
+  perValidatorPubkey: 'perValidatorPubkey',
+  shieldStrategyLogic: 'shieldStrategyLogic',
+  shieldIntent: 'shieldIntent',
+  shieldIntermediateStates: 'shieldIntermediateStates',
+  settlementMode: 'settlementMode',
+  settlementIntervalMs: 'settlementIntervalMs',
+  status: 'status',
+  logicAccountPubkey: 'logicAccountPubkey',
+  stateAccountPubkey: 'stateAccountPubkey',
+  permissionAccountPubkey: 'permissionAccountPubkey',
+  delegationTxSignature: 'delegationTxSignature',
+  errorMessage: 'errorMessage',
+  totalShieldedOps: 'totalShieldedOps',
+  totalSettledTxs: 'totalSettledTxs',
+  lastSettlementAt: 'lastSettlementAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShieldedExecutionConfigScalarFieldEnum = (typeof ShieldedExecutionConfigScalarFieldEnum)[keyof typeof ShieldedExecutionConfigScalarFieldEnum]
+
+
+export const ShieldedExecutionAuditScalarFieldEnum = {
+  id: 'id',
+  configId: 'configId',
+  agentId: 'agentId',
+  actorId: 'actorId',
+  action: 'action',
+  previousStatus: 'previousStatus',
+  newStatus: 'newStatus',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+} as const
+
+export type ShieldedExecutionAuditScalarFieldEnum = (typeof ShieldedExecutionAuditScalarFieldEnum)[keyof typeof ShieldedExecutionAuditScalarFieldEnum]
+
+
+export const BotWalletScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  ownerId: 'ownerId',
+  pubkey: 'pubkey',
+  encryptedKey: 'encryptedKey',
+  solBalanceLamports: 'solBalanceLamports',
+  usdcBalanceMicro: 'usdcBalanceMicro',
+  privatePaymentsEnabled: 'privatePaymentsEnabled',
+  paymentApiKeyHash: 'paymentApiKeyHash',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BotWalletScalarFieldEnum = (typeof BotWalletScalarFieldEnum)[keyof typeof BotWalletScalarFieldEnum]
+
+
+export const BotServiceScalarFieldEnum = {
+  id: 'id',
+  agentId: 'agentId',
+  ownerId: 'ownerId',
+  serviceType: 'serviceType',
+  name: 'name',
+  description: 'description',
+  endpointUrl: 'endpointUrl',
+  currency: 'currency',
+  pricePerCallMicro: 'pricePerCallMicro',
+  pricePerSecondMicro: 'pricePerSecondMicro',
+  isPublic: 'isPublic',
+  requiresWhitelist: 'requiresWhitelist',
+  status: 'status',
+  lastHeartbeat: 'lastHeartbeat',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BotServiceScalarFieldEnum = (typeof BotServiceScalarFieldEnum)[keyof typeof BotServiceScalarFieldEnum]
+
+
+export const BotServiceWhitelistScalarFieldEnum = {
+  id: 'id',
+  serviceId: 'serviceId',
+  allowedAgentId: 'allowedAgentId',
+  grantedBy: 'grantedBy',
+  createdAt: 'createdAt'
+} as const
+
+export type BotServiceWhitelistScalarFieldEnum = (typeof BotServiceWhitelistScalarFieldEnum)[keyof typeof BotServiceWhitelistScalarFieldEnum]
+
+
+export const A2APaymentChannelScalarFieldEnum = {
+  id: 'id',
+  payerAgentId: 'payerAgentId',
+  payeeAgentId: 'payeeAgentId',
+  serviceId: 'serviceId',
+  currency: 'currency',
+  maxPerTxMicro: 'maxPerTxMicro',
+  dailyCapMicro: 'dailyCapMicro',
+  status: 'status',
+  channelAccountPubkey: 'channelAccountPubkey',
+  openTxSignature: 'openTxSignature',
+  openedAt: 'openedAt',
+  closeTxSignature: 'closeTxSignature',
+  closedAt: 'closedAt',
+  totalPaidMicro: 'totalPaidMicro',
+  totalTxCount: 'totalTxCount',
+  lastPaymentAt: 'lastPaymentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type A2APaymentChannelScalarFieldEnum = (typeof A2APaymentChannelScalarFieldEnum)[keyof typeof A2APaymentChannelScalarFieldEnum]
+
+
+export const A2APaymentScalarFieldEnum = {
+  id: 'id',
+  channelId: 'channelId',
+  payerAgentId: 'payerAgentId',
+  payeeAgentId: 'payeeAgentId',
+  amountMicro: 'amountMicro',
+  currency: 'currency',
+  purpose: 'purpose',
+  idempotencyKey: 'idempotencyKey',
+  status: 'status',
+  txSignature: 'txSignature',
+  slot: 'slot',
+  confirmedAt: 'confirmedAt',
+  failedReason: 'failedReason',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type A2APaymentScalarFieldEnum = (typeof A2APaymentScalarFieldEnum)[keyof typeof A2APaymentScalarFieldEnum]
 
 
 export const AgentFileScalarFieldEnum = {

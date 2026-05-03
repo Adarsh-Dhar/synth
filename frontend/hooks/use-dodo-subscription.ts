@@ -73,8 +73,32 @@ export function useDodoSubscription() {
         throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
       }
 
-      const data = await res.json();
-      setState({ ...data, loading: false, error: null });
+      const data = (await res.json().catch(() => ({}))) as Partial<DodoSubscriptionState>;
+      const safeLimits = {
+        maxAgents: Number(data.limits?.maxAgents ?? INITIAL_STATE.limits.maxAgents),
+        maxRunning: Number(data.limits?.maxRunning ?? INITIAL_STATE.limits.maxRunning),
+        usageUnits: Number(data.limits?.usageUnits ?? INITIAL_STATE.limits.usageUnits),
+        credits: Number(data.limits?.credits ?? INITIAL_STATE.limits.credits),
+      };
+
+      const usageMax = Number(data.usage?.max ?? safeLimits.usageUnits);
+      const usageUnits = Number(data.usage?.units ?? 0);
+      const safeUsage = {
+        units: Number.isFinite(usageUnits) ? usageUnits : 0,
+        max: Number.isFinite(usageMax) ? usageMax : safeLimits.usageUnits,
+        pct: Number.isFinite(Number(data.usage?.pct)) ? Number(data.usage?.pct) : 0,
+        unlimited: Boolean(data.usage?.unlimited),
+      };
+
+      setState({
+        tier: String(data.tier ?? INITIAL_STATE.tier),
+        limits: safeLimits,
+        usage: safeUsage,
+        subscription: data.subscription ?? null,
+        agentCount: Number(data.agentCount ?? 0),
+        loading: false,
+        error: null,
+      });
     } catch (err) {
       setState((prev) => ({
         ...prev,

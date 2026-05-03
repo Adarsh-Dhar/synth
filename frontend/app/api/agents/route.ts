@@ -74,9 +74,9 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: userExists.id },
-      select: { subscriptionTier: true },
+      select: { plan: true },
     });
-    const tier = String(user?.subscriptionTier || "FREE").toUpperCase();
+    const tier = String(user?.plan || "free").toUpperCase();
     const maxAgents = MAX_AGENTS_BY_TIER[tier] ?? MAX_AGENTS_BY_TIER.FREE;
     const existingCount = await prisma.agent.count({ where: { userId: userExists.id } });
     if (existingCount >= maxAgents) {

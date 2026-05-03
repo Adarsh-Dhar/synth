@@ -265,3 +265,31 @@ export async function requireOwnedAgent(
 
   return { user: auth.user, agent: agent as Record<string, unknown>, error: null };
 }
+
+export async function requireEnterprisePlanForUser(
+  userId: string
+): Promise<{ ok: true } | { ok: false; error: NextResponse }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true, planExpiresAt: true },
+  });
+
+  const isEnterprise = String(user?.plan || "free").toLowerCase() === "enterprise";
+  const isActive = !user?.planExpiresAt || user.planExpiresAt.getTime() > Date.now();
+
+  if (!isEnterprise || !isActive) {
+    return {
+      ok: false,
+      error: NextResponse.json(
+        {
+          error: "enterprise_required",
+          message: "The Private Brain feature is available on the Enterprise plan only.",
+          upgrade_url: "/dashboard/billing",
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return { ok: true };
+}

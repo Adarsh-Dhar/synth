@@ -50,9 +50,8 @@ export default function DashboardPage() {
     if (user) loadAgents()
   }, [user])
 
-  const totalAllowance = agents.reduce((s, a) => s + a.spendAllowance, 0)
-  const totalPnl = agents.reduce((s, a) => s + a.currentPnl, 0)
   const activeCount = agents.filter((a) => a.status === 'RUNNING').length
+  const currentPlan = String(user?.plan || user?.subscriptionTier || 'FREE').toUpperCase()
 
   if (userLoading || loading) {
     return (
@@ -84,7 +83,7 @@ export default function DashboardPage() {
               <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             </Button>
             <Link href="/dashboard/deploy">
-              <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground">
+              <Button className="bg-linear-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground">
                 <Zap size={18} className="mr-2" />
                 Deploy New Agent
               </Button>
@@ -117,7 +116,7 @@ export default function DashboardPage() {
               <DollarSign size={16} className="text-muted-foreground" />
             </div>
             <p className="text-xs text-muted-foreground mb-3">Track subscription tier and usage limits.</p>
-            <p className="text-2xl font-bold text-foreground">{user?.subscriptionTier ?? 'FREE'}</p>
+            <p className="text-2xl font-bold text-foreground">{currentPlan}</p>
             <p className="text-xs text-muted-foreground mt-1">
               Monthly usage: {user?.monthlyUsageUnits ?? 0} units
             </p>
@@ -145,7 +144,7 @@ export default function DashboardPage() {
                 Deploy your first AI trading agent to start automated trading on Solana.
               </p>
               <Link href="/dashboard/deploy">
-                <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground">
+                <Button className="bg-linear-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground">
                   <Zap size={16} className="mr-2" />
                   Deploy Your First Agent
                 </Button>
