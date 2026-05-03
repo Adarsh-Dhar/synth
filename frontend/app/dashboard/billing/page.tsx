@@ -22,6 +22,12 @@ import { Badge } from "@/components/ui/badge";
 import { useUser } from "@/lib/user-context";
 import { useDodoSubscription } from "@/hooks/use-dodo-subscription";
 import { PricingPlans, CreditTopups } from "@/components/pricing-plans";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 // ── Tier style map ─────────────────────────────────────────────────────────────
 
@@ -252,6 +258,36 @@ export default function BillingPage() {
             </p>
           </div>
           <PricingPlans currentTier={tierLabel} onUpgraded={handleUpgraded} />
+        </section>
+
+        {/* ── FAQ (Accordion) ── */}
+        <section className="max-w-2xl mx-auto">
+          <h2 className="text-xl font-bold text-center mb-4">Frequently Asked Questions</h2>
+          <Accordion type="single" collapsible>
+            {[
+              {
+                q: "What are credits used for?",
+                a: "Each bot generation costs 50 credits. Running bots consume credits at ~1 credit/hour. Credits roll over within the same plan tier.",
+              },
+              {
+                q: "Can I cancel at any time?",
+                a: "Yes. Click 'Manage Subscription' on the billing page to cancel via the Dodo customer portal. Your plan stays active until the period ends.",
+              },
+              {
+                q: "What payment methods are accepted?",
+                a: "Dodo Payments accepts credit/debit cards, local payment methods, and 80+ currencies across 150+ countries.",
+              },
+              {
+                q: "Is my payment information stored?",
+                a: "No. Synth never sees your card details. All payment processing is handled by Dodo Payments, our Merchant of Record.",
+              },
+            ].map(({ q, a }, i) => (
+              <AccordionItem key={q} value={`faq-${i}`}>
+                <AccordionTrigger className="px-4">{q}</AccordionTrigger>
+                <AccordionContent className="px-4 text-muted-foreground">{a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </section>
 
         {/* ── Footer note ── */}

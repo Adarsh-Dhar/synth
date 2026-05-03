@@ -42,7 +42,6 @@ export function Sidebar() {
     { href: '/dashboard/deploy',               label: 'Deploy Agent',     icon: Zap },
     { href: '/dashboard/agents',               label: 'Active Agents',    icon: Bot },
     { href: '/dashboard/bridge',               label: 'Bridge/Wallet',    icon: Wallet },
-    { href: '/dashboard/pricing',              label: 'Pricing',          icon: Tag },
     { href: '/dashboard/billing',              label: 'Billing',          icon: CreditCard },
     { href: '/dashboard/privacy',              label: 'Privacy Center',   icon: Lock },
     {
