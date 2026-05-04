@@ -1,3 +1,6 @@
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-useless-assignment */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { encryptEnvConfig } from "@/lib/crypto-env";
@@ -1307,6 +1310,17 @@ Ensure your main entry file imports 'dotenv/config' at the top.
     // ── Stream backend response via SSE ────────────────────────────────────
     console.log(`[generate-bot] [${requestId}] Initiating SSE stream to backend`);
 
+    // Watch for client aborts so we can correlate disconnects
+    try {
+      if ((req as any).signal) {
+        (req as any).signal.addEventListener?.("abort", () => {
+          console.warn(`[generate-bot] [${requestId}] Client request aborted (signal).`);
+        });
+      }
+    } catch (e) {
+      // ignore if signal not present
+    }
+
     const metaResponse = await fetch(`${META_AGENT_URL}/generate-stream`, {
       method: "POST",
       headers: {
@@ -1369,6 +1383,7 @@ Ensure your main entry file imports 'dotenv/config' at the top.
           let payload: Record<string, unknown> | null = null;
           try {
             payload = JSON.parse(raw) as Record<string, unknown>;
+            console.log(`[generate-bot] [${requestId}] flushEvent parsed payload status=${payload?.status ?? payload?.error ?? 'unknown'}`);
           } catch {
             controller.enqueue(encoder.encode(`${trimmed}\n\n`));
             return;
@@ -1378,6 +1393,13 @@ Ensure your main entry file imports 'dotenv/config' at the top.
           // it may contain useful agent information (intent/files). This lets
           // us attempt a partial save if the upstream stream closes without
           // emitting a final `status: "complete"` event.
+          if (payload.status === "error") {
+            completeSeen = true;
+            finalPayload = payload;
+            enqueueEvent(payload);
+            return;
+          }
+
           if (payload.status !== "complete") {
             if (payload && (payload.files || payload.intent || payload.agent_name || payload.bot_name)) {
               lastNonCompletePayload = payload;
@@ -1422,9 +1444,13 @@ Ensure your main entry file imports 'dotenv/config' at the top.
         };
 
         try {
+          console.log(`[generate-bot] [${requestId}] Stream reader starting`);
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log(`[generate-bot] [${requestId}] reader.read returned done=true`);
+              break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
             const events = buffer.split(/\r?\n\r?\n/);

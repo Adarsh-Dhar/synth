@@ -230,7 +230,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const eventName = String(body.event || body.type || "").trim().toLowerCase();
+  const eventName = String(body.event_type || body.event || body.type || "").trim().toLowerCase();
 
   const metadataCandidate = (body.metadata ?? body.data) as Record<string, unknown> | undefined;
 
@@ -340,7 +340,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (eventName === "subscription.upgraded") {
+  if (eventName === "subscription.upgraded" || eventName === "subscription.plan_changed") {
     const subscription = await findSubscriptionByEvent(body, metadataCandidate);
     if (!subscription) {
       return NextResponse.json({ ok: true, ignored: true, event: eventName }, { status: 200 });

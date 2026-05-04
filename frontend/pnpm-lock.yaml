@@ -218,6 +218,9 @@ importers:
       date-fns:
         specifier: 4.1.0
         version: 4.1.0
+      dodopayments:
+        specifier: ^2.30.0
+        version: 2.30.0
       dotenv:
         specifier: ^17.3.1
         version: 17.3.1
@@ -5416,6 +5419,10 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  dodopayments@2.30.0:
+    resolution: {integrity: sha512-AMMlLiCxIt2hLrhiKEhFBd+dCy/LsaNkWGS58tI7rq7bZoble3tfCyOFDd8N1fqqt11Q4y3foYF0t+bu3qiyNg==}
+    hasBin: true
 
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
@@ -11203,7 +11210,7 @@ snapshots:
       hermes-parser: 0.32.0
       invariant: 2.2.4
       nullthrows: 1.1.1
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.16
       yargs: 17.7.2
 
   '@react-native/community-cli-plugin@0.84.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
@@ -17221,6 +17228,10 @@ snapshots:
     dependencies:
       esutils: 2.0.3
 
+  dodopayments@2.30.0:
+    dependencies:
+      standardwebhooks: 1.0.0
+
   dom-helpers@5.2.1:
     dependencies:
       '@babel/runtime': 7.29.2
@@ -19601,7 +19612,7 @@ snapshots:
       scheduler: 0.27.0
       semver: 7.7.4
       stacktrace-parser: 0.1.11
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.16
       whatwg-fetch: 3.6.20
       ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       yargs: 17.7.2

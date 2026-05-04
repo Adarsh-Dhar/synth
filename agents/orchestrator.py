@@ -748,7 +748,16 @@ class MetaAgent:
         user_msg: str,
         trace_id: Optional[str] = None,
     ):
+        start_time = time.time()
+        _log("INFO", "orchestrate_bot_creation_stream START", trace_id)
+
         def emit(payload: Dict[str, Any]) -> str:
+            status = payload.get("status") or payload.get("error") or "unknown"
+            try:
+                _log("DEBUG", f"EMIT status={status} keys={list(payload.keys())}", trace_id)
+            except Exception:
+                # Best-effort logging — don't crash the generator
+                pass
             return f"data: {json.dumps(payload)}\n\n"
 
         yield emit({"status": "analyzing_intent", "message": "Analyzing strategy intent..."})
@@ -874,6 +883,8 @@ class MetaAgent:
                     break
 
         yield emit({"status": "complete", "files": final_files, "plan": plan.model_dump(), "intent": intent, "warning": final_warning})
+        elapsed = round(time.time() - start_time, 2)
+        _log("INFO", f"orchestrate_bot_creation_stream END elapsed={elapsed}s", trace_id)
 
     async def orchestrate_bot_creation(
         self,

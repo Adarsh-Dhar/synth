@@ -71,12 +71,42 @@ async def generate_stream(request: Request):
         raise HTTPException(status_code=400, detail="prompt is required")
 
     agent = _get_meta_agent()
-    result = await agent.build_bot(prompt)
-    
-    # Add status field for frontend SSE consumer
-    if "status" not in result:
-        result["status"] = "complete"
-    
+    try:
+        result = await agent.build_bot(prompt)
+    except Exception as exc:
+        message = str(exc)
+
+        async def error_generator():
+            event_data = json.dumps({"status": "error", "message": message})
+            yield f"data: {event_data}\n\n"
+
+        return StreamingResponse(
+            error_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+    # Normalize the direct-generation payload into the terminal SSE shape the
+    # frontend save flow expects.
+    if isinstance(result, dict):
+        output = result.get("output")
+        if result.get("status") == "ready":
+            files = []
+            if isinstance(output, dict) and isinstance(output.get("files"), list):
+                files = output["files"]
+            result = {
+                **result,
+                "status": "complete",
+                "files": files,
+                "output": output if isinstance(output, dict) else {},
+            }
+        elif "status" not in result:
+            result = {**result, "status": "complete"}
+
     # Generate SSE events: send result as a single "data" event
     async def event_generator():
         event_data = json.dumps(result)
