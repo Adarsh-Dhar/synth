@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useUser } from "@/lib/user-context";
-import { getWalletAuthHeaders } from "@/lib/auth/client";
+import { useAuthHeaders } from "@/lib/auth/privy-client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -83,7 +82,7 @@ export default function BotCodePage() {
   const params = useParams();
   const agentId = String(params?.agentId ?? "");
   const router = useRouter();
-  const { walletSigner } = useUser();
+  const getAuthHeaders = useAuthHeaders();
 
   const [agent, setAgent] = useState<AgentData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,7 +106,7 @@ export default function BotCodePage() {
     setLoading(true);
     setError(null);
     try {
-      const headers = await getWalletAuthHeaders(walletSigner);
+      const headers = await getAuthHeaders();
       const res = await fetch(`/api/get-latest-bot?agentId=${agentId}`, { headers });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -126,7 +125,7 @@ export default function BotCodePage() {
     } finally {
       setLoading(false);
     }
-  }, [agentId, walletSigner]);
+  }, [agentId, getAuthHeaders]);
 
   useEffect(() => { loadAgent(); }, [loadAgent]);
 
@@ -135,7 +134,7 @@ export default function BotCodePage() {
   const pollTerminal = useCallback(async () => {
     if (!agentId) return;
     try {
-      const headers = await getWalletAuthHeaders(walletSigner);
+      const headers = await getAuthHeaders();
       const url = termSince
         ? `/api/agents/${agentId}/terminal-logs?since=${encodeURIComponent(termSince)}`
         : `/api/agents/${agentId}/terminal-logs`;
@@ -153,7 +152,7 @@ export default function BotCodePage() {
     } catch {
       // silently ignore poll errors
     }
-  }, [agentId, termSince, walletSigner]);
+  }, [agentId, termSince, getAuthHeaders]);
 
   // Start/stop terminal polling based on agent status
   useEffect(() => {
@@ -188,7 +187,7 @@ export default function BotCodePage() {
     setActionLoading(true);
     setActionError(null);
     try {
-      const headers = await getWalletAuthHeaders(walletSigner);
+      const headers = await getAuthHeaders();
       const res = await fetch(`/api/agents/${agentId}/${action}`, {
         method: "POST",
         headers,

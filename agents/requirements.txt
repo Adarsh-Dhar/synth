@@ -7,3 +7,4 @@ json-repair>=0.58.0
 mcp>=1.0.0
 requests>=2.32.0
 aiohttp>=3.10.0
+tiktoken>=0.7.0

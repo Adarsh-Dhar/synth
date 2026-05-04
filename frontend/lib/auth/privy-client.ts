@@ -111,17 +111,6 @@ export function useAuthHeaders() {
       throw new Error("Not authenticated. Please sign in.");
     }
 
-    // ── OAuth user: use Privy access token ────────────────────────────────
-    const isOAuthUser =
-      !user.wallet &&
-      (user.github || user.google || user.email);
-
-    if (isOAuthUser) {
-      const token = await getAccessToken();
-      if (!token) throw new Error("Failed to get Privy access token.");
-      return buildPrivyHeaders(token, user.id);
-    }
-
     // ── Wallet user: prefer embedded wallet → external wallet ─────────────
     const embeddedWallet = wallets.find((w) => (w as any).walletClientType === "privy");
     const externalWallet = wallets.find((w) => (w as any).walletClientType !== "privy");
@@ -135,6 +124,17 @@ export function useAuthHeaders() {
         return result;
       };
       return buildWalletHeaders(address, signFn);
+    }
+
+    // ── OAuth user: use Privy access token ────────────────────────────────
+    const isOAuthUser =
+      !user.wallet &&
+      (user.github || user.google || user.email);
+
+    if (isOAuthUser) {
+      const token = await getAccessToken();
+      if (!token) throw new Error("Failed to get Privy access token.");
+      return buildPrivyHeaders(token, user.id);
     }
 
     // ── Fallback: try Privy token even for wallet users ───────────────────

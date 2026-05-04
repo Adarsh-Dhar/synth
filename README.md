@@ -11,6 +11,11 @@ Synth runs agents in a backend-only execution model with per-agent Docker isolat
 - RPC Fast simulation sandbox: Solana simulation and runtime requests are routed through the configured RPC Fast Frankfurt endpoint to keep test loops low-latency and reduce stale quote risk.
 - Mainnet safety posture: production mainnet rollout is gated behind external security review; we are actively targeting the Adevar Labs audit track before enabling unrestricted live deployment.
 
+## Meta-Agent Limits
+
+- `MAX_INPUT_TOKENS` (default 8000) caps LLM input size in the meta-agent to avoid request size errors.
+- `INPUT_TOKEN_SHRINK_RATIO` (default 0.75) controls how aggressively the meta-agent shrinks input on a 413/token-limit retry.
+
 ## Worker GoldRush Environment
 
 The worker's GoldRush stream manager uses worker-level credentials and endpoints (separate from per-agent encrypted env).

@@ -7,8 +7,7 @@ import Link from 'next/link'
 import { Settings2, Play, Square, Loader2, TerminalSquare } from 'lucide-react'
 import { Agent } from '@/lib/api'
 import { AgentsTableProps } from '@/lib/types'
-import { useUser } from '@/lib/user-context'
-import { getWalletAuthHeaders } from '@/lib/auth/client'
+import { useAuthHeaders } from '@/lib/auth/privy-client'
 import { GoldRushSecurityBadge } from '@/components/goldrush-security-badge'
 // Solana integration only; wallet gating removed
 
@@ -111,7 +110,7 @@ async function callWorkerAction(agentId: string, action: 'start' | 'stop', authH
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function AgentsTable({ agents, onRefresh }: AgentsTableProps) {
-  const { walletSigner } = useUser()
+  const getAuthHeaders = useAuthHeaders()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [errors, setErrors]       = useState<Record<string, string>>({})
   const handleToggle = async (agent: Agent) => {
@@ -119,7 +118,7 @@ export function AgentsTable({ agents, onRefresh }: AgentsTableProps) {
     setErrors(prev => { const n = { ...prev }; delete n[agent.id]; return n })
     try {
       const action = agent.status === 'RUNNING' ? 'stop' : 'start'
-      const authHeaders = await getWalletAuthHeaders(walletSigner)
+      const authHeaders = await getAuthHeaders()
       await callWorkerAction(agent.id, action, authHeaders)
       setTimeout(() => onRefresh?.(), 800)
     } catch (err) {

@@ -8,8 +8,6 @@ import { assembleBotFiles, assembleSolanaBotFiles } from "../get-bot-code/bot-fi
 import { sanitizeIntentMcpLists, shouldUseLegacyDeterministicFallback } from "@/lib/intent/mcp-sanitizer";
 import type { Prisma } from "@/lib/generated/prisma/client.ts";
 import { requireWalletAuth } from "@/lib/auth/server";
-import fs from "node:fs";
-import path from "node:path";
 
 const META_AGENT_URL = process.env.META_AGENT_URL ?? "http://127.0.0.1:8000";
 const HEALTH_TIMEOUT_MS = Number(process.env.META_AGENT_HEALTH_TIMEOUT_MS ?? "2000");
@@ -17,41 +15,48 @@ const HEALTH_RETRIES = Number(process.env.META_AGENT_HEALTH_RETRIES ?? "2");
 const META_TIMEOUT_MS = Number(process.env.META_AGENT_GENERATE_TIMEOUT_MS ?? "240000");
 const META_RETRIES = Number(process.env.META_AGENT_GENERATE_RETRIES ?? "1");
 const MAX_META_PROMPT_CHARS = Number(process.env.MAX_META_PROMPT_CHARS ?? "1800");
+const MAX_INPUT_TOKENS = Number(process.env.MAX_INPUT_TOKENS ?? "8000");
+const APPROX_CHARS_PER_TOKEN = Number(process.env.APPROX_CHARS_PER_TOKEN ?? "4");
+const RESERVED_INPUT_CHARS = Number(process.env.RESERVED_INPUT_CHARS ?? "1200");
 
 type GeneratedFile = { filepath: string; content: unknown; language?: string };
 
 function compactPromptForMetaAgent(input: string): { prompt: string; truncated: boolean } {
   const normalized = input.replace(/\r/g, "").trim();
-  if (normalized.length <= MAX_META_PROMPT_CHARS) return { prompt: normalized, truncated: false };
+  const tokenBudgetChars = Math.max(
+    600,
+    Math.floor(MAX_INPUT_TOKENS * APPROX_CHARS_PER_TOKEN - RESERVED_INPUT_CHARS),
+  );
+  const maxChars = Math.min(MAX_META_PROMPT_CHARS, tokenBudgetChars);
+  if (normalized.length <= maxChars) return { prompt: normalized, truncated: false };
 
-  const head = Math.floor(MAX_META_PROMPT_CHARS * 0.7);
-  const tail = Math.max(300, MAX_META_PROMPT_CHARS - head - 64);
+  const head = Math.floor(maxChars * 0.7);
+  const tail = Math.max(300, maxChars - head - 64);
   return {
     prompt: `${normalized.slice(0, head)}\n\n[...truncated for model limit...]\n\n${normalized.slice(-tail)}`,
     truncated: true,
   };
 }
 
-function parseEnvText(text: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#")) continue;
-    const eq = line.indexOf("=");
-    if (eq <= 0) continue;
-    const key = line.slice(0, eq).trim();
-    let value = line.slice(eq + 1).trim();
-    const commentIndex = value.indexOf(" #");
-    if (commentIndex >= 0) value = value.slice(0, commentIndex).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    if (key) out[key] = value;
+function resolveGeneratedFilepath(candidate: Record<string, unknown>, idx: number): string {
+  return (
+    (typeof candidate?.filepath === "string" && candidate.filepath.trim()) ||
+    (typeof candidate?.path === "string" && candidate.path.trim()) ||
+    (typeof candidate?.filename === "string" && candidate.filename.trim()) ||
+    `generated_${idx + 1}.txt`
+  );
+}
+
+function extractEnvFromPayload(filesList: unknown): string {
+  if (!Array.isArray(filesList)) return "";
+  for (let idx = 0; idx < filesList.length; idx += 1) {
+    const candidate = filesList[idx] as Record<string, unknown>;
+    const filepath = resolveGeneratedFilepath(candidate, idx);
+    if (filepath !== ".env") continue;
+    const rawContent = candidate?.content ?? candidate?.code ?? candidate?.text ?? "";
+    return typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent, null, 2);
   }
-  return out;
+  return "";
 }
 
 function buildSafeYieldSweeperIndexTs(): string {
@@ -1196,46 +1201,6 @@ function deriveFallbackIntent(prompt: string): Record<string, unknown> {
   };
 }
 
-function pickPublicGateway(preferred: string, fallback: string): string {
-  const value = String(preferred ?? "").trim();
-  const backup = String(fallback ?? "").trim();
-
-  const isLocal = (url: string): boolean => {
-    const normalized = String(url || "").trim().toLowerCase();
-    return (
-      normalized.includes("localhost") ||
-      normalized.includes("127.0.0.1") ||
-      normalized.includes("0.0.0.0") ||
-      normalized.includes("192.168.")
-    );
-  };
-
-  if (value && !isLocal(value)) return value;
-  if (backup && !isLocal(backup)) return backup;
-  if (value) return value;
-  return backup;
-}
-
-function loadAgentEnvDefaults(): Record<string, string> {
-  const out: Record<string, string> = {};
-  const candidates = [
-    path.resolve(process.cwd(), "../agents/.env"),
-    path.resolve(process.cwd(), "../agents/.env.local"),
-  ];
-
-  for (const file of candidates) {
-    try {
-      if (!fs.existsSync(file)) continue;
-      const parsed = parseEnvText(fs.readFileSync(file, "utf8"));
-      Object.assign(out, parsed);
-    } catch {
-      // ignore missing/unreadable defaults
-    }
-  }
-
-  return out;
-}
-
 async function ensureAgentWalletAddressColumn(requestId: string): Promise<void> {
   console.warn(`[generate-bot] [${requestId}] Applying fallback schema fix for Agent.walletAddress`);
   await prisma.$executeRawUnsafe(
@@ -1269,9 +1234,7 @@ export async function POST(req: NextRequest) {
     if (promptBundle.truncated) {
       warnings.push("Prompt was truncated before reaching the Meta-Agent; critical details may have been dropped.");
     }
-    const envDefaults = loadAgentEnvDefaults();
     const envConfig: Record<string, string> = {
-      ...envDefaults,
       ...(body.envConfig || {}),
     };
 
@@ -1419,8 +1382,6 @@ Ensure your main entry file imports 'dotenv/config' at the top.
               granterWalletAddress,
               originalPrompt,
               expandedPrompt,
-              envConfig,
-              envDefaults,
               userId,
             );
             console.log(`[generate-bot] [${requestId}] Saved bot with agentId: ${agentId}`);
@@ -1485,8 +1446,6 @@ Ensure your main entry file imports 'dotenv/config' at the top.
                   granterWalletAddress,
                   originalPrompt,
                   expandedPrompt,
-                  envConfig,
-                  envDefaults,
                   userId,
                 );
                 console.log(`[generate-bot] [${requestId}] Partial save succeeded, agentId=${agentId}`);
@@ -1541,57 +1500,29 @@ async function saveBotToDatabase(
   granterWalletAddress: string,
   originalPrompt: string,
   expandedPrompt: string,
-  envConfig: Record<string, string>,
-  envDefaults: Record<string, string>,
   userId: string,
 ): Promise<string> {
   const intent = sanitizeIntentMcpLists((finalPayload.intent || {}) as Record<string, unknown>);
   const botName: string = (intent.bot_name as string) || (intent.bot_type as string) || "Universal DeFi Bot";
   const filesList = finalPayload.files || [];
+  const envPlaintext = extractEnvFromPayload(filesList);
+  if (!envPlaintext.trim()) {
+    console.warn(`[generate-bot] [${requestId}] Meta-agent did not emit a .env file.`);
+  }
 
   let normalizedFiles: GeneratedFile[] = (Array.isArray(filesList) ? filesList : [])
     .map((raw: unknown, idx: number) => {
       const candidate = raw as Record<string, unknown>;
-      const filepath =
-        (typeof candidate?.filepath === "string" && candidate.filepath.trim()) ||
-        (typeof candidate?.path === "string" && candidate.path.trim()) ||
-        (typeof candidate?.filename === "string" && candidate.filename.trim()) ||
-        `generated_${idx + 1}.txt`;
-
-      const content = candidate?.content ?? candidate?.code ?? candidate?.text ?? "";
+      const filepath = resolveGeneratedFilepath(candidate, idx);
+      const rawContent = candidate?.content ?? candidate?.code ?? candidate?.text ?? "";
+      const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent, null, 2);
       const language = typeof candidate?.language === "string" ? candidate.language : undefined;
 
       return language ? { filepath, content, language } : { filepath, content };
     })
     .filter((f: { filepath: string }) => ![".env", ".env.example"].includes(f.filepath));
 
-  // Build final environment config
-  const publicGatewayFallback = pickPublicGateway(
-    envDefaults.MCP_GATEWAY_URL || process.env.MCP_GATEWAY_URL || "",
-    "http://localhost:8000/mcp",
-  );
-
-  const finalEnv: Record<string, string> = {
-    ...envConfig,
-    MCP_GATEWAY_URL: pickPublicGateway(envConfig.MCP_GATEWAY_URL || "", publicGatewayFallback),
-    SIMULATION_MODE: "false",
-  };
-
-  const sessionKeyMode = String(finalEnv.SESSION_KEY_MODE || "").toLowerCase() === "true";
-  if (sessionKeyMode) {
-    finalEnv.SESSION_KEY_MODE = "true";
-  }
-
-  let envPlaintext = "";
-  for (const [key, val] of Object.entries(finalEnv)) {
-    if (val) envPlaintext += `${key}=${val}\n`;
-  }
   const encryptedEnv = encryptEnvConfig(envPlaintext);
-
-  // Ensure a deterministic .env file is included so WebContainer receives required envs
-  if (envPlaintext && envPlaintext.trim()) {
-    normalizedFiles.push({ filepath: ".env", content: envPlaintext });
-  }
 
   // Create agent record in database
   const configRecord: Prisma.InputJsonObject = {

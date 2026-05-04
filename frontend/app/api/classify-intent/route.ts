@@ -4,6 +4,9 @@ import { sanitizeIntentMcpLists } from "@/lib/intent/mcp-sanitizer";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_MODEL_ENDPOINT = process.env.GITHUB_MODEL_ENDPOINT || "https://models.inference.ai.azure.com";
 const MODEL_URL = GITHUB_MODEL_ENDPOINT.replace(/\/+$/, "") + "/chat/completions";
+const MAX_INPUT_TOKENS = Number(process.env.MAX_INPUT_TOKENS ?? "8000");
+const APPROX_CHARS_PER_TOKEN = Number(process.env.APPROX_CHARS_PER_TOKEN ?? "4");
+const RESERVED_INPUT_CHARS = Number(process.env.RESERVED_INPUT_CHARS ?? "1200");
 
 // ─── Rich Expander System Prompt ─────────────────────────────────────────────
 // This prompt produces a deeply detailed technical spec so the downstream
@@ -178,6 +181,13 @@ function normalizeIntentFromPrompt(intent: Record<string, unknown>, prompt: stri
   return normalized;
 }
 
+function truncateWithMarker(input: string, maxChars: number): string {
+  if (input.length <= maxChars) return input;
+  const head = Math.floor(maxChars * 0.7);
+  const tail = Math.max(300, maxChars - head - 64);
+  return `${input.slice(0, head)}\n\n[...truncated for model limit...]\n\n${input.slice(-tail)}`;
+}
+
 // ─── Helper: call GitHub Models with a short timeout ─────────────────────────
 
 async function callGitHubModels(
@@ -297,7 +307,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Keep expanded specs concise so downstream generation stays within model limits.
-    const MAX_EXPANDED_PROMPT_CHARS = Number(process.env.MAX_EXPANDED_PROMPT_CHARS ?? "3200");
+    const approxBudgetChars = Math.max(
+      600,
+      Math.floor(MAX_INPUT_TOKENS * APPROX_CHARS_PER_TOKEN - RESERVED_INPUT_CHARS),
+    );
+    const MAX_EXPANDED_PROMPT_CHARS = Math.min(
+      Number(process.env.MAX_EXPANDED_PROMPT_CHARS ?? "3200"),
+      approxBudgetChars,
+    );
     if (expandedPrompt.length > MAX_EXPANDED_PROMPT_CHARS) {
       console.warn(
         "[classify-intent] Expanded prompt too long; truncating:",
@@ -305,7 +322,7 @@ export async function POST(req: NextRequest) {
         "->",
         MAX_EXPANDED_PROMPT_CHARS,
       );
-      expandedPrompt = expandedPrompt.slice(0, MAX_EXPANDED_PROMPT_CHARS);
+      expandedPrompt = truncateWithMarker(expandedPrompt, MAX_EXPANDED_PROMPT_CHARS);
     }
 
     // ── Step 2: Classify intent locally via LLM fallback classifier ──────────

@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 import httpx
 import asyncio
+import tiktoken
 
 from mcp_client import MultiMCPClient
 from planner import (
@@ -92,6 +93,8 @@ JUPITER_DOCS_MCP_URL = os.environ.get("JUPITER_DOCS_MCP_URL", "http://127.0.0.1:
 JUPITER_DOCS_TIMEOUT_SECONDS = float(os.environ.get("JUPITER_DOCS_TIMEOUT_SECONDS", "8"))
 JUPITER_DOCS_MAX_CHARS = int(os.environ.get("JUPITER_DOCS_MAX_CHARS", "4000"))
 CONTEXT_INJECTION_MAX_CHARS = int(os.environ.get("CONTEXT_INJECTION_MAX_CHARS", "12000"))
+MAX_INPUT_TOKENS = int(os.environ.get("MAX_INPUT_TOKENS", "8000"))
+INPUT_TOKEN_SHRINK_RATIO = float(os.environ.get("INPUT_TOKEN_SHRINK_RATIO", "0.75"))
 
 
 def _log(level: str, message: str, trace_id: Optional[str] = None) -> None:
@@ -99,6 +102,140 @@ def _log(level: str, message: str, trace_id: Optional[str] = None) -> None:
     if trace_id:
         prefix += f" [{trace_id}]"
     print(f"{prefix} {message}")
+
+
+def _get_token_encoder(model_name: str) -> Optional[tiktoken.Encoding]:
+    try:
+        return tiktoken.encoding_for_model(model_name)
+    except Exception:
+        for enc_name in ("o200k_base", "cl100k_base"):
+            try:
+                return tiktoken.get_encoding(enc_name)
+            except Exception:
+                continue
+    return None
+
+
+def _count_tokens(text: str, encoder: Optional[tiktoken.Encoding]) -> int:
+    if encoder is None:
+        return max(1, len(text) // 4)
+    return len(encoder.encode(text))
+
+
+def _count_message_tokens(messages: List[Dict[str, str]], encoder: Optional[tiktoken.Encoding]) -> int:
+    overhead_per_message = 4
+    tokens = 2
+    for msg in messages:
+        tokens += overhead_per_message
+        tokens += _count_tokens(str(msg.get("content", "")), encoder)
+    return tokens
+
+
+def _truncate_head_tail(text: str, target_chars: int, marker: str) -> str:
+    if len(text) <= target_chars:
+        return text
+    marker_text = marker or "\n\n[...truncated for model limit...]\n\n"
+    head = int(target_chars * 0.7)
+    tail = max(300, target_chars - head - len(marker_text))
+    head = max(200, min(head, target_chars))
+    tail = max(200, min(tail, max(0, target_chars - head)))
+    return f"{text[:head].rstrip()}{marker_text}{text[-tail:].lstrip()}"
+
+
+def _truncate_text_to_tokens(
+    text: str,
+    max_tokens: int,
+    encoder: Optional[tiktoken.Encoding],
+    marker: str,
+) -> str:
+    if _count_tokens(text, encoder) <= max_tokens:
+        return text
+    current_tokens = max(1, _count_tokens(text, encoder))
+    ratio = max_tokens / float(current_tokens)
+    target_chars = max(600, int(len(text) * ratio))
+    truncated = _truncate_head_tail(text, target_chars, marker)
+    for _ in range(4):
+        if _count_tokens(truncated, encoder) <= max_tokens:
+            return truncated
+        target_chars = int(len(truncated) * 0.85)
+        truncated = _truncate_head_tail(truncated, target_chars, marker)
+    return truncated
+
+
+def _truncate_jupiter_context(
+    user_text: str,
+    max_user_tokens: int,
+    encoder: Optional[tiktoken.Encoding],
+) -> str:
+    marker = "=== JUPITER CONTEXT ===\n"
+    idx = user_text.find(marker)
+    if idx == -1:
+        return user_text
+    start = idx + len(marker)
+    end = user_text.find("\n\n", start)
+    if end == -1:
+        end = len(user_text)
+    docs = user_text[start:end]
+    user_tokens = _count_tokens(user_text, encoder)
+    if user_tokens <= max_user_tokens:
+        return user_text
+    docs_tokens = _count_tokens(docs, encoder)
+    excess = max(0, user_tokens - max_user_tokens)
+    target_docs_tokens = max(200, docs_tokens - excess)
+    trimmed_docs = _truncate_text_to_tokens(
+        docs,
+        target_docs_tokens,
+        encoder,
+        "\n\n[...truncated jupiter context...]\n\n",
+    )
+    return user_text[:start] + trimmed_docs + user_text[end:]
+
+
+def _apply_input_budget(
+    system: str,
+    user: str,
+    model_name: str,
+    max_tokens: int,
+    max_input_tokens: int,
+) -> Dict[str, Any]:
+    encoder = _get_token_encoder(model_name)
+    benign_user = "Please analyze the data provided in the system context and proceed."
+    system_prefix = f"{system}\n\n=== USER INPUT DATA ===\n"
+    overhead_tokens = 10
+    prefix_tokens = _count_tokens(system_prefix, encoder)
+    benign_tokens = _count_tokens(benign_user, encoder)
+    allowed_input_tokens = max(1000, max_input_tokens - max_tokens)
+    allowed_user_tokens = max(200, allowed_input_tokens - overhead_tokens - prefix_tokens - benign_tokens)
+
+    adjusted_user = user
+    truncated = False
+    new_user = _truncate_jupiter_context(adjusted_user, allowed_user_tokens, encoder)
+    if new_user != adjusted_user:
+        truncated = True
+    adjusted_user = new_user
+    new_user = _truncate_text_to_tokens(
+        adjusted_user,
+        allowed_user_tokens,
+        encoder,
+        "\n\n[...truncated for model limit...]\n\n",
+    )
+    if new_user != adjusted_user:
+        truncated = True
+    adjusted_user = new_user
+
+    combined_system = f"{system}\n\n=== USER INPUT DATA ===\n{adjusted_user}"
+    messages = [
+        {"role": "system", "content": combined_system},
+        {"role": "user", "content": benign_user},
+    ]
+    input_tokens = _count_message_tokens(messages, encoder)
+    return {
+        "user": adjusted_user,
+        "input_tokens": input_tokens,
+        "allowed_input_tokens": allowed_input_tokens,
+        "benign_user": benign_user,
+        "truncated": truncated,
+    }
 
 
 # ─── Intent Classifier ────────────────────────────────────────────────────────
@@ -460,22 +597,38 @@ class MetaAgent:
     ) -> str:
         model_name = self.planner_model if operation in ("planner", "copilot_react") else self.model
         started_at = time.monotonic()
+        current_input_limit = MAX_INPUT_TOKENS
 
         def _retryable(exc: Exception) -> bool:
             t = str(exc).lower()
             return any(x in t for x in (
                 "connection aborted", "remotedisconnected", "service response error",
                 "connection reset", "temporarily unavailable", "timed out", "503", "502",
-                "429", "too many requests", "rate limit", "rate-limited",
+                "500", "internal error", "429", "too many requests", "rate limit", "rate-limited",
             ))
 
-        def _complete():
+        def _token_limit(exc: Exception) -> bool:
+            t = str(exc).lower()
+            return any(x in t for x in (
+                "413", "tokens_limit_reached", "max size", "context length",
+                "request body too large", "context window",
+            ))
+
+        def _complete(input_limit: int):
             url = self.model_endpoint
             if not url.endswith("/chat/completions"):
                 url = url + "/chat/completions"
 
-            combined_system = f"{system}\n\n=== USER INPUT DATA ===\n{user}"
-            benign_user = "Please analyze the data provided in the system context and proceed."
+            budgeted = _apply_input_budget(system, user, model_name, max_tokens, input_limit)
+            combined_system = f"{system}\n\n=== USER INPUT DATA ===\n{budgeted['user']}"
+            benign_user = budgeted["benign_user"]
+            if budgeted["truncated"]:
+                _log(
+                    "WARN",
+                    f"{operation}: input truncated to {budgeted['input_tokens']} tokens "
+                    f"(limit {budgeted['allowed_input_tokens']})",
+                    trace_id,
+                )
 
             payload = {
                 "model": model_name,
@@ -504,7 +657,7 @@ class MetaAgent:
                      f"{operation}: attempt={attempt}/{max_attempts} model={model_name} "
                      f"max_tokens={max_tokens} timeout={LLM_TIMEOUT_SECONDS}s",
                      trace_id)
-                future = executor.submit(_complete)
+                future = executor.submit(_complete, current_input_limit)
                 response = future.result(timeout=LLM_TIMEOUT_SECONDS)
                 executor.shutdown(wait=False, cancel_futures=True)
                 break
@@ -516,6 +669,16 @@ class MetaAgent:
             except Exception as exc:
                 executor.shutdown(wait=False, cancel_futures=True)
                 _log("ERROR", f"{operation}: model request failed: {exc}", trace_id)
+                if _token_limit(exc) and attempt < max_attempts:
+                    reduced = max(max_tokens + 1000, int(current_input_limit * INPUT_TOKEN_SHRINK_RATIO))
+                    if reduced < current_input_limit:
+                        current_input_limit = reduced
+                        _log(
+                            "WARN",
+                            f"{operation}: token limit hit; shrinking input budget to {current_input_limit}",
+                            trace_id,
+                        )
+                        continue
                 if _retryable(exc) and attempt < max_attempts:
                     delay = round(LLM_RETRY_BASE_DELAY * attempt, 2)
                     _log("WARN", f"{operation}: retrying in {delay}s ({exc})", trace_id)
