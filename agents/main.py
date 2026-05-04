@@ -51,13 +51,8 @@ log = logging.getLogger("meta-agent")
 # ─────────────────────────────────────────────
 
 AGENTS_DIR = Path(os.environ.get("AGENTS_DIR", Path(__file__).parent))
-
 GOLDRUSH_SERVER = AGENTS_DIR / "goldrush-mcp-server" / "dist" / "index.js"
 JUPITER_SERVER = AGENTS_DIR / "jupiter-mcp-server" / "dist" / "index.js"
-
-# During development, fall back to tsx (no build required)
-GOLDRUSH_DEV_ENTRY = AGENTS_DIR / "goldrush-mcp-server" / "src" / "index.ts"
-JUPITER_DEV_ENTRY = AGENTS_DIR / "jupiter-mcp-server" / "src" / "index.ts"
 
 
 def _server_params(dist_path: Path, dev_entry: Path, extra_env: dict[str, str] | None = None) -> StdioServerParameters:
@@ -118,90 +113,90 @@ async def call_tool(session: ClientSession, name: str, args: dict[str, Any]) -> 
 # ─────────────────────────────────────────────
 
 
-async def demo_workflow(
-    goldrush: ClientSession,
-    jupiter: ClientSession,
-    target_wallet: str,
-    strategy: str = "copy_trade",
-) -> None:
-    """
-    Example orchestration:
-    1. Validate the target wallet via GoldRush
-    2. Search Jupiter docs for the requested strategy
-    3. Generate bot code
-    4. Get a live quote to validate the swap parameters
+# async def demo_workflow(
+#     goldrush: ClientSession,
+#     jupiter: ClientSession,
+#     target_wallet: str,
+#     strategy: str = "copy_trade",
+# ) -> None:
+#     """
+#     Example orchestration:
+#     1. Validate the target wallet via GoldRush
+#     2. Search Jupiter docs for the requested strategy
+#     3. Generate bot code
+#     4. Get a live quote to validate the swap parameters
 
-    Replace this function with your real agent logic.
-    """
-    log.info("═══ Step 1: Fetch wallet balances (GoldRush) ═══")
-    balances = await call_tool(goldrush, "get_token_balances", {"wallet": target_wallet})
-    items = (balances or {}).get("items", [])
-    log.info("Wallet %s holds %d token(s).", target_wallet[:8] + "…", len(items))
-    for item in items[:5]:
-        symbol = item.get("contract_ticker_symbol", "?")
-        usd = item.get("quote", 0)
-        log.info("  %-10s  $%.2f", symbol, usd)
+#     Replace this function with your real agent logic.
+#     """
+#     log.info("═══ Step 1: Fetch wallet balances (GoldRush) ═══")
+#     balances = await call_tool(goldrush, "get_token_balances", {"wallet": target_wallet})
+#     items = (balances or {}).get("items", [])
+#     log.info("Wallet %s holds %d token(s).", target_wallet[:8] + "…", len(items))
+#     for item in items[:5]:
+#         symbol = item.get("contract_ticker_symbol", "?")
+#         usd = item.get("quote", 0)
+#         log.info("  %-10s  $%.2f", symbol, usd)
 
-    log.info("")
-    log.info("═══ Step 2: Fetch recent transactions (GoldRush) ═══")
-    txns = await call_tool(
-        goldrush, "get_transactions", {"wallet": target_wallet, "page_size": 5}
-    )
-    tx_items = (txns or {}).get("items", [])
-    log.info("Latest %d transaction(s):", len(tx_items))
-    for tx in tx_items:
-        log.info("  %s  %s", tx.get("tx_hash", "?")[:16] + "…", tx.get("block_signed_at", ""))
+#     log.info("")
+#     log.info("═══ Step 2: Fetch recent transactions (GoldRush) ═══")
+#     txns = await call_tool(
+#         goldrush, "get_transactions", {"wallet": target_wallet, "page_size": 5}
+#     )
+#     tx_items = (txns or {}).get("items", [])
+#     log.info("Latest %d transaction(s):", len(tx_items))
+#     for tx in tx_items:
+#         log.info("  %s  %s", tx.get("tx_hash", "?")[:16] + "…", tx.get("block_signed_at", ""))
 
-    log.info("")
-    log.info("═══ Step 3: Search Jupiter docs for strategy ═══")
-    docs = await call_tool(jupiter, "search_docs", {"query": strategy.replace("_", " "), "include_examples": True})
-    if isinstance(docs, list):
-        for doc in docs[:2]:
-            log.info("  [%s] %s", doc.get("id"), doc.get("title"))
-    else:
-        log.info("  %s", docs)
+#     log.info("")
+#     log.info("═══ Step 3: Search Jupiter docs for strategy ═══")
+#     docs = await call_tool(jupiter, "search_docs", {"query": strategy.replace("_", " "), "include_examples": True})
+#     if isinstance(docs, list):
+#         for doc in docs[:2]:
+#             log.info("  [%s] %s", doc.get("id"), doc.get("title"))
+#     else:
+#         log.info("  %s", docs)
 
-    log.info("")
-    log.info("═══ Step 4: Generate bot code ═══")
-    bot = await call_tool(
-        jupiter,
-        "generate_bot_code",
-        {
-            "strategy": strategy,
-            "params": {
-                "target_wallet": target_wallet,
-                "position_size_usdc": 100,
-            },
-        },
-    )
-    filename = bot.get("filename", "bot.ts")
-    code_snippet = (bot.get("code", "") or "")[:300]
-    log.info("Generated: %s", filename)
-    log.info("Code preview:\n%s…", code_snippet)
+#     log.info("")
+#     log.info("═══ Step 4: Generate bot code ═══")
+#     bot = await call_tool(
+#         jupiter,
+#         "generate_bot_code",
+#         {
+#             "strategy": strategy,
+#             "params": {
+#                 "target_wallet": target_wallet,
+#                 "position_size_usdc": 100,
+#             },
+#         },
+#     )
+#     filename = bot.get("filename", "bot.ts")
+#     code_snippet = (bot.get("code", "") or "")[:300]
+#     log.info("Generated: %s", filename)
+#     log.info("Code preview:\n%s…", code_snippet)
 
-    log.info("")
-    log.info("═══ Step 5: Get live quote (Jupiter) ═══")
-    SOL_MINT = "So11111111111111111111111111111111111111112"
-    USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-    try:
-        quote_result = await call_tool(
-            jupiter,
-            "get_quote",
-            {
-                "input_mint": SOL_MINT,
-                "output_mint": USDC_MINT,
-                "amount": 1_000_000_000,  # 1 SOL
-                "slippage_bps": 50,
-            },
-        )
-        quote = quote_result.get("quote", {})
-        out_amount = int(quote.get("outAmount", 0)) / 1_000_000  # USDC has 6 decimals
-        log.info("1 SOL → %.2f USDC (slippage ≤ 0.5%%)", out_amount)
-    except RuntimeError as exc:
-        log.warning("Quote failed (expected outside Solana network): %s", exc)
+#     log.info("")
+#     log.info("═══ Step 5: Get live quote (Jupiter) ═══")
+#     SOL_MINT = "So11111111111111111111111111111111111111112"
+#     USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+#     try:
+#         quote_result = await call_tool(
+#             jupiter,
+#             "get_quote",
+#             {
+#                 "input_mint": SOL_MINT,
+#                 "output_mint": USDC_MINT,
+#                 "amount": 1_000_000_000,  # 1 SOL
+#                 "slippage_bps": 50,
+#             },
+#         )
+#         quote = quote_result.get("quote", {})
+#         out_amount = int(quote.get("outAmount", 0)) / 1_000_000  # USDC has 6 decimals
+#         log.info("1 SOL → %.2f USDC (slippage ≤ 0.5%%)", out_amount)
+#     except RuntimeError as exc:
+#         log.warning("Quote failed (expected outside Solana network): %s", exc)
 
-    log.info("")
-    log.info("✓ Workflow complete. Bot file '%s' is ready to save.", filename)
+#     log.info("")
+#     log.info("✓ Workflow complete. Bot file '%s' is ready to save.", filename)
 
 
 # ─────────────────────────────────────────────

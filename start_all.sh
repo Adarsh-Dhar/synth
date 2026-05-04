@@ -69,7 +69,6 @@ kill_port_processes 5001
 kill_port_processes 5002
 kill_port_processes 8001
 kill_port_processes 8011
-kill_port_processes 8012
 kill_port_processes 8013
 kill_port_processes 8014
 
@@ -101,7 +100,6 @@ fi
 
 ensure_node_deps "$AGENTS_DIR/solana-mcp-server"
 ensure_node_deps "$AGENTS_DIR/goldrush-mcp-server"
-ensure_node_deps "$AGENTS_DIR/magicblock-mcp-server"
 ensure_node_deps "$AGENTS_DIR/jupiter-mcp-server"
 
 start_service \
@@ -113,11 +111,6 @@ start_service \
 	"mcp-goldrush" \
 	"$AGENTS_DIR/goldrush-mcp-server" \
 	"PORT=8011 HOST=127.0.0.1 pnpm dev"
-
-start_service \
-	"mcp-magicblock" \
-	"$AGENTS_DIR/magicblock-mcp-server" \
-	"PORT=8012 HOST=127.0.0.1 pnpm dev"
 
 start_service \
 	"mcp-jupiter" \
@@ -145,7 +138,6 @@ echo "agents:   http://localhost:5001"
 echo "worker:   http://localhost:5002"
 echo "mcp-solana:     http://127.0.0.1:8001"
 echo "mcp-goldrush:   http://127.0.0.1:8011"
-echo "mcp-magicblock: http://127.0.0.1:8012"
 echo "mcp-jupiter:    http://127.0.0.1:8013/sse"
 
 while true; do

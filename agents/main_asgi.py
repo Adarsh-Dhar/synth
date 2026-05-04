@@ -125,7 +125,7 @@ async def generate_stream(request: Request):
 
 # Mount the copilot sub-router for backwards compatibility
 try:
-    from copilot_router import router as copilot_router
+    from router import router as copilot_router
 
     app.include_router(copilot_router)
 except Exception:

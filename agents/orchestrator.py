@@ -1,19 +1,28 @@
 """
-orchestrator.py  (v5 — Copilot ReAct Edition)
+orchestrator.py  (v6 — Native Code Generation Edition)
 
-Meta-Agent — Solana-native DeFi bot generator with copilot-style planning.
+Meta-Agent — Solana-native DeFi bot generator.
+
+KEY CHANGE from v5:
+  - Removed MCP_BRIDGE_CONTENT / SNS_RESOLVER_CONTENT hardcoded injections.
+  - The Meta-Agent now generates 100% standalone TypeScript that uses
+    @solana/web3.js and @bonfida/spl-name-service natively.
+  - Generated bots are portable — no backend dependency at runtime.
+  - The MCP servers (solana-mcp-server, jupiter-mcp-server) are used ONLY
+    during the planning phase to fetch live context (quotes, docs, balances).
+    They are NOT injected as runtime dependencies into the generated code.
 
 Pipeline:
   build_bot_copilot(prompt, session_id)
     └── CopilotPlannerAgent.start_session(prompt)   ← ReAct loop
           ├── think  → plan what we need
           ├── ask_user  → pause & wait for clarification
-          ├── query_onchain → verify wallet/mint via MCP
+          ├── query_onchain → verify wallet/mint via MCP (planning only)
           ├── emit_plan → show architecture to user
           └── finish → hand enriched prompt to code generator
 
   continue_copilot(state, user_reply)
-    └── CopilotPlannerAgent.continue_session(state, reply)  ← resume loop
+    └── CopilotPlannerAgent.continue_session(state, reply)
 
 Legacy single-shot:
   build_bot(prompt) → direct generation (no interactive planning)
@@ -36,16 +45,14 @@ import asyncio
 
 from mcp_client import MultiMCPClient
 from planner import (
+    CopilotPlannerAgent,
+    CopilotState,
     PlannerAgent,
     PlannerState,
     SolanaMCPClient,
-    summarise_mcp_result,
-    extract_resolved_address,
-)
-from copilot_planner import (
-    CopilotPlannerAgent,
-    CopilotState,
     build_yield_sweeper_enriched_prompt,
+    extract_resolved_address,
+    summarise_mcp_result,
 )
 
 _BASE_DIR = Path(__file__).resolve().parent
@@ -71,180 +78,6 @@ def _log(level: str, message: str, trace_id: Optional[str] = None) -> None:
     if trace_id:
         prefix += f" [{trace_id}]"
     print(f"{prefix} {message}")
-
-
-# ─── MCP Bridge — injected into every generated bot ──────────────────────────
-
-MCP_BRIDGE_CONTENT = r'''
-import "dotenv/config";
-import axios from "axios";
-
-const MCP_GATEWAY_URL = process.env.MCP_GATEWAY_URL ?? "";
-const SOLANA_KEY = process.env.SOLANA_KEY ?? "";
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function normalizeBase(raw: string): string {
-  return String(raw || "").trim().replace(/\/+$/, "");
-}
-
-function candidateUrls(base: string, server: string, tool: string): string[] {
-  const withMcp = /\/mcp$/i.test(base) ? base : base + "/mcp";
-  const without = withMcp.replace(/\/mcp$/i, "");
-  return [`${withMcp}/${server}/${tool}`, `${without}/${server}/${tool}`];
-}
-
-export async function callMcpTool(
-  server: string,
-  tool: string,
-  args: Record<string, unknown>,
-): Promise<unknown> {
-  const key = SOLANA_KEY.trim();
-  if (server === "solana" && tool === "send_raw_transaction" && !key) {
-    throw new Error("SOLANA_KEY missing — cannot send transactions.");
-  }
-  const base = normalizeBase(MCP_GATEWAY_URL);
-  if (!base) throw new Error("MCP_GATEWAY_URL not configured.");
-
-  const urls = candidateUrls(base, server, tool);
-  let lastError = "unknown";
-
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    for (const url of urls) {
-      try {
-        const resp = await axios.post(url, args, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(key ? { "x-session-key": key } : {}),
-            "ngrok-skip-browser-warning": "true",
-          },
-          timeout: 10_000,
-        });
-        const data = resp.data;
-        const result = (data as any)?.result;
-        if (result?.isError) {
-          const detail = Array.isArray(result.content) && result.content.length > 0
-            ? String((result.content[0] as any).text ?? JSON.stringify(result.content))
-            : JSON.stringify(result.content ?? data);
-          throw new Error(`MCP error: ${detail}`);
-        }
-        return data;
-      } catch (err) {
-        const status = (err as any)?.response?.status ?? 0;
-        lastError = `${status} — ${(err as any)?.response?.data ?? (err instanceof Error ? err.message : String(err))}`;
-        if (status === 404) continue;
-        break;
-      }
-    }
-    if (attempt < 3) await sleep(400 * attempt);
-  }
-  throw new Error(`MCP ${server}/${tool} failed after retries: ${lastError}`);
-}
-
-export async function getSolBalance(
-  network: string,
-  walletAddress: string,
-): Promise<bigint> {
-  try {
-    const data = await callMcpTool("solana", "get_balance", { network, address: walletAddress });
-    const str = JSON.stringify(data ?? {});
-    const m = str.match(/"lamports"\s*:\s*(\d+)/) ?? str.match(/"balance"\s*:\s*"?(\d+)"?/);
-    return m ? BigInt(m[1]) : 0n;
-  } catch (err) {
-    console.warn("[MCP] getSolBalance failed:", err instanceof Error ? err.message : String(err));
-    return 0n;
-  }
-}
-
-export async function getTokenBalance(
-  network: string,
-  walletAddress: string,
-  mint: string,
-): Promise<bigint> {
-  try {
-    const data = await callMcpTool("solana", "get_token_balance", { network, owner: walletAddress, mint });
-    const str = JSON.stringify(data ?? {});
-    const m = str.match(/"amount"\s*:\s*"(\d+)"/) ?? str.match(/"balance"\s*:\s*"?(\d+)"?/);
-    return m ? BigInt(m[1]) : 0n;
-  } catch (err) {
-    console.warn("[MCP] getTokenBalance failed:", err instanceof Error ? err.message : String(err));
-    return 0n;
-  }
-}
-
-export async function getGoldRushTokenBalances(
-    network: string,
-    walletAddress: string,
-): Promise<unknown> {
-    return callMcpTool("solana", "goldrush_token_balances", {
-        network,
-        wallet: walletAddress,
-    });
-}
-
-export async function callMagicBlockPrivateTransfer(args: {
-    network: string;
-    from: string;
-    to: string;
-    mint: string;
-    amount: string;
-}): Promise<unknown> {
-    return callMcpTool("solana", "magicblock_transfer", args);
-}
-
-export async function callUmbraShield(args: {
-    network: string;
-    wallet: string;
-    mint: string;
-    amount: string;
-}): Promise<unknown> {
-    return callMcpTool("solana", "umbra_shield", args);
-}
-
-export async function callUmbraTransfer(args: {
-    network: string;
-    sender: string;
-    recipient: string;
-    mint: string;
-    amount: string;
-}): Promise<unknown> {
-    return callMcpTool("solana", "umbra_transfer", args);
-}
-'''.lstrip("\n")
-
-SNS_RESOLVER_CONTENT = r'''
-import { callMcpTool } from "./mcp_bridge.js";
-import "dotenv/config";
-
-const _cache = new Map<string, string>();
-
-export function isSolDomain(value: string): boolean {
-  return /^[a-z0-9_-]+\.sol$/i.test(String(value ?? "").trim());
-}
-
-export async function resolveAddress(nameOrAddress: string): Promise<string> {
-  const v = String(nameOrAddress ?? "").trim();
-  if (!isSolDomain(v)) return v;
-
-  const key = v.toLowerCase();
-  const cached = _cache.get(key);
-  if (cached) return cached;
-
-  const resp = await callMcpTool("solana", "resolve_sns", {
-        network: String(process.env.SOLANA_NETWORK ?? "mainnet-beta"),
-    name: key,
-  });
-
-  const str = JSON.stringify(resp ?? {});
-  const m = str.match(/"(?:address|owner|resolved)"\s*:\s*"([1-9A-HJ-NP-Za-km-z]{32,44})"/);
-  if (!m) throw new Error(`SNS: no address found for '${v}'`);
-
-  _cache.set(key, m[1]);
-  return m[1];
-}
-'''.lstrip("\n")
 
 
 # ─── Intent Classifier ────────────────────────────────────────────────────────
@@ -298,113 +131,207 @@ def _normalize_filepath(raw: object) -> str:
     base = lower.split("/")[-1]
     aliases = {
         "package.json": "package.json",
+        "tsconfig.json": "tsconfig.json",
         "index.ts": "src/index.ts",
         "main.ts": "src/index.ts",
-        "mcp_bridge.ts": "src/mcp_bridge.ts",
-        "sns_resolver.ts": "src/sns_resolver.ts",
     }
     return aliases.get(lower) or aliases.get(base) or p
 
 
 # ─── Generator System Prompt ──────────────────────────────────────────────────
-# FIX: Replaced vague "handle execution" instruction with explicit architectural
-# boundary rules and exact signing boilerplate. The LLM was hallucinating
-# callMcpTool("jupiter","execute_swap") because no hard boundary existed.
+# The LLM is now taught to write ALL logic natively — no bridge files, no
+# backend dependency. Every pattern it needs is provided as boilerplate
+# directly in this prompt.
 
 GENERATOR_SYSTEM = """\
-You are an expert Solana bot engineer. Generate production-ready TypeScript for the Agentia platform.
+You are an expert Solana bot engineer. Generate production-ready, 100% standalone TypeScript.
+
+CRITICAL PHILOSOPHY: The generated bot must run on ANY computer without any backend server.
+It uses only npm packages. No external bridge files, no local MCP gateway at runtime.
 
 Respond with valid JSON only (no markdown):
 
 {
   "thoughts": "<one paragraph: architecture rationale>",
   "files": [
-    {"filepath": "package.json", "content": "..."},
-    {"filepath": "src/index.ts",  "content": "..."}
+    {"filepath": "package.json",    "content": "..."},
+    {"filepath": "tsconfig.json",   "content": "..."},
+    {"filepath": "src/index.ts",    "content": "..."}
   ]
 }
 
-Generate these 2 files in this order:
+Generate exactly these 3 files in this order:
   1. package.json
-  2. src/index.ts
+  2. tsconfig.json
+  3. src/index.ts
 
-Additional files src/mcp_bridge.ts and src/sns_resolver.ts are injected automatically.
+════════════════════════════════════════════════════════════
+NATIVE SOLANA PATTERNS — USE THESE EXACT IMPLEMENTATIONS
+════════════════════════════════════════════════════════════
 
-Import from bridge: import { callMcpTool, getSolBalance, getTokenBalance } from './mcp_bridge.js';
-Import from resolver (only if needed): import { resolveAddress, isSolDomain } from './sns_resolver.js';
+1. CONNECTION & WALLET SETUP (always at top of src/index.ts):
+   import { config } from "dotenv";
+   import { fileURLToPath } from "url";
+   import { dirname, join } from "path";
+   import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL, VersionedTransaction } from "@solana/web3.js";
+   import axios from "axios";
 
-══════════════════════════════════════════════════════════
-CRITICAL ARCHITECTURAL BOUNDARY — READ BEFORE WRITING CODE
-══════════════════════════════════════════════════════════
+   const __filename = fileURLToPath(import.meta.url);
+   const botDir = dirname(dirname(__filename));
+   config({ path: join(botDir, ".env") });
 
-The Jupiter MCP Server is READ-ONLY context and quote retrieval ONLY.
-It does NOT have access to the user's private key and CANNOT sign transactions.
+   const NETWORK    = process.env.SOLANA_NETWORK ?? "mainnet-beta";
+   const RPC_URL    = process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
+   const WALLET_ADDR = process.env.USER_WALLET_ADDRESS ?? "";
+   const SIM_MODE   = process.env.SIMULATION_MODE !== "false"; // default true
 
-FORBIDDEN — never write these in generated code:
-  ✗ callMcpTool("jupiter", "execute_swap", ...)   ← does not exist, will crash at runtime
-  ✗ callMcpTool("jupiter", "swap", ...)           ← does not exist
-  ✗ Any MCP call that implies transaction signing or submission
+   const connection = new Connection(RPC_URL, { commitment: "confirmed" });
+   const wallet     = Keypair.fromSecretKey(
+     new Uint8Array(JSON.parse(process.env.SOLANA_KEY ?? "[]"))
+   );
 
-REQUIRED swap execution flow — always use this exact pattern:
-  Step 1: GET https://quote-api.jup.ag/v6/quote  → quoteResponse
-  Step 2: POST https://quote-api.jup.ag/v6/swap  → { swapTransaction: "<base64>" }
-  Step 3: Sign and send locally with @solana/web3.js:
+   console.log("=== Bot Config ===");
+   console.log("Network:", NETWORK, "| RPC:", RPC_URL);
+   console.log("Wallet:", wallet.publicKey.toBase58());
+   console.log("Simulation mode:", SIM_MODE);
 
-    import { Connection, Keypair, VersionedTransaction } from "@solana/web3.js";
+2. NATIVE SOL BALANCE (never use a bridge or external HTTP for this):
+   async function getSolBalance(address: string): Promise<bigint> {
+     const lamports = await connection.getBalance(new PublicKey(address));
+     return BigInt(lamports);
+   }
 
-    const connection = new Connection(
-      process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com"
-    );
-    const secretKey = new Uint8Array(
-      JSON.parse(process.env.SOLANA_KEY ?? "[]")
-    );
-    const wallet = Keypair.fromSecretKey(secretKey);
+3. NATIVE SPL TOKEN BALANCE (use getParsedTokenAccountsByOwner):
+   async function getTokenBalance(walletAddress: string, mintAddress: string): Promise<bigint> {
+     const accounts = await connection.getParsedTokenAccountsByOwner(
+       new PublicKey(walletAddress),
+       { mint: new PublicKey(mintAddress) }
+     );
+     if (accounts.value.length === 0) return 0n;
+     const amount = accounts.value[0].account.data.parsed.info.tokenAmount.amount;
+     return BigInt(amount);
+   }
 
-    // After receiving swapTransaction from Jupiter /swap endpoint:
-    const swapTransactionBuf = Buffer.from(swapTransaction, "base64");
-    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
-    transaction.sign([wallet]);
-    const txid = await connection.sendRawTransaction(
-      transaction.serialize(),
-      { skipPreflight: true, maxRetries: 2 }
-    );
-    console.log("Swap executed:", txid);
+4. NATIVE SNS DOMAIN RESOLUTION (install @bonfida/spl-name-service):
+   import { getDomainKey, NameRegistryState } from "@bonfida/spl-name-service";
+   const _snsCache = new Map<string, string>();
+   async function resolveAddress(nameOrAddress: string): Promise<string> {
+     if (!nameOrAddress.endsWith(".sol")) return nameOrAddress;
+     if (_snsCache.has(nameOrAddress)) return _snsCache.get(nameOrAddress)!;
+     const { pubkey } = await getDomainKey(nameOrAddress);
+     const { registry } = await NameRegistryState.retrieve(connection, pubkey);
+     const resolved = registry.owner.toBase58();
+     _snsCache.set(nameOrAddress, resolved);
+     return resolved;
+   }
 
-The MCP bridge (callMcpTool) is ONLY used for:
-  • callMcpTool("solana", "get_balance", ...)         — read SOL balance
-    • callMcpTool("solana", "get_token_balance", ...)   — read SPL token balance (owner + mint, summed raw amount)
-  • callMcpTool("solana", "get_account_info", ...)    — read account data
-  • callMcpTool("solana", "resolve_sns", ...)         — resolve .sol domains
-  • callMcpTool("solana", "send_raw_transaction", ...) — submit already-signed tx
+5. JUPITER SWAP EXECUTION (native HTTP, no bridge):
+   async function executeJupiterSwap(
+     inputMint: string, outputMint: string,
+     amount: bigint, userWallet: string
+   ): Promise<string | null> {
+     if (SIM_MODE) {
+       console.log(`[SIM] Would swap ${amount} ${inputMint} → ${outputMint}`);
+       return null;
+     }
+     const quoteResp = await axios.get("https://quote-api.jup.ag/v6/quote", {
+       params: { inputMint, outputMint, amount: amount.toString(), slippageBps: 50 },
+       timeout: 10_000,
+     });
+     const swapResp = await axios.post("https://quote-api.jup.ag/v6/swap", {
+       quoteResponse: quoteResp.data,
+       userPublicKey: userWallet,
+       wrapAndUnwrapSol: true,
+       dynamicComputeUnitLimit: true,
+       prioritizationFeeLamports: { autoMultiplier: 2 },
+     }, { timeout: 10_000 });
+     const tx = VersionedTransaction.deserialize(
+       Buffer.from(swapResp.data.swapTransaction, "base64")
+     );
+     tx.sign([wallet]);
+     const txid = await connection.sendRawTransaction(
+       tx.serialize(), { skipPreflight: true, maxRetries: 2 }
+     );
+     console.log("Swap executed:", txid);
+     return txid;
+   }
 
-════════════════════════════════════════
-CORE RULES
-════════════════════════════════════════
-1. TypeScript + Node.js (ESM). package.json sets "type": "module".
-2. "start" script is: "tsx src/index.ts"
-3. Dependencies: axios ^1.7.4, dotenv ^16.4.0, @solana/web3.js ^1.98.0, tsx (dev), typescript (dev), @types/node (dev).
-4. Import "dotenv/config" at the very top of src/index.ts.
-5. Use BigInt for all internal token balance math. When calling the Jupiter /quote API, you MUST pass the EXACT raw balance (as a string) retrieved from get_token_balance. Do not normalize decimals before fetching the quote.
-6. SIMULATION_MODE = process.env.SIMULATION_MODE !== "false" (default true).
-7. When SIMULATION_MODE is true, log the swap that would happen instead of executing it.
-8. Use an inFlight boolean guard to prevent overlapping poll cycles.
-9. Handle SIGINT / SIGTERM for graceful shutdown.
-10. Addresses are read from process.env, not hardcoded.
-11. Load .env CORRECTLY using explicit path resolution:
-    import { config } from "dotenv";
-    import { fileURLToPath } from "url";
-    import { dirname, join } from "path";
-    const __filename = fileURLToPath(import.meta.url);
-    const botDir = dirname(dirname(__filename));
-    config({ path: join(botDir, ".env") });
-12. Log environment variables at startup for debugging.
-13. Ensure MCP_GATEWAY_URL defaults to http://127.0.0.1:8001 if not set.
-14. Include retry logic (3 attempts with exponential backoff) around Jupiter API calls.
-15. Never call execSync, child_process, or any local CLI tool.
-16. If the user requests a DCA, TWAP, or chunked execution strategy, you MUST use a finite loop (e.g., a for-loop based on the number of chunks). You MUST insert a randomized sleep interval (jitter) between each execution using await sleep(Math.floor(Math.random() * max) + min). NEVER use an infinite while(true) loop for a chunked strategy.
-17. MINT ROUTING: Never set inputMint and outputMint to the same address. Unless explicitly instructed otherwise by the user, assume the inputMint is always USDC (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) and the outputMint is the user's target TOKEN_MINT_ADDRESS.
-18. EXECUTION LIFECYCLE: If the user requests a finite execution strategy (e.g., "split into 5 chunks", "buy X times"), the main() function MUST execute exactly that many times and then gracefully exit using process.exit(0). DO NOT wrap finite strategies in a while(true) loop or setInterval. Daemon loops are ONLY for continuous monitoring strategies.
-19. SWAP PAYLOAD: When making the POST request to the Jupiter /v6/swap endpoint, the JSON body MUST ALWAYS include "dynamicComputeUnitLimit": true and "prioritizationFeeLamports": { "autoMultiplier": 2 } to prevent mainnet transaction drops.
+6. RETRY HELPER (always include):
+   async function sleep(ms: number): Promise<void> {
+     return new Promise(r => setTimeout(r, ms));
+   }
+   async function withRetry<T>(fn: () => Promise<T>, attempts = 3, baseDelayMs = 500): Promise<T> {
+     let lastErr: Error = new Error("unknown");
+     for (let i = 0; i < attempts; i++) {
+       try { return await fn(); }
+       catch (e) {
+         lastErr = e as Error;
+         if (i < attempts - 1) await sleep(baseDelayMs * Math.pow(2, i));
+       }
+     }
+     throw lastErr;
+   }
+
+7. GRACEFUL SHUTDOWN (always include):
+   let intervalId: ReturnType<typeof setInterval> | null = null;
+   function shutdown(signal: string) {
+     console.log(`[${signal}] Shutting down…`);
+     if (intervalId) clearInterval(intervalId);
+     process.exit(0);
+   }
+   process.on("SIGINT",  () => shutdown("SIGINT"));
+   process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+════════════════════════════════════════════════════════════
+PACKAGE.JSON TEMPLATE (always use this structure)
+════════════════════════════════════════════════════════════
+{
+  "name": "<bot-name-kebab>",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "start": "tsx src/index.ts", "build": "tsc" },
+  "dependencies": {
+    "axios": "^1.7.4",
+    "dotenv": "^16.4.0",
+    "@solana/web3.js": "^1.98.0",
+    "@bonfida/spl-name-service": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0"
+  }
+}
+
+TSCONFIG.JSON TEMPLATE:
+{
+  "compilerOptions": {
+    "target": "ES2020", "module": "ES2020",
+    "moduleResolution": "node", "outDir": "dist",
+    "rootDir": "src", "strict": true,
+    "esModuleInterop": true, "skipLibCheck": true
+  },
+  "include": ["src/**/*"]
+}
+
+════════════════════════════════════════════════════════════
+ABSOLUTE RULES (never break these)
+════════════════════════════════════════════════════════════
+1. NEVER import from "./mcp_bridge.js" or "./sns_resolver.js" — these files do NOT exist.
+2. NEVER call callMcpTool() — this function does NOT exist at runtime.
+3. NEVER use execSync, child_process, or any local CLI tool.
+4. NEVER call callMcpTool("jupiter", "execute_swap", ...) — does not exist, will crash.
+5. All token amounts internally are BigInt (smallest unit). Convert only for display.
+6. SIMULATION_MODE=true by default. When true, log what would happen instead of executing.
+7. Use inFlight boolean guard to prevent overlapping poll cycles.
+8. Handle SIGINT/SIGTERM for graceful shutdown (clearInterval + process.exit).
+9. Load .env using explicit path resolution (fileURLToPath pattern shown above).
+10. Log all env vars at startup for debugging.
+11. MINT ROUTING: never set inputMint === outputMint.
+12. For finite strategies (N chunks), use a for-loop + process.exit(0). NOT while(true).
+13. For daemon strategies (continuous monitoring), use setInterval.
+14. When APY APIs return Cloudflare 403/404, implement graceful fallback with cached last value.
+15. SWAP PAYLOAD must always include dynamicComputeUnitLimit:true and prioritizationFeeLamports.
 
 ENV VARS your bot should read:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
@@ -415,61 +342,60 @@ ENV VARS your bot should read:
 """
 
 DEMO_CONTEXT = """
-=== DEMO-MODE YIELD SWEEPER CONTEXT (Kamino ↔ sUSDe) ===
+=== YIELD SWEEPER CONTEXT (Kamino ↔ sUSDe) ===
 
 EXACT MINT ADDRESSES (hardcoded, never ask):
     USDC:   EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v  (6 decimals)
     sUSDe:  G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz   (18 decimals)
     SOL:    So11111111111111111111111111111111111111112      (9 decimals)
 
-JUPITER SWAP PATTERN — use axios to call Jupiter HTTP API directly, then sign locally:
-    // Step 1: Get quote
-    const quoteResp = await axios.get("https://quote-api.jup.ag/v6/quote", {
-        params: {
-            inputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-            outputMint: "G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz",
-            // IMPORTANT: amount is the raw token balance (smallest units) as a string
-            amount: usdcBalance.toString(),
-            slippageBps: 50,
-        },
-        timeout: 10_000,
-    });
-    // Step 2: Get swap transaction
-    const swapResp = await axios.post("https://quote-api.jup.ag/v6/swap", {
-        quoteResponse: quoteResp.data,
-        userPublicKey: WALLET,
-        wrapAndUnwrapSol: true,
-        dynamicComputeUnitLimit: true,
-        prioritizationFeeLamports: {
-            autoMultiplier: 2,
-        },
-    }, { timeout: 10_000 });
-    // Step 3: Sign and send locally (SIMULATION_MODE check first)
-    if (SIMULATION_MODE) {
-        console.log("[sim] would execute swap, skipping signing");
-    } else {
-        const swapTransactionBuf = Buffer.from(swapResp.data.swapTransaction, "base64");
-        const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
-        transaction.sign([wallet]);
-        const txid = await connection.sendRawTransaction(
-            transaction.serialize(), { skipPreflight: true, maxRetries: 2 }
-        );
-        console.log("Swap txid:", txid);
-    }
+APY FETCH PATTERN (with graceful fallback for Cloudflare blocks):
+    let _lastKaminoApy = 12.0;
+    let _lastSusdeApy  = 5.0;
 
-APY FETCH PATTERN:
     async function fetchKaminoApy(): Promise<number> {
-        const r = await axios.get(String(process.env.KAMINO_APY_URL ?? ""), {timeout: 8000});
-        return extractFirstNumber(r.data, ["supplyApy","supplyAPY","apr","apy"]) ?? 0;
-    }
-    async function fetchSusdeApy(): Promise<number> {
-        const r = await axios.get(String(process.env.SUSDE_APY_URL ?? ""), {timeout: 8000});
-        return Number(r.data?.apy ?? r.data?.yield ?? 0);
+      try {
+        const r = await axios.get(process.env.KAMINO_APY_URL ?? "", {
+          timeout: 8000,
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; SolanaBot/1.0)" },
+        });
+        const val = extractFirstNumber(r.data, ["supplyApy","supplyAPY","apr","apy"]);
+        if (val !== null) { _lastKaminoApy = val; return val; }
+      } catch (e) {
+        console.warn("[WARN] Kamino APY fetch failed, using cached:", _lastKaminoApy);
+      }
+      return _lastKaminoApy;
     }
 
-DECIMAL CONVERSION:
-    const toUiUsdc = (raw: bigint) => Number(raw) / 1e6;
+    async function fetchSusdeApy(): Promise<number> {
+      try {
+        const r = await axios.get(process.env.SUSDE_APY_URL ?? "", { timeout: 8000 });
+        const val = Number(r.data?.apy ?? r.data?.yield ?? 0);
+        if (val > 0) { _lastSusdeApy = val; return val; }
+      } catch (e) {
+        console.warn("[WARN] sUSDe APY fetch failed, using cached:", _lastSusdeApy);
+      }
+      return _lastSusdeApy;
+    }
+
+    function extractFirstNumber(data: unknown, keys: string[]): number | null {
+      if (Array.isArray(data) && data.length > 0) data = data[0];
+      if (typeof data !== "object" || data === null) return null;
+      for (const k of keys) {
+        const v = Number((data as Record<string,unknown>)[k]);
+        if (!isNaN(v) && v > 0) return v;
+      }
+      return null;
+    }
+
+DECIMAL HELPERS:
+    const toUiUsdc  = (raw: bigint) => Number(raw) / 1e6;
     const toUiSusde = (raw: bigint) => Number(raw) / 1e18;
+
+REBALANCE LOGIC:
+    const THRESHOLD = parseFloat(process.env.REBALANCE_THRESHOLD_PCT ?? "1.5");
+    // Enter sUSDe when: susdeApy - kaminoApy >= THRESHOLD
+    // Enter Kamino when: kaminoApy - susdeApy >= THRESHOLD
 """
 
 
@@ -483,14 +409,11 @@ class MetaAgent:
 
         endpoint = os.environ.get("GITHUB_MODEL_ENDPOINT", "https://models.inference.ai.azure.com").rstrip("/")
 
-        if isinstance(token, str) and token.startswith("github_pat_") and "azure" in endpoint:
-            _log("WARN", "GITHUB_TOKEN looks like a GitHub PAT but GITHUB_MODEL_ENDPOINT points to Azure.")
-
         self.model_endpoint = endpoint
         self.model_token = token
         self.model = os.environ.get("GITHUB_MODEL_NAME", "gpt-4o")
         self.planner_model = os.environ.get("PLANNER_MODEL_NAME", "gpt-4o-mini")
-        self.max_tokens = int(os.environ.get("GENERATION_MAX_TOKENS", "3000"))
+        self.max_tokens = int(os.environ.get("GENERATION_MAX_TOKENS", "3500"))
         self.mcp_client = SolanaMCPClient()
         self.planner = PlannerAgent(llm_caller=self._llm)
         self.copilot = CopilotPlannerAgent(
@@ -593,7 +516,7 @@ class MetaAgent:
         _log("INFO", f"{operation}: done in {elapsed}s", trace_id)
         return content.strip() if isinstance(content, str) else str(content)
 
-    # ── Copilot API (new) ──────────────────────────────────────────────────────
+    # ── Copilot API ────────────────────────────────────────────────────────────
 
     async def build_bot_copilot_start(
         self,
@@ -685,6 +608,7 @@ class MetaAgent:
     ) -> Dict[str, Any]:
         network = confirmed_parameters.get("SOLANA_NETWORK", "mainnet-beta")
 
+        # Fetch live context from MCP servers (planning phase only)
         jupiter_docs = await self._fetch_rag_context(enriched_prompt, strategy)
         chain_ctx = self._chain_context(network, strategy)
         params_txt = "\n".join(f"  {k}={v}" for k, v in confirmed_parameters.items())
@@ -697,12 +621,12 @@ class MetaAgent:
         )
 
         if jupiter_docs:
-            user_msg += f"=== JUPITER CONTEXT ===\n{jupiter_docs[:JUPITER_DOCS_MAX_CHARS]}\n\n"
+            user_msg += f"=== JUPITER CONTEXT (from live MCP docs — use for logic, NOT as runtime dependency) ===\n{jupiter_docs[:JUPITER_DOCS_MAX_CHARS]}\n\n"
 
         if strategy in ("yield_sweeper", "shielded_yield"):
             user_msg += DEMO_CONTEXT + "\n\n"
 
-        user_msg += f"{chain_ctx}\n\nGenerate the 2 files now."
+        user_msg += f"{chain_ctx}\n\nGenerate exactly 3 files: package.json, tsconfig.json, src/index.ts."
 
         _log("INFO", f"generator prompt chars={len(user_msg)}", trace_id)
 
@@ -724,47 +648,33 @@ class MetaAgent:
             files = self._assemble_files(parsed.get("files", []), strategy)
 
             index_ts = next((f.get("content") for f in files if f.get("filepath") == "src/index.ts"), None)
-
             if not index_ts:
                 break
 
-            # Post-generation validation: reject hallucinated MCP swap calls
-            hallucination_check = self._check_for_mcp_swap_hallucination(index_ts)
-            if hallucination_check:
-                _log("WARN", f"Hallucination detected on attempt {attempt+1}: {hallucination_check}", trace_id)
+            # Validate: no bridge imports survived
+            violation = self._check_for_bridge_violations(index_ts)
+            if violation:
+                _log("WARN", f"Bridge violation on attempt {attempt+1}: {violation}", trace_id)
                 if attempt < MAX_RETRIES:
                     user_msg = (
                         f"{user_msg}\n\n"
-                        f"CRITICAL ERROR in your previous output: {hallucination_check}\n"
-                        "You MUST use axios to call https://quote-api.jup.ag/v6/quote and "
-                        "https://quote-api.jup.ag/v6/swap directly, then sign with @solana/web3.js. "
-                        "callMcpTool('jupiter', 'execute_swap') does NOT exist. Fix and return full JSON."
+                        f"CRITICAL ERROR in your previous output: {violation}\n"
+                        "You MUST use native @solana/web3.js patterns. "
+                        "Do NOT import from mcp_bridge.js or sns_resolver.js. "
+                        "Fix and return the complete updated JSON."
                     )
                     continue
 
             # TypeScript syntax check
-            with tempfile.TemporaryDirectory() as tmp:
-                src_dir = os.path.join(tmp, "src")
-                os.makedirs(src_dir, exist_ok=True)
-                fp = os.path.join(src_dir, "index.ts")
-                with open(fp, "w") as f_h:
-                    f_h.write(str(index_ts))
-
-                result = subprocess.run(
-                    ["npx", "-y", "tsc", "--noEmit", "--target", "es2020", "--moduleResolution", "node", fp],
-                    capture_output=True, text=True, check=False,
+            ts_error = self._typecheck(index_ts)
+            if ts_error and attempt < MAX_RETRIES:
+                user_msg = (
+                    f"{user_msg}\n\n"
+                    f"TypeScript errors:\n\n{ts_error[:800]}\n\n"
+                    "Fix ALL errors and return the FULL updated JSON."
                 )
-
-                if result.returncode == 0:
-                    break
-
-                if attempt < MAX_RETRIES:
-                    error_msg = (result.stdout + "\n" + result.stderr).strip()
-                    user_msg = (
-                        f"{user_msg}\n\n"
-                        f"The code failed TypeScript validation:\n\n{error_msg[:800]}\n\n"
-                        "Fix the errors and return the FULL updated JSON."
-                    )
+            else:
+                break
 
         intent = {
             "chain": "solana",
@@ -786,6 +696,8 @@ class MetaAgent:
     # ── RAG context fetcher ────────────────────────────────────────────────────
 
     async def _fetch_rag_context(self, prompt: str, strategy: str) -> str:
+        """Fetch live docs/quotes from MCP servers for planning context only.
+        This context is used to inform what the LLM writes — NOT injected as runtime code."""
         normalized = prompt.lower()
         needs_jupiter = strategy in {"arbitrage", "sniping", "dca", "grid", "whale_mirror", "yield_sweeper"} or \
                         any(t in normalized for t in ("jupiter", "swap", "quote", "trade"))
@@ -797,12 +709,11 @@ class MetaAgent:
             pass
 
         jup_res = ""
-
         if needs_jupiter:
             try:
                 jup_res = await mcp.call_tool("jupiter", "jupiter_docs", {"query": prompt})
             except Exception as exc:
-                _log("WARN", f"Jupiter MCP docs failed: {exc}")
+                _log("WARN", f"Jupiter MCP docs fetch failed (non-fatal): {exc}")
 
         try:
             await mcp.shutdown()
@@ -811,29 +722,45 @@ class MetaAgent:
 
         return str(jup_res or "")
 
-    # ── Hallucination detector ─────────────────────────────────────────────────
+    # ── Validation helpers ─────────────────────────────────────────────────────
 
     @staticmethod
-    def _check_for_mcp_swap_hallucination(code: str) -> Optional[str]:
-        """
-        Detect the most common hallucination pattern: using callMcpTool to execute
-        a Jupiter swap. Returns an error string if found, None if code is clean.
-        """
-        # Pattern: callMcpTool("jupiter", "execute_swap", ...)
+    def _check_for_bridge_violations(code: str) -> Optional[str]:
+        """Detect forbidden patterns: bridge imports and hallucinated MCP swap calls."""
+        # Importing from bridge files
+        if re.search(r'from\s+["\']\.\/mcp_bridge(?:\.js)?["\']', code):
+            return "Imports from './mcp_bridge.js' detected — this file does not exist. Use native @solana/web3.js."
+        if re.search(r'from\s+["\']\.\/sns_resolver(?:\.js)?["\']', code):
+            return "Imports from './sns_resolver.js' detected — this file does not exist. Use @bonfida/spl-name-service natively."
+        # Hallucinated MCP swap tools
         if re.search(r'callMcpTool\s*\(\s*["\']jupiter["\'].*["\']execute_swap["\']', code, re.DOTALL):
-            return (
-                "callMcpTool(\"jupiter\", \"execute_swap\") was used — this tool does not exist. "
-                "Jupiter swaps must be executed via axios calls to quote-api.jup.ag/v6 "
-                "and signed locally with @solana/web3.js VersionedTransaction."
-            )
-
-        # Pattern: callMcpTool("jupiter", "swap", ...)
+            return "callMcpTool('jupiter','execute_swap') does not exist. Use axios to call quote-api.jup.ag/v6 directly."
         if re.search(r'callMcpTool\s*\(\s*["\']jupiter["\'].*["\']swap["\']', code, re.DOTALL):
-            return (
-                "callMcpTool(\"jupiter\", \"swap\") was used — this tool does not exist. "
-                "Use axios to call https://quote-api.jup.ag/v6/swap directly."
-            )
+            return "callMcpTool('jupiter','swap') does not exist. Use the Jupiter V6 HTTP API directly."
+        # Using callMcpTool at all (it no longer exists in standalone bots)
+        if re.search(r'\bcallMcpTool\b', code):
+            return "callMcpTool() is not available in standalone bots. Use native @solana/web3.js methods."
+        return None
 
+    @staticmethod
+    def _typecheck(code: str) -> Optional[str]:
+        """Run tsc --noEmit on the generated index.ts. Returns error string or None."""
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                src_dir = os.path.join(tmp, "src")
+                os.makedirs(src_dir)
+                fp = os.path.join(src_dir, "index.ts")
+                with open(fp, "w") as f:
+                    f.write(code)
+                result = subprocess.run(
+                    ["npx", "-y", "tsc", "--noEmit", "--target", "es2020",
+                     "--moduleResolution", "node", "--skipLibCheck", fp],
+                    capture_output=True, text=True, check=False,
+                )
+                if result.returncode != 0:
+                    return (result.stdout + "\n" + result.stderr).strip()
+        except Exception as exc:
+            _log("WARN", f"TypeScript check failed to run: {exc}")
         return None
 
     # ── Planner orchestration (legacy) ─────────────────────────────────────────
@@ -847,11 +774,6 @@ class MetaAgent:
         _log("INFO", "orchestrate_bot_creation_stream START", trace_id)
 
         def emit(payload: Dict[str, Any]) -> str:
-            status = payload.get("status") or payload.get("error") or "unknown"
-            try:
-                _log("DEBUG", f"EMIT status={status} keys={list(payload.keys())}", trace_id)
-            except Exception:
-                pass
             return f"data: {json.dumps(payload)}\n\n"
 
         yield emit({"status": "analyzing_intent", "message": "Analyzing strategy intent..."})
@@ -895,7 +817,6 @@ class MetaAgent:
                     "collected_parameters": plan.collected_parameters,
                 })
                 return
-
             break
 
         if not plan:
@@ -913,15 +834,14 @@ class MetaAgent:
             "collected_parameters": plan.collected_parameters,
         }
 
-        yield emit({"status": "fetching_context", "message": "Fetching SDK docs from MCP servers..."})
-
+        yield emit({"status": "fetching_context", "message": "Fetching live Jupiter docs from MCP..."})
         jupiter_docs = await self._fetch_rag_context(user_msg, plan.strategy_type)
 
         enriched_prompt = f"{user_msg}\n\n"
         if jupiter_docs:
-            enriched_prompt += f"=== JUPITER CONTEXT ===\n{jupiter_docs}\n\n"
+            enriched_prompt += f"=== JUPITER CONTEXT (reference only) ===\n{jupiter_docs}\n\n"
 
-        yield emit({"status": "generating_code", "message": "AI is writing TypeScript code..."})
+        yield emit({"status": "generating_code", "message": "AI is writing native TypeScript code..."})
 
         prompt_source = enriched_prompt
         final_files: List[Dict[str, Any]] = []
@@ -949,50 +869,42 @@ class MetaAgent:
             if not index_ts_content:
                 break
 
-            # Post-generation hallucination check
-            hallucination_check = self._check_for_mcp_swap_hallucination(index_ts_content)
-            if hallucination_check and attempt < MAX_RETRIES:
-                _log("WARN", f"Hallucination on attempt {attempt+1}: {hallucination_check}", trace_id)
-                yield emit({"status": "self_healing", "message": "Fixing incorrect MCP usage..."})
+            violation = self._check_for_bridge_violations(index_ts_content)
+            if violation and attempt < MAX_RETRIES:
+                _log("WARN", f"Bridge violation attempt {attempt+1}: {violation}", trace_id)
+                yield emit({"status": "self_healing", "message": "Removing deprecated bridge dependencies..."})
                 prompt_source = (
                     f"{enriched_prompt}\n\n"
-                    f"CRITICAL ERROR: {hallucination_check}\n"
-                    "Use axios to call https://quote-api.jup.ag/v6/quote and /swap directly, "
-                    "then sign with @solana/web3.js VersionedTransaction. Return the FULL updated JSON."
+                    f"CRITICAL ERROR: {violation}\n"
+                    "Use native @solana/web3.js. Return the FULL updated JSON."
                 )
                 continue
 
             yield emit({"status": "validating_syntax", "message": "Running TypeScript compiler..."})
+            ts_error = self._typecheck(index_ts_content)
 
-            with tempfile.TemporaryDirectory() as temp_dir:
-                src_dir = os.path.join(temp_dir, "src")
-                os.makedirs(src_dir, exist_ok=True)
-                file_path = os.path.join(src_dir, "index.ts")
-                with open(file_path, "w") as handle:
-                    handle.write(str(index_ts_content))
+            if ts_error is None:
+                yield emit({"status": "complete", "files": final_files, "plan": plan.model_dump(), "intent": intent})
+                return
 
-                result = subprocess.run(
-                    ["npx", "-y", "tsc", "--noEmit", "--target", "es2020", "--moduleResolution", "node", file_path],
-                    capture_output=True, text=True, check=False,
+            if attempt < MAX_RETRIES:
+                yield emit({"status": "self_healing", "message": "Syntax error detected — AI is self-healing..."})
+                prompt_source = (
+                    f"{enriched_prompt}\n\n"
+                    f"TypeScript errors:\n\n{ts_error[:1000]}\n\n"
+                    "Fix ALL errors and return the FULL updated JSON."
                 )
+            else:
+                final_warning = "Code generated with TypeScript errors."
+                break
 
-                if result.returncode == 0:
-                    yield emit({"status": "complete", "files": final_files, "plan": plan.model_dump(), "intent": intent})
-                    return
-
-                error_msg = (result.stdout + "\n" + result.stderr).strip()
-                if attempt < MAX_RETRIES:
-                    yield emit({"status": "self_healing", "message": "Syntax error caught. AI is self-healing..."})
-                    prompt_source = (
-                        f"{enriched_prompt}\n\n"
-                        f"The code failed TypeScript validation:\n\n{error_msg[:1000]}\n\n"
-                        "Fix the errors and return the FULL updated JSON."
-                    )
-                else:
-                    final_warning = "Code generated with TypeScript errors."
-                    break
-
-        yield emit({"status": "complete", "files": final_files, "plan": plan.model_dump(), "intent": intent, "warning": final_warning})
+        yield emit({
+            "status": "complete",
+            "files": final_files,
+            "plan": plan.model_dump(),
+            "intent": intent,
+            "warning": final_warning,
+        })
         elapsed = round(time.time() - start_time, 2)
         _log("INFO", f"orchestrate_bot_creation_stream END elapsed={elapsed}s", trace_id)
 
@@ -1025,103 +937,6 @@ class MetaAgent:
         if result.get("status") == "complete":
             result["status"] = "ready"
         return result
-
-    # ── Legacy generate ────────────────────────────────────────────────────────
-
-    async def _generate_code_with_plan(
-        self,
-        plan: PlannerState,
-        enriched_prompt: str,
-        trace_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        network = plan.collected_parameters.get("SOLANA_NETWORK", "mainnet-beta")
-        intent = {
-            "chain": "solana",
-            "network": network,
-            "strategy": plan.strategy_type,
-            "mcps": ["solana"],
-            "bot_name": self._bot_name(plan.strategy_type),
-            "requires_openai": plan.strategy_type == "sentiment",
-            "collected_parameters": plan.collected_parameters,
-        }
-
-        jupiter_docs = await self._fetch_rag_context(enriched_prompt, plan.strategy_type)
-
-        combined = ""
-        if jupiter_docs:
-            combined += f"JUPITER DOCS CONTEXT (live MCP):\n{jupiter_docs[:JUPITER_DOCS_MAX_CHARS]}\n\n"
-
-        if not combined:
-            combined = "JUPITER DOCS CONTEXT: unavailable for this request.\n\n"
-
-        if plan.strategy_type in ("yield_sweeper", "shielded_yield"):
-            combined += DEMO_CONTEXT + "\n\n"
-
-        params_txt = "\n".join(f"  {k}={v}" for k, v in plan.collected_parameters.items())
-        user_msg = (
-            f"Bot name: {intent['bot_name']}\n"
-            f"Chain: solana | Network: {network}\n"
-            f"Strategy: {plan.strategy_type}\n"
-            f"Verified parameters:\n{params_txt}\n\n"
-            f"User intent: {enriched_prompt}\n\n"
-            f"{combined}"
-            f"{self._chain_context(network, plan.strategy_type)}\n\nGenerate the 2 files now."
-        )
-
-        MAX_RETRIES = 2
-        files: List[Dict[str, Any]] = []
-        parsed: Dict[str, Any] = {}
-
-        for attempt in range(MAX_RETRIES + 1):
-            try:
-                raw = self._llm(GENERATOR_SYSTEM, user_msg, temperature=0.1, max_tokens=self.max_tokens)
-            except Exception as exc:
-                if attempt < MAX_RETRIES:
-                    time.sleep(LLM_RETRY_BASE_DELAY * (attempt + 1))
-                    continue
-                return {"status": "error", "message": f"LLM generation failed: {exc}"}
-
-            parsed = self._parse_json(raw)
-            files = self._assemble_files(parsed.get("files", []), plan.strategy_type)
-
-            index_ts_content = next((f["content"] for f in files if f["filepath"] == "src/index.ts"), None)
-            if not index_ts_content:
-                break
-
-            # Hallucination check
-            hallucination_check = self._check_for_mcp_swap_hallucination(index_ts_content)
-            if hallucination_check and attempt < MAX_RETRIES:
-                user_msg = (
-                    f"{user_msg}\n\n"
-                    f"CRITICAL ERROR: {hallucination_check}\n"
-                    "Use axios + @solana/web3.js for swaps. Return the FULL updated JSON."
-                )
-                continue
-
-            with tempfile.TemporaryDirectory() as temp_dir:
-                src_dir = os.path.join(temp_dir, "src")
-                os.makedirs(src_dir, exist_ok=True)
-                file_path = os.path.join(src_dir, "index.ts")
-                with open(file_path, "w") as f:
-                    f.write(index_ts_content)
-
-                result = subprocess.run(
-                    ["npx", "-y", "tsc", "--noEmit", "--target", "es2020", "--moduleResolution", "node", file_path],
-                    capture_output=True, text=True, check=False
-                )
-
-                if result.returncode == 0:
-                    return {"status": "ready", "files": files, "plan": plan.model_dump()}
-                elif attempt < MAX_RETRIES:
-                    error_msg = result.stdout + "\n" + result.stderr
-                    user_msg = (
-                        f"{user_msg}\n\nTypeScript errors:\n{error_msg[:1000]}\n\n"
-                        "Fix the errors and return the FULL updated JSON."
-                    )
-                else:
-                    return {"status": "ready", "files": files, "plan": plan.model_dump(), "warning": "TS errors"}
-
-        return {"status": "ready", "files": files, "plan": plan.model_dump()}
 
     # ── Public API ─────────────────────────────────────────────────────────────
 
@@ -1163,8 +978,8 @@ class MetaAgent:
             f"Chain: solana | Network: {network}\n"
             f"Strategy: {strategy}\n"
             f"User intent: {prompt}\n\n"
-            f"JUPITER DOCS CONTEXT (live MCP):\nunavailable for this request.\n\n"
-            f"{chain_ctx}\n\nGenerate the 2 files now."
+            f"{chain_ctx}\n\n"
+            f"Generate exactly 3 files: package.json, tsconfig.json, src/index.ts."
         )
 
         raw    = self._llm(GENERATOR_SYSTEM, user_msg, temperature=0.1, max_tokens=self.max_tokens)
@@ -1175,6 +990,7 @@ class MetaAgent:
             "status": "ready",
             "intent": intent,
             "output": {"thoughts": parsed.get("thoughts", ""), "files": files},
+            "files": files,
         }
 
     async def build_bot_with_history(
@@ -1188,42 +1004,43 @@ class MetaAgent:
     # ── File assembly ──────────────────────────────────────────────────────────
 
     def _assemble_files(self, raw_files: Any, strategy: str) -> List[Dict[str, Any]]:
+        """
+        Assemble the final file list from LLM output.
+        IMPORTANT: We no longer inject mcp_bridge.ts or sns_resolver.ts.
+        The generated bot must be 100% standalone using npm packages only.
+        """
         normalized: List[Dict[str, Any]] = []
         for f in raw_files if isinstance(raw_files, list) else []:
             if not isinstance(f, dict):
                 continue
             fp = _normalize_filepath(f.get("filepath"))
+            # Explicitly reject any bridge file injections
+            if fp in ("src/mcp_bridge.ts", "src/sns_resolver.ts"):
+                _log("WARN", f"Rejected bridge file injection: {fp}")
+                continue
             if fp:
                 normalized.append({**f, "filepath": fp})
 
         result: List[Dict[str, Any]] = []
         seen = set()
         for f in normalized:
-            fp = str(f.get("filepath", ""))
-            if fp == "src/mcp_bridge.ts":
-                f = {**f, "content": MCP_BRIDGE_CONTENT}
-            elif fp == "src/sns_resolver.ts":
-                f = {**f, "content": SNS_RESOLVER_CONTENT}
             result.append(f)
-            seen.add(fp)
+            seen.add(str(f.get("filepath", "")))
 
-        if "src/mcp_bridge.ts" not in seen:
-            result.append({"filepath": "src/mcp_bridge.ts", "content": MCP_BRIDGE_CONTENT})
-        if "src/sns_resolver.ts" not in seen:
-            result.append({"filepath": "src/sns_resolver.ts", "content": SNS_RESOLVER_CONTENT})
-
+        # Ensure package.json is always present with correct deps
         if "package.json" not in seen:
             result.append({
                 "filepath": "package.json",
                 "content": json.dumps({
-                    "name": "agentia-solana-bot",
+                    "name": f"agentia-{strategy.replace('_', '-')}-bot",
                     "version": "1.0.0",
                     "type": "module",
-                    "scripts": {"start": "tsx src/index.ts"},
+                    "scripts": {"start": "tsx src/index.ts", "build": "tsc"},
                     "dependencies": {
                         "axios": "^1.7.4",
                         "dotenv": "^16.4.0",
                         "@solana/web3.js": "^1.98.0",
+                        "@bonfida/spl-name-service": "^3.0.0",
                     },
                     "devDependencies": {
                         "typescript": "^5.4.0",
@@ -1233,22 +1050,51 @@ class MetaAgent:
                 }, indent=2),
             })
 
+        # Ensure tsconfig.json is always present
+        if "tsconfig.json" not in seen:
+            result.append({
+                "filepath": "tsconfig.json",
+                "content": json.dumps({
+                    "compilerOptions": {
+                        "target": "ES2020",
+                        "module": "ES2020",
+                        "moduleResolution": "node",
+                        "outDir": "dist",
+                        "rootDir": "src",
+                        "strict": True,
+                        "esModuleInterop": True,
+                        "skipLibCheck": True,
+                    },
+                    "include": ["src/**/*"],
+                }, indent=2),
+            })
+
+        # Ensure src/index.ts is always present
         if "src/index.ts" not in seen:
             result.append({
                 "filepath": "src/index.ts",
                 "content": (
-                    'import "dotenv/config";\n'
-                    'import { getSolBalance } from "./mcp_bridge.js";\n\n'
+                    'import { config } from "dotenv";\n'
+                    'import { fileURLToPath } from "url";\n'
+                    'import { dirname, join } from "path";\n'
+                    'import { Connection, PublicKey } from "@solana/web3.js";\n\n'
+                    'const __filename = fileURLToPath(import.meta.url);\n'
+                    'const botDir = dirname(dirname(__filename));\n'
+                    'config({ path: join(botDir, ".env") });\n\n'
+                    'const connection = new Connection(\n'
+                    '  process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com",\n'
+                    '  { commitment: "confirmed" }\n'
+                    ');\n\n'
                     'async function main(): Promise<void> {\n'
-                    '  const network = String(process.env.SOLANA_NETWORK ?? "mainnet-beta");\n'
-                    '  const wallet  = String(process.env.USER_WALLET_ADDRESS ?? "");\n'
-                    '  const bal = await getSolBalance(network, wallet);\n'
-                    '  console.log("SOL balance (lamports):", bal.toString());\n'
+                    '  const wallet = process.env.USER_WALLET_ADDRESS ?? "";\n'
+                    '  const lamports = await connection.getBalance(new PublicKey(wallet));\n'
+                    '  console.log("SOL balance (lamports):", lamports);\n'
                     '}\n\nvoid main();\n'
                 ),
             })
 
-        wanted = {"package.json", "src/index.ts", "src/mcp_bridge.ts", "src/sns_resolver.ts"}
+        # Return only the 3 expected files
+        wanted = {"package.json", "tsconfig.json", "src/index.ts"}
         return [f for f in result if str(f.get("filepath", "")) in wanted]
 
     # ── JSON parsing ───────────────────────────────────────────────────────────
@@ -1270,7 +1116,7 @@ class MetaAgent:
         try:
             return json.loads(raw)
         except Exception:
-            return {"thoughts": "parse error", "files": [{"filepath": "error.ts", "content": raw}]}
+            return {"thoughts": "parse error", "files": []}
 
     # ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -1293,26 +1139,51 @@ class MetaAgent:
         return f"""
 CHAIN CONTEXT — SOLANA ({network})
 
-MCP TOOL REFERENCE (read-only data queries only):
-  getSolBalance(network, walletAddress)           → bigint lamports
-  getTokenBalance(network, walletAddress, mint)   → bigint token units
-  callMcpTool("solana", "get_account_info", {{network, address}})
-  callMcpTool("solana", "send_raw_transaction",  {{network, raw: "<base64>"}})
-  callMcpTool("solana", "resolve_sns",           {{network, name: "alice.sol"}})
+════════════════════════════════════════
+NATIVE DATA QUERY PATTERNS
+════════════════════════════════════════
 
-JUPITER SWAP EXECUTION (use axios, NOT callMcpTool):
-  1. GET https://quote-api.jup.ag/v6/quote → quoteResponse
-  2. POST https://quote-api.jup.ag/v6/swap → {{ swapTransaction: "<base64>" }}
-  3. Sign locally: VersionedTransaction.deserialize(...); tx.sign([wallet]); connection.sendRawTransaction(...)
+All on-chain reads use @solana/web3.js Connection directly.
+There is NO bridge, NO gateway, NO external server at runtime.
+
+SOL BALANCE:
+  const lamports = await connection.getBalance(new PublicKey(address));
+
+SPL TOKEN BALANCE (use getParsedTokenAccountsByOwner):
+  const accounts = await connection.getParsedTokenAccountsByOwner(
+    new PublicKey(walletAddress), {{ mint: new PublicKey(mintAddress) }}
+  );
+  const rawAmount = accounts.value.length > 0
+    ? BigInt(accounts.value[0].account.data.parsed.info.tokenAmount.amount)
+    : 0n;
+
+SNS DOMAIN RESOLUTION (@bonfida/spl-name-service):
+  import {{ getDomainKey, NameRegistryState }} from "@bonfida/spl-name-service";
+  async function resolveSolDomain(domain: string): Promise<string> {{
+    if (!domain.endsWith(".sol")) return domain;
+    const {{ pubkey }} = await getDomainKey(domain);
+    const {{ registry }} = await NameRegistryState.retrieve(connection, pubkey);
+    return registry.owner.toBase58();
+  }}
+
+JUPITER SWAP EXECUTION (native HTTP — no bridge):
+  1. GET  https://quote-api.jup.ag/v6/quote  → quoteResponse
+  2. POST https://quote-api.jup.ag/v6/swap   → {{ swapTransaction: "<base64>" }}
+  3. VersionedTransaction.deserialize(Buffer.from(swapTransaction, "base64"))
+  4. tx.sign([wallet])
+  5. connection.sendRawTransaction(tx.serialize(), {{ skipPreflight: true, maxRetries: 2 }})
 
 REQUIRED ENV VARS:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
   USER_WALLET_ADDRESS, TOKEN_MINT_ADDRESS,
-  POLL_INTERVAL_MS, SIMULATION_MODE
+  POLL_INTERVAL_MS (default 15000), SIMULATION_MODE (default true)
 
 RULES:
-- Every BigInt value is in the token's smallest unit.
-- SIMULATION_MODE=true by default — log swaps, do not execute them.
-- @solana/web3.js handles all signing; MCP bridge handles only read queries.
-- Never use execSync, child_process, or local CLI tools.
+  - All BigInt values are in the token's smallest unit. Never normalize before passing to Jupiter.
+  - SIMULATION_MODE=true by default — log swaps, do not execute them.
+  - Use inFlight boolean to prevent overlapping poll cycles.
+  - Handle SIGINT/SIGTERM gracefully.
+  - Never use execSync, child_process, or any local CLI.
+  - Include retry logic (withRetry helper) around all network calls.
+  - SWAP PAYLOAD must always include dynamicComputeUnitLimit:true + prioritizationFeeLamports.
 """
