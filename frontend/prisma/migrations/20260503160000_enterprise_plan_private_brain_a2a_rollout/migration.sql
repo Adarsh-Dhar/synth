@@ -1,6 +1,280 @@
 -- Enterprise plan + private brain / shielded execution / A2A rollout
 
 -- ============================================================
+-- 0. Ensure required tables exist (dev bootstrap)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "PrivateBrainConfig" (
+  "id" TEXT NOT NULL,
+  "agentId" TEXT NOT NULL,
+  "ownerId" TEXT NOT NULL,
+  "privateBrainEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
+  "perValidator" TEXT NOT NULL,
+  "perValidatorPubkey" TEXT NOT NULL,
+  "memorySlots" INTEGER NOT NULL DEFAULT 8,
+  "geofenceRegions" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  "ofacCheckEnabled" BOOLEAN NOT NULL DEFAULT TRUE,
+  "status" TEXT NOT NULL DEFAULT 'inactive',
+  "stateAccountPubkey" TEXT,
+  "permissionAccountPubkey" TEXT,
+  "delegationTxSignature" TEXT,
+  "undelegationTxSignature" TEXT,
+  "errorMessage" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "PrivateBrainConfig_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "PrivateBrainConfig"
+  ADD CONSTRAINT "PrivateBrainConfig_agentId_fkey"
+  FOREIGN KEY ("agentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "PrivateBrainConfig"
+  ADD CONSTRAINT "PrivateBrainConfig_ownerId_fkey"
+  FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "PrivateBrainAudit" (
+  "id" TEXT NOT NULL,
+  "configId" TEXT NOT NULL,
+  "agentId" TEXT NOT NULL,
+  "actorId" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "previousStatus" TEXT,
+  "newStatus" TEXT,
+  "metadata" JSONB,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT "PrivateBrainAudit_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "PrivateBrainAudit"
+  ADD CONSTRAINT "PrivateBrainAudit_configId_fkey"
+  FOREIGN KEY ("configId") REFERENCES "PrivateBrainConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "PrivateBrainAudit"
+  ADD CONSTRAINT "PrivateBrainAudit_agentId_fkey"
+  FOREIGN KEY ("agentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "PrivateBrainAudit"
+  ADD CONSTRAINT "PrivateBrainAudit_actorId_fkey"
+  FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "ShieldedExecutionConfig" (
+  "id" TEXT NOT NULL,
+  "agentId" TEXT NOT NULL,
+  "ownerId" TEXT NOT NULL,
+  "enabled" BOOLEAN NOT NULL DEFAULT FALSE,
+  "perValidator" TEXT NOT NULL,
+  "perValidatorPubkey" TEXT NOT NULL,
+  "shieldStrategyLogic" BOOLEAN NOT NULL DEFAULT TRUE,
+  "shieldIntent" BOOLEAN NOT NULL DEFAULT TRUE,
+  "shieldIntermediateStates" BOOLEAN NOT NULL DEFAULT TRUE,
+  "settlementMode" TEXT NOT NULL DEFAULT 'net_only',
+  "settlementIntervalMs" INTEGER NOT NULL DEFAULT 0,
+  "status" TEXT NOT NULL DEFAULT 'inactive',
+  "logicAccountPubkey" TEXT,
+  "stateAccountPubkey" TEXT,
+  "permissionAccountPubkey" TEXT,
+  "delegationTxSignature" TEXT,
+  "errorMessage" TEXT,
+  "totalShieldedOps" BIGINT NOT NULL DEFAULT 0,
+  "totalSettledTxs" INTEGER NOT NULL DEFAULT 0,
+  "lastSettlementAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "ShieldedExecutionConfig_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "ShieldedExecutionConfig"
+  ADD CONSTRAINT "ShieldedExecutionConfig_agentId_fkey"
+  FOREIGN KEY ("agentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "ShieldedExecutionConfig"
+  ADD CONSTRAINT "ShieldedExecutionConfig_ownerId_fkey"
+  FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "ShieldedExecutionAudit" (
+  "id" TEXT NOT NULL,
+  "configId" TEXT NOT NULL,
+  "agentId" TEXT NOT NULL,
+  "actorId" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "previousStatus" TEXT,
+  "newStatus" TEXT,
+  "metadata" JSONB,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT "ShieldedExecutionAudit_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "ShieldedExecutionAudit"
+  ADD CONSTRAINT "ShieldedExecutionAudit_configId_fkey"
+  FOREIGN KEY ("configId") REFERENCES "ShieldedExecutionConfig"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "ShieldedExecutionAudit"
+  ADD CONSTRAINT "ShieldedExecutionAudit_agentId_fkey"
+  FOREIGN KEY ("agentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "ShieldedExecutionAudit"
+  ADD CONSTRAINT "ShieldedExecutionAudit_actorId_fkey"
+  FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "BotWallet" (
+  "id" TEXT NOT NULL,
+  "agentId" TEXT NOT NULL,
+  "ownerId" TEXT NOT NULL,
+  "pubkey" TEXT NOT NULL,
+  "encryptedKey" TEXT,
+  "solBalanceLamports" BIGINT NOT NULL DEFAULT 0,
+  "usdcBalanceMicro" BIGINT NOT NULL DEFAULT 0,
+  "privatePaymentsEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
+  "paymentApiKeyHash" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "BotWallet_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "BotWallet"
+  ADD CONSTRAINT "BotWallet_agentId_fkey"
+  FOREIGN KEY ("agentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "BotWallet"
+  ADD CONSTRAINT "BotWallet_ownerId_fkey"
+  FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "BotService" (
+  "id" TEXT NOT NULL,
+  "agentId" TEXT NOT NULL,
+  "ownerId" TEXT NOT NULL,
+  "serviceType" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "description" TEXT,
+  "endpointUrl" TEXT,
+  "currency" TEXT NOT NULL DEFAULT 'USDC',
+  "pricePerCallMicro" INTEGER NOT NULL DEFAULT 0,
+  "pricePerSecondMicro" INTEGER NOT NULL DEFAULT 0,
+  "isPublic" BOOLEAN NOT NULL DEFAULT FALSE,
+  "requiresWhitelist" BOOLEAN NOT NULL DEFAULT FALSE,
+  "status" TEXT NOT NULL DEFAULT 'offline',
+  "lastHeartbeat" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "BotService_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "BotService"
+  ADD CONSTRAINT "BotService_agentId_fkey"
+  FOREIGN KEY ("agentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "BotService"
+  ADD CONSTRAINT "BotService_ownerId_fkey"
+  FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "BotServiceWhitelist" (
+  "id" TEXT NOT NULL,
+  "serviceId" TEXT NOT NULL,
+  "allowedAgentId" TEXT NOT NULL,
+  "grantedBy" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT "BotServiceWhitelist_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "BotServiceWhitelist"
+  ADD CONSTRAINT "BotServiceWhitelist_serviceId_fkey"
+  FOREIGN KEY ("serviceId") REFERENCES "BotService"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "BotServiceWhitelist"
+  ADD CONSTRAINT "BotServiceWhitelist_allowedAgentId_fkey"
+  FOREIGN KEY ("allowedAgentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "BotServiceWhitelist_serviceId_allowedAgentId_key"
+  ON "BotServiceWhitelist" ("serviceId", "allowedAgentId");
+
+CREATE INDEX IF NOT EXISTS "BotServiceWhitelist_allowedAgentId_idx"
+  ON "BotServiceWhitelist" ("allowedAgentId");
+
+CREATE TABLE IF NOT EXISTS "A2APaymentChannel" (
+  "id" TEXT NOT NULL,
+  "payerAgentId" TEXT NOT NULL,
+  "payeeAgentId" TEXT NOT NULL,
+  "serviceId" TEXT,
+  "currency" TEXT NOT NULL DEFAULT 'USDC',
+  "maxPerTxMicro" INTEGER NOT NULL DEFAULT 1000000,
+  "dailyCapMicro" INTEGER NOT NULL DEFAULT 100000000,
+  "status" TEXT NOT NULL DEFAULT 'pending',
+  "channelAccountPubkey" TEXT,
+  "openTxSignature" TEXT,
+  "openedAt" TIMESTAMP(3),
+  "closeTxSignature" TEXT,
+  "closedAt" TIMESTAMP(3),
+  "totalPaidMicro" INTEGER NOT NULL DEFAULT 0,
+  "totalTxCount" INTEGER NOT NULL DEFAULT 0,
+  "lastPaymentAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "A2APaymentChannel_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "A2APaymentChannel"
+  ADD CONSTRAINT "A2APaymentChannel_payerAgentId_fkey"
+  FOREIGN KEY ("payerAgentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "A2APaymentChannel"
+  ADD CONSTRAINT "A2APaymentChannel_payeeAgentId_fkey"
+  FOREIGN KEY ("payeeAgentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "A2APaymentChannel"
+  ADD CONSTRAINT "A2APaymentChannel_serviceId_fkey"
+  FOREIGN KEY ("serviceId") REFERENCES "BotService"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS "A2APayment" (
+  "id" TEXT NOT NULL,
+  "channelId" TEXT NOT NULL,
+  "payerAgentId" TEXT NOT NULL,
+  "payeeAgentId" TEXT NOT NULL,
+  "amountMicro" INTEGER NOT NULL,
+  "currency" TEXT NOT NULL,
+  "purpose" TEXT NOT NULL,
+  "idempotencyKey" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'pending',
+  "txSignature" TEXT,
+  "slot" INTEGER,
+  "confirmedAt" TIMESTAMP(3),
+  "failedReason" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "A2APayment_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "A2APayment"
+  ADD CONSTRAINT "A2APayment_channelId_fkey"
+  FOREIGN KEY ("channelId") REFERENCES "A2APaymentChannel"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "A2APayment"
+  ADD CONSTRAINT "A2APayment_payerAgentId_fkey"
+  FOREIGN KEY ("payerAgentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "A2APayment"
+  ADD CONSTRAINT "A2APayment_payeeAgentId_fkey"
+  FOREIGN KEY ("payeeAgentId") REFERENCES "Agent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "A2APayment_idempotencyKey_key"
+  ON "A2APayment" ("idempotencyKey");
+
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE OR REPLACE FUNCTION auth.uid()
+RETURNS TEXT LANGUAGE sql STABLE AS $$
+  SELECT NULL::TEXT;
+$$;
+
+-- ============================================================
 -- 1. User plan columns
 -- ============================================================
 ALTER TABLE "User"

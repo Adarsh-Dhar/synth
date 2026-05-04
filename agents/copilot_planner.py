@@ -11,6 +11,10 @@ Changes from v1:
   - ask_user loop-break now also resets iteration so resumption works.
   - query_onchain results absorbed into confirmed_parameters immediately.
   - emit_plan step sets strategy even if LLM omits it.
+
+FIX (v2.1): build_yield_sweeper_enriched_prompt no longer references the
+  hallucinated callMcpTool("jupiter","execute_swap") tool. Swaps are now
+  described using the correct Jupiter V6 HTTP API + @solana/web3.js signing.
 """
 
 from __future__ import annotations
@@ -156,7 +160,6 @@ class CopilotState(BaseModel):
     plan_emitted: bool = False
     final_enriched_prompt: Optional[str] = None
     iteration: int = 0
-    # New: tracks whether max-iter fallback was triggered
     hit_max_iterations: bool = False
 
 
@@ -297,7 +300,6 @@ class CopilotPlannerAgent:
                 continue
 
         else:
-            # Loop exhausted REACT_MAX_ITERATIONS without breaking
             logger.warning(
                 "[copilot] session=%s hit max iterations (%d), synthesising finish",
                 state.session_id,
@@ -436,10 +438,8 @@ class CopilotPlannerAgent:
 
     def _parse_tool_call(self, raw: str) -> Tuple[str, Dict[str, Any]]:
         raw = raw.strip()
-        # Strip markdown code fences
         raw = re.sub(r"```(?:json)?\s*|\s*```", "", raw).strip()
 
-        # Extract outermost JSON object
         start, end = raw.find("{"), raw.rfind("}")
         if start != -1 and end != -1:
             raw = raw[start : end + 1]
@@ -457,7 +457,6 @@ class CopilotPlannerAgent:
                 pass
 
         if not data:
-            # Last-resort: regex for tool name
             m = re.search(r'"tool"\s*:\s*"([^"]+)"', raw)
             if m:
                 return m.group(1), {}
@@ -547,7 +546,10 @@ class CopilotPlannerAgent:
                 state.confirmed_parameters.setdefault("TOKEN_MINT_ADDRESS", addr)
 
 
-# ─── Yield sweeper helper (unchanged from v1) ─────────────────────────────────
+# ─── Yield sweeper enriched prompt ───────────────────────────────────────────
+# FIX: Removed the hallucinated callMcpTool("jupiter","execute_swap") pattern.
+# Swaps are now described using the correct Jupiter V6 HTTP API flow with
+# @solana/web3.js local signing — matching the GENERATOR_SYSTEM boundary rules.
 
 def build_yield_sweeper_enriched_prompt(params: Dict[str, str]) -> str:
     wallet    = params.get("USER_WALLET_ADDRESS", "")
@@ -558,9 +560,9 @@ def build_yield_sweeper_enriched_prompt(params: Dict[str, str]) -> str:
 
     return f"""
 Build a production Solana yield sweeper bot that automatically rebalances USDC between
-Kamino Finance and sUSDe (via Jupiter swaps) based on APY comparison.
+Kamino Finance and sUSDe based on APY comparison.
 
-STRATEGY: yield_sweeper (Kamino USDC ↔ sUSDe via Jupiter)
+STRATEGY: yield_sweeper (Kamino USDC ↔ sUSDe via Jupiter V6 HTTP API)
 
 EXACT TOKEN MINTS — hardcoded, NEVER guessed:
   USDC:   EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v  (6 decimals)
@@ -574,23 +576,82 @@ CONFIRMED PARAMETERS:
   POLL_INTERVAL_MS = {poll_ms}
   SIMULATION_MODE = {sim_mode}
 
+SWAP EXECUTION RULES — CRITICAL:
+The MCP bridge (callMcpTool) is for READ-ONLY data queries only.
+Jupiter swaps MUST be executed using the Jupiter V6 HTTP API + @solana/web3.js.
+NEVER use callMcpTool("jupiter", "execute_swap") — that tool does not exist.
+
+Use this exact swap flow in the generated TypeScript:
+
+  import {{ Connection, Keypair, VersionedTransaction }} from "@solana/web3.js";
+  import axios from "axios";
+
+  const connection = new Connection(
+    process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com"
+  );
+  const wallet = Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(process.env.SOLANA_KEY ?? "[]"))
+  );
+
+  async function executeJupiterSwap(
+    inputMint: string,
+    outputMint: string,
+    amount: bigint,
+    userWallet: string,
+  ): Promise<string | null> {{
+    if (SIMULATION_MODE) {{
+      console.log(`[sim] would swap ${{amount}} of ${{inputMint}} → ${{outputMint}}`);
+      return null;
+    }}
+    // Step 1: Get quote
+    const quoteResp = await axios.get("https://quote-api.jup.ag/v6/quote", {{
+      params: {{
+        inputMint,
+        outputMint,
+                amount: amount.toString(),
+        slippageBps: 50,
+      }},
+      timeout: 10_000,
+    }});
+    // Step 2: Get swap transaction
+    const swapResp = await axios.post("https://quote-api.jup.ag/v6/swap", {{
+      quoteResponse: quoteResp.data,
+      userPublicKey: userWallet,
+      wrapAndUnwrapSol: true,
+      dynamicComputeUnitLimit: true,
+            prioritizationFeeLamports: {{
+                autoMultiplier: 2,
+            }},
+    }}, {{ timeout: 10_000 }});
+    // Step 3: Deserialize, sign, and send locally
+    const swapTransactionBuf = Buffer.from(swapResp.data.swapTransaction, "base64");
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    transaction.sign([wallet]);
+    const txid = await connection.sendRawTransaction(
+      transaction.serialize(),
+      {{ skipPreflight: true, maxRetries: 2 }}
+    );
+    console.log("Swap executed:", txid);
+    return txid;
+  }}
+
 EXECUTION RULES:
 1. Poll every {poll_ms}ms using setInterval.
 2. Fetch Kamino APY: GET https://api.kamino.finance/v1/kamino-market/USDC/reserves
 3. Fetch sUSDe APY: GET https://api.ethena.fi/apy — parse .apy field
 4. REBALANCE when: |sUSDe_apy - kamino_apy| >= {threshold}% (enter whichever is higher)
-5. All swaps via: callMcpTool("jupiter", "execute_swap", {{inputMint, outputMint, amount, userWallet, slippageBps: 50}})
-6. Use BigInt for ALL token amounts. USDC=6 decimals, sUSDe=18 decimals.
-7. Guard with inFlight boolean to prevent overlapping cycles.
-8. Handle SIGINT/SIGTERM gracefully (clearInterval + log).
-9. SIMULATION_MODE=true by default — log what would happen, don't execute.
-10. Load .env correctly using explicit path resolution with fileURLToPath.
-11. Log environment variables at startup for debugging.
+5. Use BigInt for all internal token balance math. When calling the Jupiter /quote API, you MUST pass the EXACT raw balance (as a string) retrieved from get_token_balance. Do not normalize decimals before fetching the quote.
+6. Guard with inFlight boolean to prevent overlapping cycles.
+7. Handle SIGINT/SIGTERM gracefully (clearInterval + log).
+8. SIMULATION_MODE=true by default — log what would happen, don't execute.
+9. Load .env correctly using explicit path resolution with fileURLToPath.
+10. Log environment variables at startup for debugging.
+11. Read on-chain balances via callMcpTool("solana","get_token_balance",...) — that IS valid.
 
 OUTPUT FILES (generate exactly these 3 files):
-1. package.json — with "type": "module", tsx dev dep, axios, dotenv
+1. package.json — with "type": "module", tsx dev dep, axios, dotenv, @solana/web3.js
 2. tsconfig.json — target ES2020, module ES2020, include src/**/*
-3. src/index.ts — complete bot logic
+3. src/index.ts — complete bot logic using the swap pattern above
 
 Import mcp_bridge.ts and sns_resolver.ts — they are injected automatically.
 """.strip()

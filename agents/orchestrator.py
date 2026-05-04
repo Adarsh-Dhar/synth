@@ -307,6 +307,9 @@ def _normalize_filepath(raw: object) -> str:
 
 
 # ─── Generator System Prompt ──────────────────────────────────────────────────
+# FIX: Replaced vague "handle execution" instruction with explicit architectural
+# boundary rules and exact signing boilerplate. The LLM was hallucinating
+# callMcpTool("jupiter","execute_swap") because no hard boundary existed.
 
 GENERATOR_SYSTEM = """\
 You are an expert Solana bot engineer. Generate production-ready TypeScript for the Agentia platform.
@@ -330,14 +333,60 @@ Additional files src/mcp_bridge.ts and src/sns_resolver.ts are injected automati
 Import from bridge: import { callMcpTool, getSolBalance, getTokenBalance } from './mcp_bridge.js';
 Import from resolver (only if needed): import { resolveAddress, isSolDomain } from './sns_resolver.js';
 
-CORE RULES:
+══════════════════════════════════════════════════════════
+CRITICAL ARCHITECTURAL BOUNDARY — READ BEFORE WRITING CODE
+══════════════════════════════════════════════════════════
+
+The Jupiter MCP Server is READ-ONLY context and quote retrieval ONLY.
+It does NOT have access to the user's private key and CANNOT sign transactions.
+
+FORBIDDEN — never write these in generated code:
+  ✗ callMcpTool("jupiter", "execute_swap", ...)   ← does not exist, will crash at runtime
+  ✗ callMcpTool("jupiter", "swap", ...)           ← does not exist
+  ✗ Any MCP call that implies transaction signing or submission
+
+REQUIRED swap execution flow — always use this exact pattern:
+  Step 1: GET https://quote-api.jup.ag/v6/quote  → quoteResponse
+  Step 2: POST https://quote-api.jup.ag/v6/swap  → { swapTransaction: "<base64>" }
+  Step 3: Sign and send locally with @solana/web3.js:
+
+    import { Connection, Keypair, VersionedTransaction } from "@solana/web3.js";
+
+    const connection = new Connection(
+      process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com"
+    );
+    const secretKey = new Uint8Array(
+      JSON.parse(process.env.SOLANA_KEY ?? "[]")
+    );
+    const wallet = Keypair.fromSecretKey(secretKey);
+
+    // After receiving swapTransaction from Jupiter /swap endpoint:
+    const swapTransactionBuf = Buffer.from(swapTransaction, "base64");
+    const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+    transaction.sign([wallet]);
+    const txid = await connection.sendRawTransaction(
+      transaction.serialize(),
+      { skipPreflight: true, maxRetries: 2 }
+    );
+    console.log("Swap executed:", txid);
+
+The MCP bridge (callMcpTool) is ONLY used for:
+  • callMcpTool("solana", "get_balance", ...)         — read SOL balance
+    • callMcpTool("solana", "get_token_balance", ...)   — read SPL token balance (owner + mint, summed raw amount)
+  • callMcpTool("solana", "get_account_info", ...)    — read account data
+  • callMcpTool("solana", "resolve_sns", ...)         — resolve .sol domains
+  • callMcpTool("solana", "send_raw_transaction", ...) — submit already-signed tx
+
+════════════════════════════════════════
+CORE RULES
+════════════════════════════════════════
 1. TypeScript + Node.js (ESM). package.json sets "type": "module".
 2. "start" script is: "tsx src/index.ts"
-3. Dependencies: axios ^1.7.4, dotenv ^16.4.0, tsx (dev), typescript (dev), @types/node (dev).
+3. Dependencies: axios ^1.7.4, dotenv ^16.4.0, @solana/web3.js ^1.98.0, tsx (dev), typescript (dev), @types/node (dev).
 4. Import "dotenv/config" at the very top of src/index.ts.
-5. All money arithmetic uses BigInt, not floats.
+5. Use BigInt for all internal token balance math. When calling the Jupiter /quote API, you MUST pass the EXACT raw balance (as a string) retrieved from get_token_balance. Do not normalize decimals before fetching the quote.
 6. SIMULATION_MODE = process.env.SIMULATION_MODE !== "false" (default true).
-7. For Jupiter swaps: await callMcpTool("jupiter", "execute_swap", { inputMint, outputMint, amount, userWallet })
+7. When SIMULATION_MODE is true, log the swap that would happen instead of executing it.
 8. Use an inFlight boolean guard to prevent overlapping poll cycles.
 9. Handle SIGINT / SIGTERM for graceful shutdown.
 10. Addresses are read from process.env, not hardcoded.
@@ -350,6 +399,12 @@ CORE RULES:
     config({ path: join(botDir, ".env") });
 12. Log environment variables at startup for debugging.
 13. Ensure MCP_GATEWAY_URL defaults to http://127.0.0.1:8001 if not set.
+14. Include retry logic (3 attempts with exponential backoff) around Jupiter API calls.
+15. Never call execSync, child_process, or any local CLI tool.
+16. If the user requests a DCA, TWAP, or chunked execution strategy, you MUST use a finite loop (e.g., a for-loop based on the number of chunks). You MUST insert a randomized sleep interval (jitter) between each execution using await sleep(Math.floor(Math.random() * max) + min). NEVER use an infinite while(true) loop for a chunked strategy.
+17. MINT ROUTING: Never set inputMint and outputMint to the same address. Unless explicitly instructed otherwise by the user, assume the inputMint is always USDC (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) and the outputMint is the user's target TOKEN_MINT_ADDRESS.
+18. EXECUTION LIFECYCLE: If the user requests a finite execution strategy (e.g., "split into 5 chunks", "buy X times"), the main() function MUST execute exactly that many times and then gracefully exit using process.exit(0). DO NOT wrap finite strategies in a while(true) loop or setInterval. Daemon loops are ONLY for continuous monitoring strategies.
+19. SWAP PAYLOAD: When making the POST request to the Jupiter /v6/swap endpoint, the JSON body MUST ALWAYS include "dynamicComputeUnitLimit": true and "prioritizationFeeLamports": { "autoMultiplier": 2 } to prevent mainnet transaction drops.
 
 ENV VARS your bot should read:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
@@ -367,14 +422,40 @@ EXACT MINT ADDRESSES (hardcoded, never ask):
     sUSDe:  G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz   (18 decimals)
     SOL:    So11111111111111111111111111111111111111112      (9 decimals)
 
-JUPITER SWAP PATTERN:
-    await callMcpTool("jupiter", "execute_swap", {
-        inputMint:  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        outputMint: "G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz",
-        amount:     usdcBalance.toString(),
-        userWallet: WALLET,
-        slippageBps: 50,
+JUPITER SWAP PATTERN — use axios to call Jupiter HTTP API directly, then sign locally:
+    // Step 1: Get quote
+    const quoteResp = await axios.get("https://quote-api.jup.ag/v6/quote", {
+        params: {
+            inputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            outputMint: "G9W2WBKV3nJULX4kz47HCJ75jnVG4RYWZj5q5U5kXfz",
+            // IMPORTANT: amount is the raw token balance (smallest units) as a string
+            amount: usdcBalance.toString(),
+            slippageBps: 50,
+        },
+        timeout: 10_000,
     });
+    // Step 2: Get swap transaction
+    const swapResp = await axios.post("https://quote-api.jup.ag/v6/swap", {
+        quoteResponse: quoteResp.data,
+        userPublicKey: WALLET,
+        wrapAndUnwrapSol: true,
+        dynamicComputeUnitLimit: true,
+        prioritizationFeeLamports: {
+            autoMultiplier: 2,
+        },
+    }, { timeout: 10_000 });
+    // Step 3: Sign and send locally (SIMULATION_MODE check first)
+    if (SIMULATION_MODE) {
+        console.log("[sim] would execute swap, skipping signing");
+    } else {
+        const swapTransactionBuf = Buffer.from(swapResp.data.swapTransaction, "base64");
+        const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+        transaction.sign([wallet]);
+        const txid = await connection.sendRawTransaction(
+            transaction.serialize(), { skipPreflight: true, maxRetries: 2 }
+        );
+        console.log("Swap txid:", txid);
+    }
 
 APY FETCH PATTERN:
     async function fetchKaminoApy(): Promise<number> {
@@ -520,15 +601,7 @@ class MetaAgent:
         session_id: str,
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Start a new copilot planning session.
-        Returns either:
-          - {status: "clarification_needed", question, parameter_name, session_state}
-          - {status: "planning", plan, session_state}
-          - {status: "ready", files, intent}
-        """
         _log("INFO", f"copilot start session={session_id} chars={len(prompt)}", trace_id)
-
         state = self.copilot.start_session(prompt, session_id)
         return await self._process_copilot_state(state, trace_id)
 
@@ -538,13 +611,8 @@ class MetaAgent:
         user_reply: str,
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Continue a copilot session after user answers a question.
-        """
-        # Reconstruct state from serialized dict
         state = CopilotState(**session_state)
         _log("INFO", f"copilot continue session={state.session_id}", trace_id)
-
         state = self.copilot.continue_session(state, user_reply)
         return await self._process_copilot_state(state, trace_id)
 
@@ -553,13 +621,9 @@ class MetaAgent:
         state: CopilotState,
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Convert a CopilotState into an API response."""
-        # Serialize state for round-trip
         state_dict = state.model_dump()
 
-        # Waiting for user input
         if state.is_waiting_for_user:
-            # Find the ask_user step
             ask_step = next(
                 (s for s in reversed(state.steps) if s.step_type == "ask_user"),
                 None
@@ -578,17 +642,14 @@ class MetaAgent:
                 "confirmed_parameters": state.confirmed_parameters,
             }
 
-        # Planning complete — find the plan step
         plan_step = next(
             (s for s in reversed(state.steps) if s.step_type == "emit_plan"),
             None
         )
 
-        # Ready for code generation
         if state.is_complete and state.final_enriched_prompt:
             _log("INFO", f"copilot generating code strategy={state.strategy}", trace_id)
 
-            # Special handling for yield sweeper — use the optimized prompt
             enriched = state.final_enriched_prompt
             strategy = state.strategy or "custom_utility"
 
@@ -607,7 +668,6 @@ class MetaAgent:
             result["plan"] = plan_step.tool_args if plan_step else {}
             return result
 
-        # Still planning but not waiting (shouldn't happen often)
         return {
             "status": "planning",
             "steps": [s.model_dump() for s in state.steps],
@@ -623,14 +683,10 @@ class MetaAgent:
         confirmed_parameters: Dict[str, str],
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Generate code using the enriched prompt from the copilot planner."""
         network = confirmed_parameters.get("SOLANA_NETWORK", "mainnet-beta")
 
-        # Fetch RAG context
         jupiter_docs = await self._fetch_rag_context(enriched_prompt, strategy)
-
         chain_ctx = self._chain_context(network, strategy)
-
         params_txt = "\n".join(f"  {k}={v}" for k, v in confirmed_parameters.items())
 
         user_msg = (
@@ -652,6 +708,7 @@ class MetaAgent:
 
         MAX_RETRIES = 2
         files: List[Dict[str, Any]] = []
+        parsed: Dict[str, Any] = {}
 
         for attempt in range(MAX_RETRIES + 1):
             try:
@@ -670,6 +727,20 @@ class MetaAgent:
 
             if not index_ts:
                 break
+
+            # Post-generation validation: reject hallucinated MCP swap calls
+            hallucination_check = self._check_for_mcp_swap_hallucination(index_ts)
+            if hallucination_check:
+                _log("WARN", f"Hallucination detected on attempt {attempt+1}: {hallucination_check}", trace_id)
+                if attempt < MAX_RETRIES:
+                    user_msg = (
+                        f"{user_msg}\n\n"
+                        f"CRITICAL ERROR in your previous output: {hallucination_check}\n"
+                        "You MUST use axios to call https://quote-api.jup.ag/v6/quote and "
+                        "https://quote-api.jup.ag/v6/swap directly, then sign with @solana/web3.js. "
+                        "callMcpTool('jupiter', 'execute_swap') does NOT exist. Fix and return full JSON."
+                    )
+                    continue
 
             # TypeScript syntax check
             with tempfile.TemporaryDirectory() as tmp:
@@ -699,7 +770,7 @@ class MetaAgent:
             "chain": "solana",
             "network": network,
             "strategy": strategy,
-            "mcps": ["solana", "jupiter"],
+            "mcps": ["solana"],
             "bot_name": self._bot_name(strategy),
             "requires_openai": strategy == "sentiment",
             "collected_parameters": confirmed_parameters,
@@ -715,7 +786,6 @@ class MetaAgent:
     # ── RAG context fetcher ────────────────────────────────────────────────────
 
     async def _fetch_rag_context(self, prompt: str, strategy: str) -> str:
-        """Fetch Jupiter docs from the MCP server when the prompt warrants it."""
         normalized = prompt.lower()
         needs_jupiter = strategy in {"arbitrage", "sniping", "dca", "grid", "whale_mirror", "yield_sweeper"} or \
                         any(t in normalized for t in ("jupiter", "swap", "quote", "trade"))
@@ -741,6 +811,31 @@ class MetaAgent:
 
         return str(jup_res or "")
 
+    # ── Hallucination detector ─────────────────────────────────────────────────
+
+    @staticmethod
+    def _check_for_mcp_swap_hallucination(code: str) -> Optional[str]:
+        """
+        Detect the most common hallucination pattern: using callMcpTool to execute
+        a Jupiter swap. Returns an error string if found, None if code is clean.
+        """
+        # Pattern: callMcpTool("jupiter", "execute_swap", ...)
+        if re.search(r'callMcpTool\s*\(\s*["\']jupiter["\'].*["\']execute_swap["\']', code, re.DOTALL):
+            return (
+                "callMcpTool(\"jupiter\", \"execute_swap\") was used — this tool does not exist. "
+                "Jupiter swaps must be executed via axios calls to quote-api.jup.ag/v6 "
+                "and signed locally with @solana/web3.js VersionedTransaction."
+            )
+
+        # Pattern: callMcpTool("jupiter", "swap", ...)
+        if re.search(r'callMcpTool\s*\(\s*["\']jupiter["\'].*["\']swap["\']', code, re.DOTALL):
+            return (
+                "callMcpTool(\"jupiter\", \"swap\") was used — this tool does not exist. "
+                "Use axios to call https://quote-api.jup.ag/v6/swap directly."
+            )
+
+        return None
+
     # ── Planner orchestration (legacy) ─────────────────────────────────────────
 
     async def orchestrate_bot_creation_stream(
@@ -756,7 +851,6 @@ class MetaAgent:
             try:
                 _log("DEBUG", f"EMIT status={status} keys={list(payload.keys())}", trace_id)
             except Exception:
-                # Best-effort logging — don't crash the generator
                 pass
             return f"data: {json.dumps(payload)}\n\n"
 
@@ -813,7 +907,7 @@ class MetaAgent:
             "chain": "solana",
             "network": network,
             "strategy": plan.strategy_type,
-            "mcps": ["solana", "jupiter"],
+            "mcps": ["solana"],
             "bot_name": self._bot_name(plan.strategy_type),
             "requires_openai": plan.strategy_type == "sentiment",
             "collected_parameters": plan.collected_parameters,
@@ -848,9 +942,25 @@ class MetaAgent:
             parsed = self._parse_json(raw)
             final_files = self._assemble_files(parsed.get("files", []), plan.strategy_type)
 
-            index_ts_content = next((f.get("content") for f in final_files if f.get("filepath") == "src/index.ts"), None)
+            index_ts_content = next(
+                (f.get("content") for f in final_files if f.get("filepath") == "src/index.ts"),
+                None
+            )
             if not index_ts_content:
                 break
+
+            # Post-generation hallucination check
+            hallucination_check = self._check_for_mcp_swap_hallucination(index_ts_content)
+            if hallucination_check and attempt < MAX_RETRIES:
+                _log("WARN", f"Hallucination on attempt {attempt+1}: {hallucination_check}", trace_id)
+                yield emit({"status": "self_healing", "message": "Fixing incorrect MCP usage..."})
+                prompt_source = (
+                    f"{enriched_prompt}\n\n"
+                    f"CRITICAL ERROR: {hallucination_check}\n"
+                    "Use axios to call https://quote-api.jup.ag/v6/quote and /swap directly, "
+                    "then sign with @solana/web3.js VersionedTransaction. Return the FULL updated JSON."
+                )
+                continue
 
             yield emit({"status": "validating_syntax", "message": "Running TypeScript compiler..."})
 
@@ -929,7 +1039,7 @@ class MetaAgent:
             "chain": "solana",
             "network": network,
             "strategy": plan.strategy_type,
-            "mcps": ["solana", "jupiter"],
+            "mcps": ["solana"],
             "bot_name": self._bot_name(plan.strategy_type),
             "requires_openai": plan.strategy_type == "sentiment",
             "collected_parameters": plan.collected_parameters,
@@ -977,6 +1087,16 @@ class MetaAgent:
             index_ts_content = next((f["content"] for f in files if f["filepath"] == "src/index.ts"), None)
             if not index_ts_content:
                 break
+
+            # Hallucination check
+            hallucination_check = self._check_for_mcp_swap_hallucination(index_ts_content)
+            if hallucination_check and attempt < MAX_RETRIES:
+                user_msg = (
+                    f"{user_msg}\n\n"
+                    f"CRITICAL ERROR: {hallucination_check}\n"
+                    "Use axios + @solana/web3.js for swaps. Return the FULL updated JSON."
+                )
+                continue
 
             with tempfile.TemporaryDirectory() as temp_dir:
                 src_dir = os.path.join(temp_dir, "src")
@@ -1100,7 +1220,11 @@ class MetaAgent:
                     "version": "1.0.0",
                     "type": "module",
                     "scripts": {"start": "tsx src/index.ts"},
-                    "dependencies": {"axios": "^1.7.4", "dotenv": "^16.4.0"},
+                    "dependencies": {
+                        "axios": "^1.7.4",
+                        "dotenv": "^16.4.0",
+                        "@solana/web3.js": "^1.98.0",
+                    },
                     "devDependencies": {
                         "typescript": "^5.4.0",
                         "@types/node": "^20.0.0",
@@ -1169,12 +1293,17 @@ class MetaAgent:
         return f"""
 CHAIN CONTEXT — SOLANA ({network})
 
-MCP TOOL REFERENCE:
+MCP TOOL REFERENCE (read-only data queries only):
   getSolBalance(network, walletAddress)           → bigint lamports
   getTokenBalance(network, walletAddress, mint)   → bigint token units
   callMcpTool("solana", "get_account_info", {{network, address}})
   callMcpTool("solana", "send_raw_transaction",  {{network, raw: "<base64>"}})
   callMcpTool("solana", "resolve_sns",           {{network, name: "alice.sol"}})
+
+JUPITER SWAP EXECUTION (use axios, NOT callMcpTool):
+  1. GET https://quote-api.jup.ag/v6/quote → quoteResponse
+  2. POST https://quote-api.jup.ag/v6/swap → {{ swapTransaction: "<base64>" }}
+  3. Sign locally: VersionedTransaction.deserialize(...); tx.sign([wallet]); connection.sendRawTransaction(...)
 
 REQUIRED ENV VARS:
   SOLANA_NETWORK, SOLANA_RPC_URL, SOLANA_KEY,
@@ -1183,6 +1312,7 @@ REQUIRED ENV VARS:
 
 RULES:
 - Every BigInt value is in the token's smallest unit.
-- SIMULATION_MODE=true by default.
-- @solana/web3.js is not imported; MCP bridge handles all RPC calls.
+- SIMULATION_MODE=true by default — log swaps, do not execute them.
+- @solana/web3.js handles all signing; MCP bridge handles only read queries.
+- Never use execSync, child_process, or local CLI tools.
 """
