@@ -54,6 +54,27 @@ from planner import (
     extract_resolved_address,
     summarise_mcp_result,
 )
+try:
+    from jupiter_prompt import (
+        JUPITER_SYSTEM_CONTEXT,
+        JUPITER_API_KEY as _JUP_API_KEY,
+        build_jupiter_user_context as _build_jup_ctx,
+        get_mcp_tool_descriptions as _jup_mcp_tools,
+        write_docs_json as _write_jup_docs,
+    )
+    _JUPITER_AVAILABLE = True
+except ImportError:
+    JUPITER_SYSTEM_CONTEXT = ""
+    _JUPITER_AVAILABLE = False
+
+    async def _build_jup_ctx(strategy: str = "custom_utility", tokens: Optional[List[str]] = None) -> str:
+        return ""
+
+    def _jup_mcp_tools() -> str:
+        return ""
+
+    def _write_jup_docs() -> None:
+        return None
 
 _BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(_BASE_DIR / ".env")
@@ -341,6 +362,9 @@ ENV VARS your bot should read:
   POLL_INTERVAL_MS (default 15000), SIMULATION_MODE
 """
 
+if _JUPITER_AVAILABLE:
+        GENERATOR_SYSTEM = GENERATOR_SYSTEM + JUPITER_SYSTEM_CONTEXT
+
 DEMO_CONTEXT = """
 === YIELD SWEEPER CONTEXT (Kamino ↔ sUSDe) ===
 
@@ -621,12 +645,17 @@ class MetaAgent:
         )
 
         if jupiter_docs:
-            user_msg += f"=== JUPITER CONTEXT (from live MCP docs — use for logic, NOT as runtime dependency) ===\n{jupiter_docs[:JUPITER_DOCS_MAX_CHARS]}\n\n"
+            user_msg += f"=== JUPITER CONTEXT ===\n{jupiter_docs[:CONTEXT_INJECTION_MAX_CHARS]}\n\n"
 
         if strategy in ("yield_sweeper", "shielded_yield"):
             user_msg += DEMO_CONTEXT + "\n\n"
 
-        user_msg += f"{chain_ctx}\n\nGenerate exactly 3 files: package.json, tsconfig.json, src/index.ts."
+        user_msg += (
+            "ENV NOTE: Bot must read JUPITER_API_KEY from process.env and use "
+            "x-api-key header on all Jupiter API calls.\n\n"
+            f"{chain_ctx}\n\n"
+            "Generate exactly 3 files: package.json, tsconfig.json, src/index.ts."
+        )
 
         _log("INFO", f"generator prompt chars={len(user_msg)}", trace_id)
 
@@ -696,31 +725,43 @@ class MetaAgent:
     # ── RAG context fetcher ────────────────────────────────────────────────────
 
     async def _fetch_rag_context(self, prompt: str, strategy: str) -> str:
-        """Fetch live docs/quotes from MCP servers for planning context only.
-        This context is used to inform what the LLM writes — NOT injected as runtime code."""
+        """Fetch Jupiter context: first try jupiter_prompt module (static + structured),
+        then attempt live MCP server for extra docs. Combines both into a single string."""
+        jup_static = await _build_jup_ctx(strategy=strategy)
+
         normalized = prompt.lower()
-        needs_jupiter = strategy in {"arbitrage", "sniping", "dca", "grid", "whale_mirror", "yield_sweeper"} or \
-                        any(t in normalized for t in ("jupiter", "swap", "quote", "trade"))
+        needs_jupiter = strategy in {
+            "arbitrage", "sniping", "dca", "grid", "whale_mirror",
+            "yield_sweeper", "prediction_arb", "perps", "flash_arb",
+            "trigger_bot", "adaptive_dca", "sentiment",
+        } or any(t in normalized for t in (
+            "jupiter", "swap", "quote", "trade", "limit", "perp",
+            "lend", "predict", "recurring",
+        ))
 
-        mcp = MultiMCPClient()
-        try:
-            await mcp.connect_default_sessions()
-        except Exception:
-            pass
-
-        jup_res = ""
+        jup_mcp = ""
         if needs_jupiter:
+            mcp = MultiMCPClient()
             try:
-                jup_res = await mcp.call_tool("jupiter", "jupiter_docs", {"query": prompt})
-            except Exception as exc:
-                _log("WARN", f"Jupiter MCP docs fetch failed (non-fatal): {exc}")
+                await mcp.connect_default_sessions()
+                try:
+                    jup_mcp = await mcp.call_tool("jupiter", "search_docs", {"query": prompt})
+                except Exception as exc:
+                    _log("WARN", f"Jupiter MCP docs fetch failed (non-fatal): {exc}")
+            except Exception:
+                pass
+            try:
+                await mcp.shutdown()
+            except Exception:
+                pass
 
-        try:
-            await mcp.shutdown()
-        except Exception:
-            pass
+        parts: List[str] = []
+        if jup_static:
+            parts.append(jup_static)
+        if jup_mcp:
+            parts.append(f"=== JUPITER MCP DOCS ===\n{str(jup_mcp)}")
 
-        return str(jup_res or "")
+        return "\n\n".join(parts)
 
     # ── Validation helpers ─────────────────────────────────────────────────────
 
@@ -972,14 +1013,22 @@ class MetaAgent:
         network   = intent["network"]
         strategy  = intent["strategy"]
         chain_ctx = self._chain_context(network, strategy)
+        jupiter_docs = await self._fetch_rag_context(prompt, strategy)
 
         user_msg = (
             f"Bot name: {intent['bot_name']}\n"
             f"Chain: solana | Network: {network}\n"
             f"Strategy: {strategy}\n"
             f"User intent: {prompt}\n\n"
+        )
+
+        if jupiter_docs:
+            user_msg += f"=== JUPITER CONTEXT ===\n{jupiter_docs[:CONTEXT_INJECTION_MAX_CHARS]}\n\n"
+
+        user_msg += (
+            "ENV VARS: Ensure bot reads JUPITER_API_KEY from process.env.\n"
             f"{chain_ctx}\n\n"
-            f"Generate exactly 3 files: package.json, tsconfig.json, src/index.ts."
+            "Generate exactly 3 files: package.json, tsconfig.json, src/index.ts."
         )
 
         raw    = self._llm(GENERATOR_SYSTEM, user_msg, temperature=0.1, max_tokens=self.max_tokens)
