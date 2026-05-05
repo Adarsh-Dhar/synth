@@ -1,22 +1,20 @@
 "use client";
 
 /**
- * frontend/lib/providers.tsx  (updated — adds Privy OAuth)
+ * frontend/lib/providers.tsx  (updated — Privy-first, no legacy wallet adapter)
  *
  * Provider stack (outermost → innermost):
  *   QueryClientProvider
- *   PrivyProvider           ← NEW: handles wallet + GitHub + Google auth
- *     UserProvider          ← updated to use Privy identity
+ *   PrivyProvider           ← handles wallet + GitHub + Google auth (no legacy adapter UI)
+ *     UserProvider          ← resolves wallet from Privy Solana wallets
  *       DodoOverlayProvider
  *       {children}
  *
- * NOTE: WalletProvider / ConnectionProvider from @solana/wallet-adapter-react
- * are no longer needed at the app level — Privy's embedded wallet and external
- * Solana wallet connectors replace them. If you still have components that
- * call `useWallet()` directly (the deploy chat, deposit flow, etc.) you can
- * either keep the adapter alongside Privy or migrate them to useSolanaWallets()
- * from @privy-io/react-auth/solana. A thin compatibility shim is included below.
+ * NOTE: Legacy @solana/wallet-adapter-react removed from main provider tree.
+ * Components that still need it (e.g., portfolio-panel, signing-relay-consumer)
+ * should import it locally or migrate to @privy-io/react-auth/solana.
  *
+ * No more Phantom popup!
  * Install:
  *   npm install @privy-io/react-auth @privy-io/server-auth
  */
@@ -27,14 +25,6 @@ import { PrivyProvider } from "@/lib/privy-provider";
 import { UserProvider } from "@/lib/user-context";
 import { DodoOverlayProvider } from "@/components/dodo-overlay-provider";
 
-// ── Keep the Solana wallet adapter for components that still call useWallet() ──
-// Remove once those components are migrated to Privy's useSolanaWallets().
-import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import { clusterApiUrl } from "@solana/web3.js";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import "@solana/wallet-adapter-react-ui/styles.css";
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, staleTime: 30_000 },
@@ -42,32 +32,17 @@ const queryClient = new QueryClient({
 });
 
 export default function Providers({ children }: PropsWithChildren) {
-  const network =
-    (process.env.NEXT_PUBLIC_SOLANA_NETWORK as WalletAdapterNetwork) ||
-    "mainnet-beta";
-  const endpoint =
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(network);
-
-  const wallets = React.useMemo(() => [], []);
-
   return (
     <QueryClientProvider client={queryClient}>
       {/*
        * PrivyProvider is outermost so that Privy's usePrivy() hook is
-       * available everywhere — including inside the Solana adapter tree.
+       * available everywhere for wallet + OAuth authentication.
        */}
       <PrivyProvider>
-        {/* Legacy Solana wallet adapter kept for backward compatibility */}
-        <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect={false}>
-            <WalletModalProvider>
-              <UserProvider>
-                <DodoOverlayProvider />
-                {children}
-              </UserProvider>
-            </WalletModalProvider>
-          </WalletProvider>
-        </ConnectionProvider>
+        <UserProvider>
+          <DodoOverlayProvider />
+          {children}
+        </UserProvider>
       </PrivyProvider>
     </QueryClientProvider>
   );

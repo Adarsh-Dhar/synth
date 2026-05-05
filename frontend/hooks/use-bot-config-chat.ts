@@ -29,7 +29,8 @@ import {
   KeyboardEvent,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useUser } from "@/lib/user-context";
+import { usePrivy } from "@privy-io/react-auth";
 import bs58 from 'bs58'
 import { getWalletAuthHeaders } from '@/lib/auth/client'
 
@@ -430,11 +431,12 @@ interface ServerMessage {
 export function useBotConfigChat() {
   // ── AutoSign / wallet adapter (Solana) ──────────────────────────────────
   //
-  // Wallet adapter: Solana publicKey (base58) will be used when available.
-  const { publicKey, connect, signMessage } = useWallet();
-  const openConnect = connect;
+  // Resolve wallet via UserProvider (Privy-compatible). Use Privy `login()` to open connect modal.
+  const { walletSigner } = useUser();
+  const { login } = usePrivy();
+  const openConnect = login;
 
-  const walletAddress = publicKey ? publicKey.toBase58() : "";
+  const walletAddress = walletSigner?.publicKey?.toBase58?.() ?? "";
   const walletHexAddress = toHexWalletAddress(walletAddress);
   const plannerWalletAddress = walletAddress || walletHexAddress;
   const walletDisplayAddress = walletHexAddress || walletAddress;
@@ -790,11 +792,11 @@ export function useBotConfigChat() {
         setIsTyping(false);
         appendAssistant("⏳ Saving your bot and encrypting credentials…");
 
-        if (!publicKey) {
+        if (!walletSigner?.publicKey) {
           throw new Error("Connect your wallet before generating a bot.");
         }
 
-        const authHeaders = await getWalletAuthHeaders({ publicKey, signMessage });
+        const authHeaders = await getWalletAuthHeaders(walletSigner);
 
         const saveRes = await fetch("/api/generate-bot", {
           method: "POST",
@@ -978,7 +980,7 @@ export function useBotConfigChat() {
         setStep("idle");
       }
     },
-    [appendAssistant, plannerWalletAddress, publicKey, signMessage, walletHexAddress]
+    [appendAssistant, plannerWalletAddress, walletSigner, walletHexAddress]
   );
 
   // ── submitDynamicKeys ─────────────────────────────────────────────────────
@@ -1120,7 +1122,7 @@ export function useBotConfigChat() {
           pendingClarificationKeysRef.current = [];
           pendingStrategyTypeRef.current = String(detectedStrategyRef.current ?? "custom_utility");
           try {
-            const authHeaders = await getWalletAuthHeaders({ publicKey, signMessage });
+            const authHeaders = await getWalletAuthHeaders(walletSigner);
             const classifyRes = await fetch("/api/classify-intent", {
               method: "POST",
               headers: { "Content-Type": "application/json", ...(authHeaders ?? {}) },

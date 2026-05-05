@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWallet } from '@solana/wallet-adapter-react'
+import { usePrivy } from '@privy-io/react-auth'
 import { Sidebar } from '@/components/sidebar'
 
 export default function DashboardLayout({
@@ -10,20 +10,19 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { publicKey } = useWallet()
+  const { authenticated, ready } = usePrivy()
   const router = useRouter()
-  const connected = !!publicKey
 
-  // Redirect to landing if wallet disconnected
+  // Redirect to landing if not authenticated via Privy
   useEffect(() => {
-    if (!connected) {
-      // Small delay so wallet adapter can hydrate before we redirect
+    if (!ready) return
+    if (!authenticated) {
       const t = setTimeout(() => {
-        if (!publicKey) router.push('/')
-      }, 800)
+        if (!authenticated) router.push('/')
+      }, 300)
       return () => clearTimeout(t)
     }
-  }, [connected, publicKey, router])
+  }, [authenticated, ready, router])
 
   return (
     <div className="flex h-screen">

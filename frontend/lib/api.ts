@@ -46,7 +46,7 @@ export async function fetchAgents(authHeaders?: HeadersInit): Promise<Agent[]> {
       ...(authHeaders ?? {}),
     },
   })
-  if (!res.ok) throw new Error('Failed to fetch agents')
+  await throwIfNotOk(res)
   return res.json()
 }
 
@@ -56,7 +56,7 @@ export async function fetchAgent(agentId: string, authHeaders?: HeadersInit): Pr
       ...(authHeaders ?? {}),
     },
   })
-  if (!res.ok) throw new Error('Failed to fetch agent')
+  await throwIfNotOk(res)
   return res.json()
 }
 
@@ -66,10 +66,7 @@ export async function deployAgent(payload: DeployAgentPayload, authHeaders?: Hea
     headers: { 'Content-Type': 'application/json', ...(authHeaders ?? {}) },
     body: JSON.stringify(payload),
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error((err as { error?: string }).error ?? 'Failed to deploy agent')
-  }
+  await throwIfNotOk(res)
   return res.json()
 }
 
@@ -80,7 +77,7 @@ export async function deleteAgent(agentId: string, authHeaders?: HeadersInit): P
       ...(authHeaders ?? {}),
     },
   })
-  if (!res.ok) throw new Error('Failed to delete agent')
+  await throwIfNotOk(res)
 }
 
 export async function updateAgentStatus(
@@ -93,7 +90,7 @@ export async function updateAgentStatus(
     headers: { 'Content-Type': 'application/json', ...(authHeaders ?? {}) },
     body: JSON.stringify({ status }),
   })
-  if (!res.ok) throw new Error('Failed to update agent status')
+  await throwIfNotOk(res)
   return res.json()
 }
 
@@ -101,7 +98,7 @@ export async function fetchAgentLogs(agentId: string, limit = 50, authHeaders?: 
   const res = await fetch(`/api/agents/${agentId}/logs?limit=${limit}`, {
     headers: { 'Cache-Control': 'no-store', ...(authHeaders ?? {}) },
   })
-  if (!res.ok) throw new Error('Failed to fetch logs')
+  await throwIfNotOk(res)
   return res.json()
 }
 
@@ -121,4 +118,24 @@ export function strategyLabel(strategy: Agent['strategy']): string {
     ARBITRAGE: 'Arbitrage',
     SENTIMENT_TRADER: 'Sentiment Trader',
   }[strategy]
+}
+
+// Helper: throw an Error with `status` and `body` when response is not ok
+async function throwIfNotOk(res: Response, defaultMsg = 'Request failed'): Promise<void> {
+  if (res.ok) return
+  let body: unknown = null
+  try {
+    body = await res.json()
+  } catch {
+    try {
+      body = await res.text()
+    } catch {
+      body = null
+    }
+  }
+  const message = typeof body === 'string' ? body : (body && (body as any).error) ? (body as any).error : defaultMsg
+  const err = new Error(message)
+  ;(err as any).status = res.status
+  ;(err as any).body = body
+  throw err
 }

@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? "http://localhost:3000";
   const successUrl = String(body.successUrl ?? `${origin}/dashboard/billing?dodo=success`).trim();
+  const cancelUrl = String(body.cancelUrl ?? `${origin}/dashboard/billing?dodo=cancelled`).trim();
   const walletSlug = auth.user.walletAddress.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 12);
 
   const sharedCustomer = {
@@ -63,13 +64,16 @@ export async function POST(req: NextRequest) {
     name: walletSlug,
   };
 
-  const sharedMetadata = {
+  const sharedMetadataRaw = {
     source: "synth-frontend",
     walletAddress: auth.user.walletAddress,
     userId: auth.user.id,
     planType,
     ...(body.metadata ?? {}),
   };
+  const sharedMetadata = Object.fromEntries(
+    Object.entries(sharedMetadataRaw).map(([key, value]) => [key, String(value)])
+  );
 
   try {
     // Both subscriptions and one-time payments now use checkout sessions
@@ -77,6 +81,7 @@ export async function POST(req: NextRequest) {
       product_cart: [{ product_id: resolvedId, quantity: 1 }],
       customer: sharedCustomer,
       return_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: sharedMetadata,
     });
 

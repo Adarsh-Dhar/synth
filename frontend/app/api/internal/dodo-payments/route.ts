@@ -182,9 +182,24 @@ async function maybeDeliverX402(agentId: string, externalReference: string, meta
 async function syncUserTierFromAgent(agentId: string, tier: string) {
   const agent = await prisma.agent.findUnique({ where: { id: agentId }, select: { userId: true } });
   if (!agent?.userId) return;
+  const subscription = await prisma.subscription.findFirst({
+    where: { agentId, provider: "dodo" },
+    orderBy: { updatedAt: "desc" },
+    select: { plan: true, validUntil: true },
+  });
+
+  if (!subscription) {
+    await prisma.user.update({ where: { id: agent.userId }, data: { subscriptionTier: tier } });
+    return;
+  }
+
   await prisma.user.update({
     where: { id: agent.userId },
-    data: { subscriptionTier: tier },
+    data: {
+      subscriptionTier: tier,
+      plan: (subscription.plan ?? tier).toLowerCase(),
+      ...(subscription.validUntil ? { planExpiresAt: subscription.validUntil } : {}),
+    },
   });
 }
 

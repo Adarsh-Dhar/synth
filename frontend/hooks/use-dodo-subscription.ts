@@ -62,11 +62,15 @@ export function useDodoSubscription() {
   const fetchStatus = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      const authHeaders = await getWalletAuthHeaders(walletSigner);
-      const res = await fetch("/api/payments/status", {
-        headers: { ...(authHeaders ?? {}) },
-        cache: "no-store",
-      });
+      // Try unauthenticated first; only sign and retry if the endpoint returns 401
+      let res = await fetch("/api/payments/status", { cache: "no-store" });
+      if (res.status === 401) {
+        const authHeaders = await getWalletAuthHeaders(walletSigner);
+        res = await fetch("/api/payments/status", {
+          headers: { ...(authHeaders ?? {}) },
+          cache: "no-store",
+        });
+      }
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

@@ -6,32 +6,19 @@ import { LandingHeader } from '@/components/landing-header'
 import { FeatureCard } from '@/components/feature-card'
 import Link from 'next/link'
 import { ArrowRight, Zap, Lock, GitBranch } from 'lucide-react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { usePrivy } from '@privy-io/react-auth'
 
 export default function Home() {
-  const { publicKey, connect } = useWallet()
+  const { authenticated, login } = usePrivy()
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-  const connected = !!publicKey
-
-  // Auto-redirect if already connected
-  useEffect(() => {
-    if (connected) {
-      // Don't auto-redirect on landing — let the user choose
-    }
-  }, [connected])
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleConnect = async () => {
-    if (connected) {
+    if (authenticated) {
       router.push('/dashboard')
+      return
     }
+    login()
   }
 
   return (
@@ -55,18 +42,14 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            {!connected ? (
-              mounted ? (
-                <WalletMultiButton className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2" />
-              ) : (
-                <Button
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2"
-                  disabled
-                >
-                  Connect Wallet
-                </Button>
-              )
+            {!authenticated ? (
+              <Button
+                size="lg"
+                onClick={() => login()}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 gap-2"
+              >
+                Connect Wallet
+              </Button>
             ) : (
               <>
                 <Button
@@ -204,7 +187,7 @@ export default function Home() {
             onClick={handleConnect}
             className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
           >
-            {connected ? 'Open Dashboard' : 'Connect Wallet Now'}
+            {authenticated ? 'Open Dashboard' : 'Connect Wallet Now'}
           </Button>
         </div>
       </section>

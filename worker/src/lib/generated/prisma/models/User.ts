@@ -355,7 +355,7 @@ export type UserScalarWhereWithAggregatesInput = {
 }
 
 export type UserCreateInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -376,7 +376,7 @@ export type UserCreateInput = {
 }
 
 export type UserUncheckedCreateInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -439,7 +439,7 @@ export type UserUncheckedUpdateInput = {
 }
 
 export type UserCreateManyInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -658,7 +658,7 @@ export type UserUpdateOneRequiredWithoutBotServicesNestedInput = {
 }
 
 export type UserCreateWithoutAgentsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -678,7 +678,7 @@ export type UserCreateWithoutAgentsInput = {
 }
 
 export type UserUncheckedCreateWithoutAgentsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -754,7 +754,7 @@ export type UserUncheckedUpdateWithoutAgentsInput = {
 }
 
 export type UserCreateWithoutPrivateBrainConfigsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -774,7 +774,7 @@ export type UserCreateWithoutPrivateBrainConfigsInput = {
 }
 
 export type UserUncheckedCreateWithoutPrivateBrainConfigsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -850,7 +850,7 @@ export type UserUncheckedUpdateWithoutPrivateBrainConfigsInput = {
 }
 
 export type UserCreateWithoutPrivateBrainAuditsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -870,7 +870,7 @@ export type UserCreateWithoutPrivateBrainAuditsInput = {
 }
 
 export type UserUncheckedCreateWithoutPrivateBrainAuditsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -946,7 +946,7 @@ export type UserUncheckedUpdateWithoutPrivateBrainAuditsInput = {
 }
 
 export type UserCreateWithoutShieldedExecutionConfigsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -966,7 +966,7 @@ export type UserCreateWithoutShieldedExecutionConfigsInput = {
 }
 
 export type UserUncheckedCreateWithoutShieldedExecutionConfigsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -1042,7 +1042,7 @@ export type UserUncheckedUpdateWithoutShieldedExecutionConfigsInput = {
 }
 
 export type UserCreateWithoutShieldedExecutionAuditsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -1062,7 +1062,7 @@ export type UserCreateWithoutShieldedExecutionAuditsInput = {
 }
 
 export type UserUncheckedCreateWithoutShieldedExecutionAuditsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -1138,7 +1138,7 @@ export type UserUncheckedUpdateWithoutShieldedExecutionAuditsInput = {
 }
 
 export type UserCreateWithoutBotWalletsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -1158,7 +1158,7 @@ export type UserCreateWithoutBotWalletsInput = {
 }
 
 export type UserUncheckedCreateWithoutBotWalletsInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -1234,7 +1234,7 @@ export type UserUncheckedUpdateWithoutBotWalletsInput = {
 }
 
 export type UserCreateWithoutBotServicesInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string
@@ -1254,7 +1254,7 @@ export type UserCreateWithoutBotServicesInput = {
 }
 
 export type UserUncheckedCreateWithoutBotServicesInput = {
-  id: string
+  id?: string
   email: string
   name?: string | null
   walletAddress?: string

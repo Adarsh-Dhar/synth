@@ -8,32 +8,42 @@ import { PortfolioPanel } from '@/components/portfolio-panel'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useUser } from '@/lib/user-context'
-import { useWallet } from '@solana/wallet-adapter-react'
+import { usePrivy } from '@privy-io/react-auth'
 import { useRouter } from 'next/navigation'
 import { fetchAgents, Agent } from '@/lib/api'
 import { getWalletAuthHeaders } from '@/lib/auth/client'
 
 export default function DashboardPage() {
   const { user, loading: userLoading, walletSigner } = useUser()
-  const { publicKey } = useWallet()
+  const { authenticated, ready } = usePrivy()
   const router = useRouter()
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
-  const connected = !!publicKey
-
   const loadAgents = async (showRefresh = false) => {
-    if (!user) return
     if (showRefresh) setRefreshing(true)
     try {
-      const authHeaders = await getWalletAuthHeaders(walletSigner)
-      const data = await fetchAgents(authHeaders)
-      setAgents(data)
-      setError(null)
+      // Try unauthenticated first; only sign if we get a 401
+      try {
+        const data = await fetchAgents()
+        setAgents(data)
+        setError(null)
+        return true
+      } catch (err: any) {
+        if (err?.status === 401) {
+          const authHeaders = await getWalletAuthHeaders(walletSigner)
+          const data = await fetchAgents(authHeaders)
+          setAgents(data)
+          setError(null)
+          return true
+        }
+        throw err
+      }
     } catch {
       setError('Failed to load agents. Check your connection.')
+      return false
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -41,13 +51,15 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    if (!userLoading && !connected) {
+    if (!ready) return
+    if (!userLoading && !authenticated) {
       router.push('/')
     }
-  }, [connected, userLoading, router])
+  }, [authenticated, ready, userLoading, router])
 
   useEffect(() => {
     if (user) loadAgents()
+    else loadAgents() // try unauthenticated load even when no user
   }, [user])
 
   const activeCount = agents.filter((a) => a.status === 'RUNNING').length

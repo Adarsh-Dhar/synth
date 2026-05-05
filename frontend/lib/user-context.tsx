@@ -22,7 +22,6 @@ import React, {
 } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
-import { useWallet } from "@solana/wallet-adapter-react";
 import type { WalletSigner } from "@/lib/auth/client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -68,19 +67,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { user: privyUser, authenticated, logout: privyLogout } = usePrivy();
   const { wallets: privySolanaWallets } = useWallets();
 
-  // Legacy wallet adapter (used by existing components)
-  const { publicKey, signMessage } = useWallet();
-
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
   // ── Resolve wallet address ─────────────────────────────────────────────────
 
-  // Priority: Privy embedded/external Solana wallet → legacy adapter
-  const privySolanaAddress =
-    privySolanaWallets?.[0]?.address ?? null;
-  const legacyAddress = publicKey?.toBase58() ?? null;
-  const walletAddress = privySolanaAddress ?? legacyAddress;
+  // Privy embedded/external Solana wallet is the primary source
+  const walletAddress = privySolanaWallets?.[0]?.address ?? null;
 
   // ── Build walletSigner for existing auth helpers ───────────────────────────
 
@@ -101,9 +94,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         },
       };
     }
-    // Fallback to legacy adapter
-    return { publicKey, signMessage };
-  }, [privyWallet, publicKey, signMessage]);
+    // No wallet available (OAuth-only user or not authenticated)
+    return {
+      publicKey: undefined,
+      signMessage: async () => new Uint8Array(),
+    };
+  }, [privyWallet]);
 
   // ── Sync with backend when identity changes ────────────────────────────────
 

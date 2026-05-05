@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 /**
- * POST /api/users/sync  (updated)
+ * POST /api/users/sync
  *
  * Upserts a user record by walletAddress OR Privy synthetic ID.
  *
@@ -20,30 +20,42 @@ export async function POST(req: NextRequest) {
       const normalizedWallet = walletAddress.trim();
       const isPrivySynthetic = normalizedWallet.startsWith("privy:");
 
-      // Determine the canonical user ID
-      const userId = isPrivySynthetic
-        ? normalizedWallet          // "privy:<userId>"
-        : `wallet:${normalizedWallet}`;
-
       const emailSafe = normalizedWallet.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-      // Try to find by wallet address first
-      const byWallet = await prisma.user.findFirst({
+      // For Privy synthetic IDs, the canonical DB id is "privy:<userId>".
+      // For real wallet addresses, we let Prisma generate a cuid — the wallet
+      // is stored in walletAddress only, NOT baked into the id field.
+      if (isPrivySynthetic) {
+        const syntheticId = normalizedWallet; // "privy:<userId>"
+
+        const byId = await prisma.user.findFirst({ where: { id: syntheticId } });
+        if (byId) return NextResponse.json(byId, { status: 200 });
+
+        const byWallet = await prisma.user.findFirst({ where: { walletAddress: normalizedWallet } });
+        if (byWallet) return NextResponse.json(byWallet, { status: 200 });
+
+        const user = await prisma.user.create({
+          data: {
+            id: syntheticId,
+            email: `${emailSafe}@privy.local`,
+            walletAddress: normalizedWallet,
+            plan: "free",
+            planStartedAt: new Date(),
+          },
+        });
+        return NextResponse.json(user, { status: 200 });
+      }
+
+      // Real Solana wallet — find or create, never set id manually
+      const existing = await prisma.user.findFirst({
         where: { walletAddress: normalizedWallet },
       });
-      if (byWallet) return NextResponse.json(byWallet, { status: 200 });
+      if (existing) return NextResponse.json(existing, { status: 200 });
 
-      // Try to find by ID (in case already created by server auth)
-      const byId = await prisma.user.findFirst({ where: { id: userId } });
-      if (byId) return NextResponse.json(byId, { status: 200 });
-
-      // Create new user
+      // Create with auto-generated cuid (no `id` field supplied)
       const user = await prisma.user.create({
         data: {
-          id: userId,
-          email: isPrivySynthetic
-            ? `${emailSafe}@privy.local`
-            : `${emailSafe}@wallet.local`,
+          email: `${emailSafe}@wallet.local`,
           walletAddress: normalizedWallet,
           plan: "free",
           planStartedAt: new Date(),
@@ -61,19 +73,13 @@ export async function POST(req: NextRequest) {
 
     if (!id || typeof id !== "string" || !id.trim()) {
       return NextResponse.json(
-        {
-          error:
-            "id (Clerk user ID) is required if walletAddress is not provided.",
-        },
+        { error: "id (Clerk user ID) is required if walletAddress is not provided." },
         { status: 400 }
       );
     }
     if (!email || typeof email !== "string" || !email.trim()) {
       return NextResponse.json(
-        {
-          error:
-            "email is required if walletAddress is not provided.",
-        },
+        { error: "email is required if walletAddress is not provided." },
         { status: 400 }
       );
     }
@@ -84,8 +90,8 @@ export async function POST(req: NextRequest) {
       create: { id, email, ...(name ? { name } : {}), plan: "free", planStartedAt: new Date() },
     });
     return NextResponse.json(user, { status: 200 });
+
   } catch (error: unknown) {
-    // Unique constraint on email
     if (
       typeof error === "object" &&
       error !== null &&
@@ -93,10 +99,7 @@ export async function POST(req: NextRequest) {
       (error as { code: string }).code === "P2002"
     ) {
       return NextResponse.json(
-        {
-          error:
-            "This email address is already associated with another account.",
-        },
+        { error: "This email address is already associated with another account." },
         { status: 409 }
       );
     }

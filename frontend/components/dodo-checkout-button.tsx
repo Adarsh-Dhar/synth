@@ -86,12 +86,13 @@ export function DodoCheckoutButton({
       };
 
       if (!res.ok || !data.checkoutUrl) {
-        throw new Error(data.error ?? "Failed to create checkout session");
+        const detail = typeof data.detail === "string" ? data.detail : "";
+        throw new Error(detail || data.error || "Failed to create checkout session");
       }
 
       // Use Dodo Overlay if available, fall back to redirect
       if (typeof window !== "undefined" && window.DodoOverlay) {
-        window.DodoOverlay.open(data.checkoutUrl, {
+        const openWithOverlay = () => window.DodoOverlay!.open(data.checkoutUrl!, {
           onSuccess: (result) => {
             console.log("[Dodo] Payment succeeded:", result);
             onSuccess?.();
@@ -100,9 +101,18 @@ export function DodoCheckoutButton({
             onClose?.();
           },
           onError: (err) => {
+            // Some legacy overlay flows return opaque errors (e.g. missing connector params).
+            // Fallback to direct checkout URL, which is the stable path.
             setError(err.message);
+            window.location.href = data.checkoutUrl!;
           },
         });
+
+        try {
+          openWithOverlay();
+        } catch {
+          window.location.href = data.checkoutUrl;
+        }
       } else {
         // Fallback: open in same tab
         window.location.href = data.checkoutUrl;
