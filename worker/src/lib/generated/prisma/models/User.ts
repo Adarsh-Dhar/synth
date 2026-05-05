@@ -28,10 +28,12 @@ export type AggregateUser = {
 
 export type UserAvgAggregateOutputType = {
   monthlyUsageUnits: number | null
+  creditBalance: number | null
 }
 
 export type UserSumAggregateOutputType = {
   monthlyUsageUnits: number | null
+  creditBalance: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -44,6 +46,7 @@ export type UserMinAggregateOutputType = {
   planStartedAt: Date | null
   planExpiresAt: Date | null
   monthlyUsageUnits: number | null
+  creditBalance: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -58,6 +61,7 @@ export type UserMaxAggregateOutputType = {
   planStartedAt: Date | null
   planExpiresAt: Date | null
   monthlyUsageUnits: number | null
+  creditBalance: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -72,6 +76,7 @@ export type UserCountAggregateOutputType = {
   planStartedAt: number
   planExpiresAt: number
   monthlyUsageUnits: number
+  creditBalance: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -80,10 +85,12 @@ export type UserCountAggregateOutputType = {
 
 export type UserAvgAggregateInputType = {
   monthlyUsageUnits?: true
+  creditBalance?: true
 }
 
 export type UserSumAggregateInputType = {
   monthlyUsageUnits?: true
+  creditBalance?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -96,6 +103,7 @@ export type UserMinAggregateInputType = {
   planStartedAt?: true
   planExpiresAt?: true
   monthlyUsageUnits?: true
+  creditBalance?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -110,6 +118,7 @@ export type UserMaxAggregateInputType = {
   planStartedAt?: true
   planExpiresAt?: true
   monthlyUsageUnits?: true
+  creditBalance?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -124,6 +133,7 @@ export type UserCountAggregateInputType = {
   planStartedAt?: true
   planExpiresAt?: true
   monthlyUsageUnits?: true
+  creditBalance?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -225,6 +235,7 @@ export type UserGroupByOutputType = {
   planStartedAt: Date | null
   planExpiresAt: Date | null
   monthlyUsageUnits: number
+  creditBalance: number
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -262,6 +273,7 @@ export type UserWhereInput = {
   planStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   planExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   monthlyUsageUnits?: Prisma.IntFilter<"User"> | number
+  creditBalance?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   agents?: Prisma.AgentListRelationFilter
@@ -283,6 +295,7 @@ export type UserOrderByWithRelationInput = {
   planStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
+  creditBalance?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   agents?: Prisma.AgentOrderByRelationAggregateInput
@@ -307,6 +320,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   planStartedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   planExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   monthlyUsageUnits?: Prisma.IntFilter<"User"> | number
+  creditBalance?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   agents?: Prisma.AgentListRelationFilter
@@ -328,6 +342,7 @@ export type UserOrderByWithAggregationInput = {
   planStartedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
+  creditBalance?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -350,6 +365,7 @@ export type UserScalarWhereWithAggregatesInput = {
   planStartedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   planExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   monthlyUsageUnits?: Prisma.IntWithAggregatesFilter<"User"> | number
+  creditBalance?: Prisma.IntWithAggregatesFilter<"User"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -364,6 +380,7 @@ export type UserCreateInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
@@ -385,6 +402,7 @@ export type UserUncheckedCreateInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
@@ -406,6 +424,7 @@ export type UserUpdateInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
@@ -427,6 +446,7 @@ export type UserUncheckedUpdateInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
@@ -448,6 +468,7 @@ export type UserCreateManyInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -462,6 +483,7 @@ export type UserUpdateManyMutationInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -476,6 +498,7 @@ export type UserUncheckedUpdateManyInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -490,12 +513,14 @@ export type UserCountOrderByAggregateInput = {
   planStartedAt?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
+  creditBalance?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
   monthlyUsageUnits?: Prisma.SortOrder
+  creditBalance?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -508,6 +533,7 @@ export type UserMaxOrderByAggregateInput = {
   planStartedAt?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
+  creditBalance?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -522,12 +548,14 @@ export type UserMinOrderByAggregateInput = {
   planStartedAt?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrder
   monthlyUsageUnits?: Prisma.SortOrder
+  creditBalance?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
   monthlyUsageUnits?: Prisma.SortOrder
+  creditBalance?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -667,6 +695,7 @@ export type UserCreateWithoutAgentsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   privateBrainConfigs?: Prisma.PrivateBrainConfigCreateNestedManyWithoutOwnerInput
@@ -687,6 +716,7 @@ export type UserUncheckedCreateWithoutAgentsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedCreateNestedManyWithoutOwnerInput
@@ -723,6 +753,7 @@ export type UserUpdateWithoutAgentsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   privateBrainConfigs?: Prisma.PrivateBrainConfigUpdateManyWithoutOwnerNestedInput
@@ -743,6 +774,7 @@ export type UserUncheckedUpdateWithoutAgentsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   privateBrainConfigs?: Prisma.PrivateBrainConfigUncheckedUpdateManyWithoutOwnerNestedInput
@@ -763,6 +795,7 @@ export type UserCreateWithoutPrivateBrainConfigsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
@@ -783,6 +816,7 @@ export type UserUncheckedCreateWithoutPrivateBrainConfigsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
@@ -819,6 +853,7 @@ export type UserUpdateWithoutPrivateBrainConfigsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
@@ -839,6 +874,7 @@ export type UserUncheckedUpdateWithoutPrivateBrainConfigsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
@@ -859,6 +895,7 @@ export type UserCreateWithoutPrivateBrainAuditsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
@@ -879,6 +916,7 @@ export type UserUncheckedCreateWithoutPrivateBrainAuditsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
@@ -915,6 +953,7 @@ export type UserUpdateWithoutPrivateBrainAuditsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
@@ -935,6 +974,7 @@ export type UserUncheckedUpdateWithoutPrivateBrainAuditsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
@@ -955,6 +995,7 @@ export type UserCreateWithoutShieldedExecutionConfigsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
@@ -975,6 +1016,7 @@ export type UserUncheckedCreateWithoutShieldedExecutionConfigsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
@@ -1011,6 +1053,7 @@ export type UserUpdateWithoutShieldedExecutionConfigsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
@@ -1031,6 +1074,7 @@ export type UserUncheckedUpdateWithoutShieldedExecutionConfigsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
@@ -1051,6 +1095,7 @@ export type UserCreateWithoutShieldedExecutionAuditsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
@@ -1071,6 +1116,7 @@ export type UserUncheckedCreateWithoutShieldedExecutionAuditsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
@@ -1107,6 +1153,7 @@ export type UserUpdateWithoutShieldedExecutionAuditsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
@@ -1127,6 +1174,7 @@ export type UserUncheckedUpdateWithoutShieldedExecutionAuditsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
@@ -1147,6 +1195,7 @@ export type UserCreateWithoutBotWalletsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
@@ -1167,6 +1216,7 @@ export type UserUncheckedCreateWithoutBotWalletsInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
@@ -1203,6 +1253,7 @@ export type UserUpdateWithoutBotWalletsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
@@ -1223,6 +1274,7 @@ export type UserUncheckedUpdateWithoutBotWalletsInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
@@ -1243,6 +1295,7 @@ export type UserCreateWithoutBotServicesInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentCreateNestedManyWithoutUserInput
@@ -1263,6 +1316,7 @@ export type UserUncheckedCreateWithoutBotServicesInput = {
   planStartedAt?: Date | string | null
   planExpiresAt?: Date | string | null
   monthlyUsageUnits?: number
+  creditBalance?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
@@ -1299,6 +1353,7 @@ export type UserUpdateWithoutBotServicesInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
@@ -1319,6 +1374,7 @@ export type UserUncheckedUpdateWithoutBotServicesInput = {
   planStartedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   monthlyUsageUnits?: Prisma.IntFieldUpdateOperationsInput | number
+  creditBalance?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
@@ -1424,6 +1480,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   planStartedAt?: boolean
   planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
+  creditBalance?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   agents?: boolean | Prisma.User$agentsArgs<ExtArgs>
@@ -1446,6 +1503,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   planStartedAt?: boolean
   planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
+  creditBalance?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1460,6 +1518,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   planStartedAt?: boolean
   planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
+  creditBalance?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1474,11 +1533,12 @@ export type UserSelectScalar = {
   planStartedAt?: boolean
   planExpiresAt?: boolean
   monthlyUsageUnits?: boolean
+  creditBalance?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "walletAddress" | "subscriptionTier" | "plan" | "planStartedAt" | "planExpiresAt" | "monthlyUsageUnits" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "walletAddress" | "subscriptionTier" | "plan" | "planStartedAt" | "planExpiresAt" | "monthlyUsageUnits" | "creditBalance" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agents?: boolean | Prisma.User$agentsArgs<ExtArgs>
   privateBrainConfigs?: boolean | Prisma.User$privateBrainConfigsArgs<ExtArgs>
@@ -1513,6 +1573,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     planStartedAt: Date | null
     planExpiresAt: Date | null
     monthlyUsageUnits: number
+    creditBalance: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1954,6 +2015,7 @@ export interface UserFieldRefs {
   readonly planStartedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly planExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly monthlyUsageUnits: Prisma.FieldRef<"User", 'Int'>
+  readonly creditBalance: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

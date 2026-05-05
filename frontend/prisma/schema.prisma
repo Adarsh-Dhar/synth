@@ -44,6 +44,7 @@ model User {
   planStartedAt            DateTime? @db.Timestamp(3)
   planExpiresAt            DateTime? @db.Timestamp(3)
   monthlyUsageUnits        Int       @default(0)
+  creditBalance            Int       @default(0)
   agents                   Agent[]
   privateBrainConfigs      PrivateBrainConfig[]
   privateBrainAudits       PrivateBrainAudit[]

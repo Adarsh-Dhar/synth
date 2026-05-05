@@ -4,7 +4,7 @@ import { requireWalletAuth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 
 const dodo = new DodoPayments({
-  bearerToken: process.env.DODO_API_KEY ?? "",
+  bearerToken: process.env.DODO_PAYMENTS_API_KEY ?? process.env.DODO_API_KEY ?? "",
   environment: (process.env.DODO_PAYMENTS_ENVIRONMENT === "live_mode" || process.env.DODO_PAYMENTS_ENVIRONMENT === "production") ? "live_mode" : "test_mode",
 });
 

@@ -89,7 +89,7 @@ export function AuthButton({
         </span>
 
         {/* Display name */}
-        <span className="font-mono text-xs max-w-[120px] truncate">
+        <span className="font-mono text-xs">
           {displayName ?? "Connected"}
         </span>
 
@@ -123,8 +123,8 @@ export function AuthButton({
                 {displayName}
               </p>
               {address && (
-                <p className="text-[10px] font-mono text-muted-foreground/60 truncate mt-0.5">
-                  {address.slice(0, 10)}…{address.slice(-6)}
+                <p className="text-[10px] font-mono text-muted-foreground/60 break-all mt-0.5">
+                  {address}
                 </p>
               )}
             </div>

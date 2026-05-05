@@ -44,6 +44,7 @@ const PLANS: Plan[] = [
     ],
     limits: { agents: 2, runningAgents: 1, usageUnits: 500 },
     ctaLabel: "Current plan",
+    productId: "pdt_0Ne0ZzHuknqvRLcRxK1K9", // Free plan (for reference)
   },
   {
     id: "pro",
@@ -63,7 +64,7 @@ const PLANS: Plan[] = [
     limits: { agents: 10, runningAgents: 5, usageUnits: 10_000, credits: 2_000 },
     highlight: true,
     ctaLabel: "Upgrade to Pro",
-    productId: "pdt_0Ne0ZzHuknqvRLcRxK1K9",
+    productId: "pdt_0NeAqJjnHMw3zHi9kYIXS", // ✅ Correct Pro plan product ID
   },
   {
     id: "enterprise",
@@ -83,7 +84,7 @@ const PLANS: Plan[] = [
     ],
     limits: { agents: 100, runningAgents: 25, usageUnits: "Unlimited", credits: 10_000 },
     ctaLabel: "Upgrade to Enterprise",
-    productId: "pdt_0Ne0aCoFw2FGrzxaPrPiN",
+    productId: "pdt_0Ne0aCoFw2FGrzxaPrPiN", // Enterprise plan
   },
 ];
 
@@ -200,14 +201,14 @@ const TOPUP_BUNDLES: TopupBundle[] = [
     credits: 500,
     price: "$4.99",
     priceLabel: "$0.00998 / credit",
-    productId: "pdt_0Ne0aafxIPJ1U3L2TuQ1l",
+    productId: "pdt_0Ne0aafxIPJ1U3L2TuQ1l", // 500 topup
   },
   {
     id: "2000",
     credits: 2_000,
     price: "$14.99",
     priceLabel: "$0.0075 / credit",
-    productId: "pdt_0Ne0ajLByYILVD88OEGSz",
+    productId: "pdt_0Ne0ajLByYILVD88OEGSz", // 2000 topup
     popular: true,
   },
   {
@@ -215,7 +216,7 @@ const TOPUP_BUNDLES: TopupBundle[] = [
     credits: 10_000,
     price: "$49.99",
     priceLabel: "$0.005 / credit",
-    productId: "pdt_0Ne0ariRdRBGFskEOFvXd",
+    productId: "pdt_0Ne0ariRdRBGFskEOFvXd", // 10000 topup
   },
 ];
 

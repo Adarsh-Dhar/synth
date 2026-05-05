@@ -51,6 +51,12 @@ export function PrivyProvider({ children }: { children: ReactNode }) {
           landingHeader: "Sign in to Synth",
           loginMessage: "Connect your wallet or sign in with GitHub/Google",
           showWalletLoginFirst: true,
+          walletList: [
+            "phantom",
+            "solflare",
+            "backpack",
+            "jupiter",
+          ],
           walletChainType: "solana-only",
         },
 

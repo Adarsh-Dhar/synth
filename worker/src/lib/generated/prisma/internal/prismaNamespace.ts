@@ -1577,6 +1577,7 @@ export const UserScalarFieldEnum = {
   planStartedAt: 'planStartedAt',
   planExpiresAt: 'planExpiresAt',
   monthlyUsageUnits: 'monthlyUsageUnits',
+  creditBalance: 'creditBalance',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

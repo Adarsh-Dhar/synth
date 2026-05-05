@@ -71,7 +71,7 @@ export function Sidebar() {
             className="flex items-center gap-2"
             onClick={() => setIsOpen(false)}
           >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-linear-to-br from-primary to-secondary flex items-center justify-center">
               <Bot className="text-primary-foreground" size={20} />
             </div>
             <div>
@@ -89,7 +89,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+        <nav className="overflow-y-auto px-4 py-6 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -124,7 +124,7 @@ export function Sidebar() {
         </nav>
 
         {/* Footer — identity + auth button */}
-        <div className="p-4 border-t border-sidebar-border space-y-3">
+        <div className="mt-2 py-6 px-4 border-t border-sidebar-border space-y-3">
           {/* Identity display */}
           {displayName && (
             <div className="px-3 py-2.5 rounded-lg bg-muted/20 border border-border/50">
@@ -135,7 +135,7 @@ export function Sidebar() {
                   ? "Google"
                   : "Wallet"}
               </p>
-              <p className="text-sm font-mono text-foreground truncate">
+              <p className="text-sm font-mono text-foreground break-all">
                 {displayName}
               </p>
             </div>

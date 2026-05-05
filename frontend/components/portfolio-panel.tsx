@@ -28,7 +28,7 @@ export function PortfolioPanel() {
     const wallet = walletSigner?.publicKey?.toBase58?.() ?? undefined;
     if (!wallet) return;
 
-    let mounted = true;
+    const mounted = true;
 
     const load = async () => {
       try {
@@ -64,7 +64,7 @@ export function PortfolioPanel() {
     };
 
     load();
-  }, [publicKey, walletSigner]);
+  }, [walletSigner]);
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
