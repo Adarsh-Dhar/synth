@@ -39,6 +39,7 @@ export interface DodoSubscriptionState {
   tier: string;
   limits: SubscriptionLimits;
   usage: SubscriptionUsage;
+  creditBalance: number;
   subscription: ActiveSubscription | null;
   agentCount: number;
   loading: boolean;
@@ -49,6 +50,7 @@ const INITIAL_STATE: DodoSubscriptionState = {
   tier: "FREE",
   limits: { maxAgents: 2, maxRunning: 1, usageUnits: 500, credits: 0 },
   usage: { units: 0, max: 500, pct: 0, unlimited: false },
+  creditBalance: 0,
   subscription: null,
   agentCount: 0,
   loading: true,
@@ -101,6 +103,7 @@ export function useDodoSubscription() {
         tier: String(data.tier ?? INITIAL_STATE.tier),
         limits: safeLimits,
         usage: safeUsage,
+        creditBalance: Number(data.creditBalance ?? INITIAL_STATE.creditBalance),
         subscription: data.subscription ?? null,
         agentCount: Number(data.agentCount ?? 0),
         loading: false,
@@ -111,6 +114,7 @@ export function useDodoSubscription() {
         tier: String(data.tier ?? INITIAL_STATE.tier),
         limits: safeLimits,
         usage: safeUsage,
+        creditBalance: Number(data.creditBalance ?? INITIAL_STATE.creditBalance),
         subscription: data.subscription ?? null,
         agentCount: Number(data.agentCount ?? 0),
         loading: false,

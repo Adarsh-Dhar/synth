@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
     }
 
     const origin = req.headers.get("origin") ?? "http://localhost:3000";
-    const portal = await dodo.customers.portal.create(customerId, {
+    const portalSession = await dodo.customers.customerPortal.create(customerId, {
       return_url: `${origin}/dashboard/billing`,
     });
 
-    const portalUrl = (portal as unknown as Record<string, string>).link ?? "";
+    const portalUrl = (portalSession as unknown as Record<string, string>).link ?? "";
     if (!portalUrl) {
       return NextResponse.json({ portalUrl: "/dashboard/billing", mode: "internal" }, { status: 200 });
     }

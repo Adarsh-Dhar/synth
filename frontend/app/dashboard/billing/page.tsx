@@ -76,6 +76,7 @@ function BillingContent() {
     tier,
     limits,
     usage,
+    creditBalance,
     subscription,
     agentCount,
     loading,
@@ -162,6 +163,7 @@ function BillingContent() {
   const tierLabel = tier ?? "FREE";
   const isPaid = tierLabel !== "FREE";
   const currentPlan = String(user?.plan || user?.subscriptionTier || tierLabel || "FREE").toUpperCase();
+  const synthTokensActive = Number.isFinite(creditBalance) ? creditBalance : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -260,7 +262,12 @@ function BillingContent() {
                 max: usage.max,
                 suffix: usage.unlimited ? "unlimited" : `/ ${usage.max.toLocaleString()}`,
               },
-              { label: "Credits", value: user?.monthlyUsageUnits ?? 0, max: limits.credits || 1, suffix: limits.credits ? `/ ${limits.credits.toLocaleString()}` : "included" },
+              {
+                label: "Synth Tokens Active",
+                value: synthTokensActive.toLocaleString(),
+                max: limits.credits || 1,
+                suffix: "currently active",
+              },
             ].map((stat) => (
               <div key={stat.label} className="bg-background rounded-lg border border-border p-4">
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -290,7 +297,7 @@ function BillingContent() {
           {subscription && (
             <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 text-xs text-muted-foreground">
               <CheckCircle size={12} className="text-green-400" />
-              Subscription active · ref: {subscription.externalReference.slice(0, 20)}…
+              <span className="break-all">Subscription active · ref: {subscription.externalReference}</span>
             </div>
           )}
         </div>

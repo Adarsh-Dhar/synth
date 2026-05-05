@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import DodoPayments from "dodopayments";
 import { prisma } from "@/lib/prisma";
 import { requireWalletAuth } from "@/lib/auth/server";
 
@@ -14,6 +15,38 @@ const LIMITS_BY_TIER: Record<string, TierLimits> = {
   PRO: { maxAgents: 10, maxRunning: 5, usageUnits: 10_000, credits: 2_000 },
   ENTERPRISE: { maxAgents: 100, maxRunning: 25, usageUnits: 10_000, credits: 10_000 },
 };
+
+const dodo = new DodoPayments({
+  bearerToken: process.env.DODO_API_KEY ?? "",
+  environment:
+    process.env.DODO_PAYMENTS_ENVIRONMENT === "live_mode" ||
+    process.env.DODO_PAYMENTS_ENVIRONMENT === "production"
+      ? "live_mode"
+      : "test_mode",
+});
+
+type DodoCreditEntitlement = {
+  balance?: string;
+};
+
+async function getDodoCreditBalance(customerId: string): Promise<number> {
+  if (!process.env.DODO_API_KEY || !customerId) {
+    return 0;
+  }
+
+  try {
+    const response = await dodo.customers.listCreditEntitlements(customerId);
+    const entitlements = Array.isArray(response.items) ? (response.items as DodoCreditEntitlement[]) : [];
+
+    return entitlements.reduce((total, item) => {
+      const balance = Number(item.balance ?? 0);
+      return Number.isFinite(balance) ? total + balance : total;
+    }, 0);
+  } catch (error) {
+    console.warn("[/api/payments/status] Failed to load Dodo credit balance:", error);
+    return 0;
+  }
+}
 
 export async function GET(req: NextRequest) {
   const auth = await requireWalletAuth(req);
@@ -67,18 +100,31 @@ export async function GET(req: NextRequest) {
         plan: true,
         validUntil: true,
         externalReference: true,
+        metadata: true,
         createdAt: true,
         updatedAt: true,
       },
     }),
   ]);
 
+  const subscriptionMetadata = subscription?.metadata && typeof subscription.metadata === "object"
+    ? (subscription.metadata as Record<string, unknown>)
+    : null;
+  const customerId = String(
+    subscriptionMetadata?.customerId ??
+    subscriptionMetadata?.customer_id ??
+    auth.user.id
+  ).trim();
+  const creditBalance = await getDodoCreditBalance(customerId);
+
   console.log("[status] tier resolution", {
     userId: auth.user.id,
+    customerId,
     planFromPlan,
     planFromTier,
     tier,
     subscriptionStatus: subscription?.status ?? null,
+    creditBalance,
   });
 
   const usageMax = limits.usageUnits;
@@ -96,6 +142,7 @@ export async function GET(req: NextRequest) {
       pct: usagePct,
       unlimited,
     },
+    creditBalance,
     subscription: subscription
       ? {
           ...subscription,

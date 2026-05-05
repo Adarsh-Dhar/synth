@@ -15,7 +15,6 @@ export function useDeployChat() {
   const { user } = useUser()
   const { publicKey, connect, sendTransaction } = useWallet()
   const { connection } = useConnection()
-  const openConnect = connect
   const walletAddress = publicKey ? publicKey.toBase58() : ''
   const router                                          = useRouter()
   const [, startTransition]                             = useTransition()
