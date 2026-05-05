@@ -11,7 +11,7 @@
  *  - Recent webhook events (subscription history)
  */
 
-import React, { Suspense, useCallback, useEffect } from "react";
+import React, { Suspense, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CreditCard, Zap, RefreshCw, ExternalLink,
@@ -84,17 +84,72 @@ function BillingContent() {
     openPortal,
   } = useDodoSubscription();
 
-  // Refresh after a successful Dodo redirect
-  useEffect(() => {
-    if (paymentStatus === "success") {
-      refreshSubscription();
-    }
-  }, [paymentStatus, refreshSubscription]);
+  // Track polling to prevent re-triggering on re-renders
+  const pollingTriggeredRef = useRef(false);
+  // Track consecutive auth failures to stop polling early on persistent auth loss
+  const authFailureCountRef = useRef(0);
 
-  const handleUpgraded = useCallback(() => {
-    // Give Dodo webhook a moment to fire before re-fetching
-    setTimeout(refreshSubscription, 2000);
+  const handleUpgraded = useCallback(async () => {
+    // Give webhook time to process (webhook has 300s tolerance, but usually completes quickly)
+    // Poll for subscription updates with exponential backoff
+    console.log("[Billing] Payment completed, waiting for tier update...");
+
+    const maxAttempts = 4; // keep the retry window short to avoid noisy refresh spam
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const delay = attempt === 0 ? 400 : 900 * attempt;
+      await new Promise((r) => setTimeout(r, delay));
+      try {
+        console.log(`[Billing] Poll attempt ${attempt + 1}: refreshing subscription...`);
+        const refreshed = await refreshSubscription();
+        // Reset auth failure count on successful poll
+        authFailureCountRef.current = 0;
+
+        const refreshedTier = String(refreshed?.tier ?? "FREE").toUpperCase();
+        const refreshedStatus = String(refreshed?.subscription?.status ?? "").toUpperCase();
+        if (refreshedTier !== "FREE" || refreshedStatus === "ACTIVE") {
+          console.log("[Billing] Subscription update detected, stopping polling.");
+          break;
+        }
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : String(e);
+        // Check if this is an auth failure (401/Unauthorized)
+        if (errorMsg.includes("401") || errorMsg.includes("Unauthorized")) {
+          authFailureCountRef.current++;
+          console.warn(
+            `[Billing] Auth failure ${authFailureCountRef.current}/2: ${errorMsg}`
+          );
+          // Stop polling after 2 consecutive auth failures
+          if (authFailureCountRef.current >= 2) {
+            console.warn(
+              "[Billing] Stopping polling due to persistent auth failure. Please refresh the page."
+            );
+            break;
+          }
+        } else {
+          // Reset counter for transient errors (not auth-related)
+          authFailureCountRef.current = 0;
+          console.warn("[Billing] Transient error, continuing polls:", errorMsg);
+        }
+      }
+    }
+    console.log("[Billing] Finished polling for tier update");
   }, [refreshSubscription]);
+
+  // Refresh after a successful Dodo redirect or overlay close — only once per query param
+  useEffect(() => {
+    if (paymentStatus === "success" && !pollingTriggeredRef.current) {
+      // Validate wallet signer is available before starting polling
+      if (!user?.walletAddress) {
+        console.warn(
+          "[Billing] Payment success detected but wallet not available. Skipping polling."
+        );
+        return;
+      }
+      console.log("[Billing] Detected payment success redirect, starting polling...");
+      pollingTriggeredRef.current = true;
+      void handleUpgraded();
+    }
+  }, [paymentStatus, handleUpgraded, user?.walletAddress]);
 
   if (loading) {
     return (

@@ -71,6 +71,29 @@ kill_port_processes 8001
 kill_port_processes 8011
 kill_port_processes 8013
 kill_port_processes 8014
+# Common dev default port that Next may use if previously started
+kill_port_processes 3000
+
+kill_matching_processes() {
+	local pattern="$1"
+	local pids
+	pids=$(pgrep -f -- "$pattern" || true)
+	if [[ -z "$pids" ]]; then
+		return
+	fi
+
+	echo "Found running processes matching '$pattern': $pids. Stopping them..."
+	kill $pids 2>/dev/null || true
+	sleep 1
+	pids=$(pgrep -f -- "$pattern" || true)
+	if [[ -n "$pids" ]]; then
+		echo "Force stopping remaining PID(s) for pattern '$pattern': $pids"
+		kill -9 $pids 2>/dev/null || true
+	fi
+}
+
+# Ensure any stray Next.js dev processes are stopped to avoid \"Another next dev server is already running\"
+kill_matching_processes "next dev"
 
 ensure_node_deps() {
 	local dir="$1"

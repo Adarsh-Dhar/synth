@@ -59,17 +59,20 @@ export function useDodoSubscription() {
   const { walletSigner } = useUser();
   const [state, setState] = useState<DodoSubscriptionState>(INITIAL_STATE);
 
-  const fetchStatus = useCallback(async () => {
+  const fetchStatus = useCallback(async (): Promise<DodoSubscriptionState | null> => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      // Try unauthenticated first; only sign and retry if the endpoint returns 401
-      let res = await fetch("/api/payments/status", { cache: "no-store" });
-      if (res.status === 401) {
+      let res: Response;
+
+      if (walletSigner) {
         const authHeaders = await getWalletAuthHeaders(walletSigner);
         res = await fetch("/api/payments/status", {
           headers: { ...(authHeaders ?? {}) },
           cache: "no-store",
         });
+      } else {
+        // Fall back to a public probe only when no wallet signer is available.
+        res = await fetch("/api/payments/status", { cache: "no-store" });
       }
 
       if (!res.ok) {
@@ -103,12 +106,24 @@ export function useDodoSubscription() {
         loading: false,
         error: null,
       });
+
+      return {
+        tier: String(data.tier ?? INITIAL_STATE.tier),
+        limits: safeLimits,
+        usage: safeUsage,
+        subscription: data.subscription ?? null,
+        agentCount: Number(data.agentCount ?? 0),
+        loading: false,
+        error: null,
+      };
     } catch (err) {
       setState((prev) => ({
         ...prev,
         loading: false,
         error: err instanceof Error ? err.message : "Failed to load subscription",
       }));
+
+      return null;
     }
   }, [walletSigner]);
 

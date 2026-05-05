@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 const dodo = new DodoPayments({
   bearerToken: process.env.DODO_API_KEY ?? "",
-  environment: process.env.DODO_PAYMENTS_ENVIRONMENT === "live_mode" ? "live_mode" : "test_mode",
+  environment: (process.env.DODO_PAYMENTS_ENVIRONMENT === "live_mode" || process.env.DODO_PAYMENTS_ENVIRONMENT === "production") ? "live_mode" : "test_mode",
 });
 
 export async function POST(req: NextRequest) {

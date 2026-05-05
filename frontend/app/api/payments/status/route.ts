@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
     select: {
       id: true,
       plan: true,
+      subscriptionTier: true,
       planExpiresAt: true,
       monthlyUsageUnits: true,
     },
@@ -35,7 +36,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "User not found." }, { status: 404 });
   }
 
-  const tier = String(user.plan || "free").toUpperCase();
+  // ── FIX: Check BOTH plan and subscriptionTier, use whichever is higher ──
+  const planFromPlan = String(user.plan || "free").toUpperCase();
+  const planFromTier = String(user.subscriptionTier || "FREE").toUpperCase();
+
+  // Priority: ENTERPRISE > PRO > FREE
+  const tierPriority: Record<string, number> = { FREE: 0, PRO: 1, ENTERPRISE: 2 };
+  const tier =
+    (tierPriority[planFromPlan] ?? 0) >= (tierPriority[planFromTier] ?? 0)
+      ? planFromPlan
+      : planFromTier;
+
   const planExpired = Boolean(user.planExpiresAt && user.planExpiresAt.getTime() <= Date.now());
   const effectiveTier = planExpired ? "FREE" : tier;
   const limits = LIMITS_BY_TIER[effectiveTier] ?? LIMITS_BY_TIER.FREE;
@@ -44,10 +55,10 @@ export async function GET(req: NextRequest) {
   const [agentCount, runningCount, subscription] = await Promise.all([
     prisma.agent.count({ where: { userId: auth.user.id } }),
     prisma.agent.count({ where: { userId: auth.user.id, status: "RUNNING" } }),
+    // ── FIX: Look up subscription by userId through agents ──
     prisma.subscription.findFirst({
       where: {
         agent: { userId: auth.user.id },
-        provider: "dodo",
       },
       orderBy: { updatedAt: "desc" },
       select: {
@@ -61,6 +72,14 @@ export async function GET(req: NextRequest) {
       },
     }),
   ]);
+
+  console.log("[status] tier resolution", {
+    userId: auth.user.id,
+    planFromPlan,
+    planFromTier,
+    tier,
+    subscriptionStatus: subscription?.status ?? null,
+  });
 
   const usageMax = limits.usageUnits;
   const usageUnits = Math.max(0, Number(user.monthlyUsageUnits || 0));

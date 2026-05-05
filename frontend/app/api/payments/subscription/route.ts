@@ -16,11 +16,18 @@ export async function POST(req: NextRequest) {
 
   const action = body.action || "create";
   const plan = String(body.plan || "FREE").toUpperCase();
+  const planLower = action === "cancel" ? "free" : plan.toLowerCase();
+  const tierValue = action === "cancel" ? "FREE" : plan;
 
+  // ── FIX: Update BOTH subscriptionTier AND plan ──
   await prisma.user.update({
     where: { id: auth.user.id },
-    data: { subscriptionTier: action === "cancel" ? "FREE" : plan },
+    data: {
+      subscriptionTier: tierValue,
+      plan: planLower,
+      ...(tierValue !== "FREE" ? { planStartedAt: new Date() } : {}),
+    },
   });
 
-  return NextResponse.json({ ok: true, action, tier: action === "cancel" ? "FREE" : plan }, { status: 200 });
+  return NextResponse.json({ ok: true, action, tier: tierValue }, { status: 200 });
 }

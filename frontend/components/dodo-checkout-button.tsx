@@ -94,15 +94,21 @@ export function DodoCheckoutButton({
       if (typeof window !== "undefined" && window.DodoOverlay) {
         const openWithOverlay = () => window.DodoOverlay!.open(data.checkoutUrl!, {
           onSuccess: (result) => {
-            console.log("[Dodo] Payment succeeded:", result);
-            onSuccess?.();
+            console.log("[Dodo] Payment overlay closed (success):", result);
+            // Give webhook time to process
+            setTimeout(() => {
+              console.log("[Dodo] Calling onSuccess callback");
+              onSuccess?.();
+            }, 1500);
           },
           onClose: () => {
+            console.log("[Dodo] Overlay closed (no result)");
             onClose?.();
           },
           onError: (err) => {
             // Some legacy overlay flows return opaque errors (e.g. missing connector params).
             // Fallback to direct checkout URL, which is the stable path.
+            console.error("[Dodo] Overlay error:", err.message);
             setError(err.message);
             window.location.href = data.checkoutUrl!;
           },

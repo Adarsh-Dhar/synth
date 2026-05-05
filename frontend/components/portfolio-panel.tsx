@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { Wallet } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { useUser } from "@/lib/user-context";
 import { getWalletAuthHeaders } from "@/lib/auth/client";
 
@@ -20,14 +19,13 @@ type PortfolioResponse = {
 };
 
 export function PortfolioPanel() {
-  const { publicKey } = useWallet();
   const { walletSigner } = useUser();
   const [totalUsd, setTotalUsd] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const wallet = publicKey?.toBase58();
+    const wallet = walletSigner?.publicKey?.toBase58?.() ?? undefined;
     if (!wallet) return;
 
     let mounted = true;

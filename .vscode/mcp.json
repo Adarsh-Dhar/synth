@@ -3,6 +3,18 @@
 		"Privy Docs": {
 			"url": "https://docs.privy.io/mcp",
 			"type": "http"
+		},
+		"dodopayments-mcp": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"dodopayments-mcp"
+			],
+			"env": {
+				"DODO_PAYMENTS_API_KEY": "Set your DODO_PAYMENTS_API_KEY here.",
+				"DODO_PAYMENTS_WEBHOOK_KEY": "Set your DODO_PAYMENTS_WEBHOOK_KEY here."
+			},
+			"type": "stdio"
 		}
 	},
 	"inputs": []

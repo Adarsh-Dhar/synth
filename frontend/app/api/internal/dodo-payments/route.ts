@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
@@ -66,6 +67,64 @@ function resolveBotId(body: Record<string, unknown>, metadataCandidate?: Record<
       metadataCandidate?.bot_id ||
       "",
   ).trim();
+}
+
+// ── FIXED: Updates BOTH subscriptionTier AND plan columns ──
+async function syncUserTierFromAgent(agentId: string, tier: string) {
+  const normalizedTier = tier.toUpperCase();
+  const planLower = normalizedTier.toLowerCase();
+
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    select: { userId: true },
+  });
+  if (!agent?.userId) return;
+
+  await prisma.user.update({
+    where: { id: agent.userId },
+    data: {
+      subscriptionTier: normalizedTier,
+      plan: planLower,
+      ...(normalizedTier !== "FREE" ? { planStartedAt: new Date() } : {}),
+    },
+  });
+}
+
+// ── NEW: Sync by walletAddress or userId from metadata ──
+async function syncUserTierByMetadata(
+  metadata: Record<string, unknown>,
+  tier: string
+): Promise<boolean> {
+  const normalizedTier = tier.toUpperCase();
+  const planLower = normalizedTier.toLowerCase();
+
+  const walletAddress = String(metadata.walletAddress ?? "").trim();
+  const userId = String(metadata.userId ?? "").trim();
+
+  if (!walletAddress && !userId) return false;
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        ...(walletAddress ? [{ walletAddress }] : []),
+        ...(userId ? [{ id: userId }] : []),
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (!user) return false;
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      subscriptionTier: normalizedTier,
+      plan: planLower,
+      ...(normalizedTier !== "FREE" ? { planStartedAt: new Date() } : {}),
+    },
+  });
+
+  return true;
 }
 
 async function forwardWebhookToWorker(agentId: string, payload: Record<string, unknown>) {
@@ -174,33 +233,29 @@ async function maybeDeliverX402(agentId: string, externalReference: string, meta
       metadata,
       source: "dodo",
     }),
-  }).catch(() => {
-    // Best effort delivery path; webhook acknowledgement should not fail on network issues.
-  });
+  }).catch(() => {});
 }
 
-async function syncUserTierFromAgent(agentId: string, tier: string) {
-  const agent = await prisma.agent.findUnique({ where: { id: agentId }, select: { userId: true } });
-  if (!agent?.userId) return;
-  const subscription = await prisma.subscription.findFirst({
-    where: { agentId, provider: "dodo" },
-    orderBy: { updatedAt: "desc" },
-    select: { plan: true, validUntil: true },
+// ── Helper: find or create a placeholder agent to attach subscription to ──
+async function resolveAgentIdForUser(userId: string): Promise<string | null> {
+  const existing = await prisma.agent.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
   });
+  if (existing) return existing.id;
 
-  if (!subscription) {
-    await prisma.user.update({ where: { id: agent.userId }, data: { subscriptionTier: tier } });
-    return;
-  }
-
-  await prisma.user.update({
-    where: { id: agent.userId },
+  // Create a placeholder agent so subscription can be linked
+  const agent = await prisma.agent.create({
     data: {
-      subscriptionTier: tier,
-      plan: (subscription.plan ?? tier).toLowerCase(),
-      ...(subscription.validUntil ? { planExpiresAt: subscription.validUntil } : {}),
+      name: "Subscription Placeholder",
+      userId,
+      status: "STOPPED",
+      walletAddress: "",
     },
-  });
+  }).catch(() => null);
+
+  return agent?.id ?? null;
 }
 
 export async function POST(req: NextRequest) {
@@ -226,7 +281,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "stale_timestamp" }, { status: 401 });
   }
 
-  // Prefer timestamped signature payload when provided; fallback to raw body compatibility.
   const timestampedPayload = timestampHeader ? `${timestampHeader}.${rawBody}` : "";
   const computedSigTimestamped = timestampedPayload
     ? createHmac("sha256", expectedSecret).update(timestampedPayload).digest("hex")
@@ -246,10 +300,9 @@ export async function POST(req: NextRequest) {
   }
 
   const eventName = String(body.event_type || body.event || body.type || "").trim().toLowerCase();
-
   const metadataCandidate = (body.metadata ?? body.data) as Record<string, unknown> | undefined;
 
-  const agentId = resolveBotId(body, metadataCandidate);
+  let agentId = resolveBotId(body, metadataCandidate);
   const customerId = String(body.customerId || metadataCandidate?.customerId || "").trim();
   const externalReference = String(
     body.externalReference || body.orderId || body.paymentId || metadataCandidate?.externalReference || "",
@@ -260,12 +313,65 @@ export async function POST(req: NextRequest) {
   }
 
   if (eventName === "payment.succeeded") {
-    if (!agentId || !customerId || !externalReference) {
+    if (!externalReference) {
       return NextResponse.json(
-        { error: "agentId, customerId, and externalReference are required" },
+        { error: "externalReference is required" },
         { status: 400 },
       );
     }
+
+    console.log("[dodo-payments] payment.succeeded event", {
+      externalReference,
+      agentId,
+      customerId,
+      metadata: metadataCandidate,
+      bodyPlan: body.plan,
+    });
+
+    // ── FIX: Determine tier from planType in metadata (takes precedence over body.plan) ──
+    const planFromMetadata = metadataCandidate?.planType ? String(metadataCandidate.planType).toUpperCase() : null;
+    const planFromBody = body.plan ? String(body.plan).toUpperCase() : null;
+    const tier = tierFromPlan(planFromMetadata || planFromBody || "PRO");
+
+    console.log("[dodo-payments] tier resolution", { planFromMetadata, planFromBody, tier });
+
+    // ── FIX: Try to resolve agentId from metadata (walletAddress / userId) ──
+    let resolvedUserId: string | null = null;
+    if (!agentId && metadataCandidate) {
+      console.log("[dodo-payments] attempting to sync user tier by metadata", metadataCandidate);
+      const synced = await syncUserTierByMetadata(metadataCandidate as Record<string, unknown>, tier);
+      console.log("[dodo-payments] metadata sync result:", synced);
+      if (synced) {
+        // Find the user to get/create an agent for subscription attachment
+        const walletAddress = String(metadataCandidate.walletAddress ?? "").trim();
+        const userId = String(metadataCandidate.userId ?? "").trim();
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              ...(walletAddress ? [{ walletAddress }] : []),
+              ...(userId ? [{ id: userId }] : []),
+            ],
+          },
+          select: { id: true },
+        });
+        if (user) {
+          resolvedUserId = user.id;
+          agentId = (await resolveAgentIdForUser(user.id)) ?? "";
+        }
+      }
+    }
+
+    if (!agentId) {
+      // Cannot attach subscription — but still acknowledge
+      console.error("[dodo-payments] payment.succeeded with no resolvable agentId", {
+        externalReference,
+        metadata: metadataCandidate,
+        resolvedUserId,
+      });
+      return NextResponse.json({ ok: true, warning: "no_agent_resolved", externalReference }, { status: 200 });
+    }
+
+    console.log("[dodo-payments] resolved agentId", agentId);
 
     const agent = await prisma.agent.findUnique({
       where: { id: agentId },
@@ -284,22 +390,37 @@ export async function POST(req: NextRequest) {
       },
     })) as Record<string, unknown>;
 
+    // ── FIX: Include plan in body so upsertSubscriptionByReference picks it up ──
+    const bodyWithPlan = {
+      ...body,
+      plan: planFromMetadata || planFromBody || "PRO",
+    };
+
     const subscription = await upsertSubscriptionByReference({
       agentId,
       externalReference,
       customerId,
       metadata,
-      body,
+      body: bodyWithPlan,
       status: getEventStatus(eventName, body),
     });
 
-    await syncUserTierFromAgent(agentId, tierFromPlan(subscription.plan));
+    // ── FIX: sync BOTH columns using the resolved tier ──
+    console.log("[dodo-payments] syncing user tier from agent", { agentId, tier });
+    await syncUserTierFromAgent(agentId, tier);
+    console.log("[dodo-payments] user tier synced successfully");
 
     await maybeDeliverX402(agentId, externalReference, metadata);
     await forwardWebhookToWorker(agentId, {
       ...body,
       metadata: typeof metadataCandidate === "object" && metadataCandidate ? metadataCandidate : body.metadata,
       source: "dodo",
+    });
+
+    console.log("[dodo-payments] payment.succeeded fully processed", {
+      subscriptionId: subscription.id,
+      status: subscription.status,
+      tier,
     });
 
     return NextResponse.json(
@@ -309,6 +430,7 @@ export async function POST(req: NextRequest) {
         status: subscription.status,
         provider: subscription.provider,
         customerId,
+        tier,
       },
       { status: 200 },
     );

@@ -4,7 +4,7 @@ import { requireWalletAuth } from "@/lib/auth/server";
 
 const dodo = new DodoPayments({
   bearerToken: process.env.DODO_API_KEY ?? "",
-  environment: process.env.DODO_PAYMENTS_ENVIRONMENT === "live_mode" ? "live_mode" : "test_mode",
+  environment: (process.env.DODO_PAYMENTS_ENVIRONMENT === "live_mode" || process.env.DODO_PAYMENTS_ENVIRONMENT === "production") ? "live_mode" : "test_mode",
 });
 
 type CheckoutBody = {
@@ -69,11 +69,14 @@ export async function POST(req: NextRequest) {
     walletAddress: auth.user.walletAddress,
     userId: auth.user.id,
     planType,
+    timestamp: new Date().toISOString(),
     ...(body.metadata ?? {}),
   };
   const sharedMetadata = Object.fromEntries(
     Object.entries(sharedMetadataRaw).map(([key, value]) => [key, String(value)])
   );
+
+  console.log("[checkout] creating session with metadata:", { walletAddress: auth.user.walletAddress, userId: auth.user.id, planType, resolvedId });
 
   try {
     // Both subscriptions and one-time payments now use checkout sessions
@@ -90,6 +93,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Dodo did not return a checkout URL." }, { status: 502 });
     }
 
+    console.log("[checkout] session created successfully", { checkoutUrl: checkoutUrl?.substring(0, 50) + "...", planType });
+
     return NextResponse.json(
       {
         checkoutUrl,
@@ -101,7 +106,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("[/api/payments/checkout] Dodo error:", message);
+    console.error("[/api/payments/checkout] Dodo error:", message, { error });
     return NextResponse.json({ error: "checkout_failed", detail: message }, { status: 502 });
   }
 }
